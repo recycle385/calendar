@@ -15,7 +15,7 @@ if (!fs.existsSync(logDir)) {
 export const logger = winston.createLogger({
   level: env.NODE_ENV === 'production' ? 'info' : 'debug', // env 사용
   format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // 포맷 지정
+    winston.format.timestamp({ format: () => new Date().toISOString() }),
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),

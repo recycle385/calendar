@@ -6,6 +6,10 @@ if (process.env.NODE_ENV === 'test') {
 } else {
   dotenv.config();
 }
+
+// 로컬 실행과 Docker 실행 모두 동일한 UTC 시간대를 사용한다.
+process.env.TZ = 'UTC';
+
 interface EnvConfig {
   PORT: number;
   NODE_ENV: string;
