@@ -77,8 +77,10 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     mockedAxios.get.mockResolvedValueOnce({ data: hostProfile });
     const loginRes = await request(app)
       .get('/api/v1/auth/google/callback')
-      .query({ code: 'code1' });
-    hostAccessToken = loginRes.body.token;
+      .set('Cookie', 'oauth_state=integration-state')
+      .query({ code: 'test-code', state: 'integration-state' })
+      .expect(200);
+    hostAccessToken = loginRes.body.accessToken;
 
     // 잘못된 날짜로 생성 시도
     await request(app)
@@ -209,18 +211,18 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
   // =================================================================
   // [Scenario 5] 권한 제어 및 마감
   // =================================================================
-  it('9. [Permission] 게스트가 수정 시도 시 차단 (403)', async () => {
+  it('9. [Permission] 게스트 Participant Token으로 수정 시도 시 차단 (401)', async () => {
     await request(app)
       .patch(`/api/v1/calendars/${calendarSlug}`)
       .set('Authorization', `Bearer ${guestParticipantToken}`)
       .send({ title: '게스트가 수정함' })
-      .expect(403);
+      .expect(401);
   });
 
   it('10. [Close] 방장이 캘린더 마감 성공 (200)', async () => {
     const res = await request(app)
       .post(`/api/v1/calendars/${calendarSlug}/close`)
-      .set('Authorization', `Bearer ${hostParticipantToken}`)
+      .set('Authorization', `Bearer ${hostAccessToken}`)
       .expect(200);
 
     expect(res.body.calendar.is_closed).toBe(true); // or 1
@@ -240,7 +242,7 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     /*
     await request(app)
       .patch(`/api/v1/calendars/${calendarSlug}`)
-      .set('Authorization', `Bearer ${hostParticipantToken}`)
+      .set('Authorization', `Bearer ${hostAccessToken}`)
       .send({ title: '마감 후 수정' })
       .expect(400); 
     */
@@ -249,7 +251,7 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
   it('13. [Delete] 방장에 의한 삭제 성공 (200) 및 조회 불가 (404)', async () => {
     await request(app)
       .delete(`/api/v1/calendars/${calendarSlug}`)
-      .set('Authorization', `Bearer ${hostParticipantToken}`)
+      .set('Authorization', `Bearer ${hostAccessToken}`)
       .expect(200);
 
     // 삭제 후 조회 시도

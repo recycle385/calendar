@@ -86,8 +86,10 @@ describe('Socket.IO Integration Test', () => {
 
     const loginRes = await request(app)
       .get('/api/v1/auth/google/callback')
-      .query({ code: 'auth_code' });
-    hostAccessToken = loginRes.body.token;
+      .set('Cookie', 'oauth_state=integration-state')
+      .query({ code: 'test-code', state: 'integration-state' })
+      .expect(200);
+    hostAccessToken = loginRes.body.accessToken;
 
     const calRes = await request(app)
       .post('/api/v1/calendars')

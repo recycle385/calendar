@@ -4,7 +4,7 @@ import { env } from '../config/env';
 import { PARTICIPANT_ROUTES } from '../constants/routes.constants';
 import { ParticipantController } from '../controllers/participant.controller';
 import { authRateLimiter, optionalAuth } from '../middlewares';
-import { authenticateParticipant } from '../middlewares/auth';
+import { authenticateParticipant, authenticateUser } from '../middlewares/auth';
 import { asyncHandler } from '../middlewares/errorHandler';
 import {
   commonSchemas,
@@ -170,7 +170,7 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *     summary: 방장의 유저 강퇴
    *     description: 방장만 가능
    *     security:
-   *       - ParticipantAuth: []
+   *       - UserAuth: []
    *     parameters:
    *       - in: path
    *         name: slug
@@ -200,7 +200,7 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
   router.delete(
     PARTICIPANT_ROUTES.DELETE_BY_HOST,
     validateParams(commonSchemas.slugAndParticipantUuidParams),
-    authenticateParticipant,
+    authenticateUser,
     asyncHandler(controller.deleteParticipantAsHost)
   );
 

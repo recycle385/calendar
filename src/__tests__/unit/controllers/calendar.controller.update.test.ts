@@ -15,14 +15,14 @@ it.each(['', null])(
     const controller = new CalendarController(
       { updateCalendar } as unknown as ICalendarService,
       { getIdUsingUuid: async () => 1 } as unknown as IUserService,
-      {} as IParticipantService,
+      {
+        getParticipantUuidByUserIdAndCalendarId: async () => 'host',
+      } as unknown as IParticipantService,
       {} as ITokenService
     );
     const req = {
       params: { slug: 'calendar' },
       body: { description },
-      participantUuid: 'host',
-      userRole: 'host',
       userUuid: 'user',
     } as unknown as Request;
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() } as unknown as Response;

@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { CALENDAR_ROUTES } from '../constants/routes.constants';
 import { CalendarController } from '../controllers/calendar.controller';
-import { authenticateParticipant, authenticateUser } from '../middlewares/auth';
+import { authenticateUser } from '../middlewares/auth';
 import { asyncHandler } from '../middlewares/errorHandler';
 import {
   calendarSchemas,
@@ -114,7 +114,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *     summary: 캘린더 정보 수정
    *     description: 방장만 수정 가능
    *     security:
-   *       - ParticipantAuth: []
+   *       - UserAuth: []
    *     parameters:
    *       - in: path
    *         name: slug
@@ -148,7 +148,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
     CALENDAR_ROUTES.CALENDAR_SLUG,
     validateParams(slugParams),
     validateBody(calendarSchemas.updateRequest),
-    authenticateParticipant,
+    authenticateUser,
     asyncHandler(controller.updateCalendar)
   );
 
@@ -159,7 +159,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *     summary: 캘린더 삭제
    *     description: 방장만 가능
    *     security:
-   *       - ParticipantAuth: []
+   *       - UserAuth: []
    *     parameters:
    *       - in: path
    *         name: slug
@@ -184,7 +184,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
   router.delete(
     CALENDAR_ROUTES.CALENDAR_SLUG,
     validateParams(slugParams),
-    authenticateParticipant,
+    authenticateUser,
     asyncHandler(controller.deleteCalendar)
   );
 
@@ -195,7 +195,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *     summary: 캘린더 마감
    *     description: 방장만 가능
    *     security:
-   *       - ParticipantAuth: []
+   *       - UserAuth: []
    *     parameters:
    *       - in: path
    *         name: slug
@@ -220,7 +220,7 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
   router.post(
     CALENDAR_ROUTES.CALENDAR_CLOSE,
     validateParams(slugParams),
-    authenticateParticipant,
+    authenticateUser,
     asyncHandler(controller.closeCalendar)
   );
 

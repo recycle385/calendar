@@ -93,27 +93,10 @@ export class CalendarController {
 
   public updateCalendar: RequestHandler = async (req, res) => {
     const { slug } = req.params;
-
-    const userParticipantUuid = req.participantUuid;
-    const userRole = req.userRole;
     const userUuid = req.userUuid;
-
-    if (!userParticipantUuid || !userRole) {
-      throw Errors.Internal('인증실패');
-    }
-
-    if (userRole !== 'host' || !userUuid) {
-      throw Errors.Forbidden('캘린더 수정은 방장만 가능합니다');
-    }
+    if (!userUuid) throw Errors.Unauthorized();
 
     const { title, description, start_date, end_date } = req.body;
-
-    if ([title, description, start_date, end_date].every((value) => value === undefined)) {
-      res.status(200).json({
-        message: '변경사항이 없습니다',
-      });
-      return;
-    }
 
     const userId = await this.userService.getIdUsingUuid(userUuid);
 
@@ -124,33 +107,32 @@ export class CalendarController {
       end_date,
     });
 
+    if ([title, description, start_date, end_date].every((value) => value === undefined)) {
+      return res.status(200).json({ message: '변경사항이 없습니다' });
+    }
+    const hostParticipantUuid =
+      await this.participantService.getParticipantUuidByUserIdAndCalendarId(
+        calendar.owner_id,
+        calendar.id
+      );
+
     const io = getIO();
 
     io.to(slug).emit('calendarUpdated', {
       message: '캘린더 정보가 수정되었습니다.',
-      calendar: this.changeToSafeCalendar(calendar, userParticipantUuid),
+      calendar: this.changeToSafeCalendar(calendar, hostParticipantUuid),
     });
 
     return res.status(200).json({
       message: '캘린더가 수정되었습니다',
-      calendar: this.changeToSafeCalendar(calendar, userParticipantUuid),
+      calendar: this.changeToSafeCalendar(calendar, hostParticipantUuid),
     });
   };
 
   public deleteCalendar: RequestHandler = async (req, res) => {
     const { slug } = req.params;
-
-    const userParticipantUuid = req.participantUuid;
-    const userRole = req.userRole;
     const userUuid = req.userUuid;
-
-    if (!userParticipantUuid || !userRole) {
-      throw Errors.Internal('인증실패');
-    }
-
-    if (userRole !== 'host' || !userUuid) {
-      throw Errors.Forbidden('캘린더 수정은 방장만 가능합니다');
-    }
+    if (!userUuid) throw Errors.Unauthorized();
 
     const userId = await this.userService.getIdUsingUuid(userUuid);
 
@@ -171,22 +153,17 @@ export class CalendarController {
 
   public closeCalendar: RequestHandler = async (req, res) => {
     const { slug } = req.params;
-
-    const userParticipantUuid = req.participantUuid;
-    const userRole = req.userRole;
     const userUuid = req.userUuid;
-
-    if (!userParticipantUuid || !userRole) {
-      throw Errors.Internal('인증실패');
-    }
-
-    if (userRole !== 'host' || !userUuid) {
-      throw Errors.Forbidden('캘린더 마감은 방장만 가능합니다');
-    }
+    if (!userUuid) throw Errors.Unauthorized();
 
     const userId = await this.userService.getIdUsingUuid(userUuid);
 
     const calendar = await this.calendarService.closeCalendar(slug, userId);
+    const hostParticipantUuid =
+      await this.participantService.getParticipantUuidByUserIdAndCalendarId(
+        calendar.owner_id,
+        calendar.id
+      );
 
     const io = getIO();
     io.to(slug).emit('calendarClosed', {
@@ -196,7 +173,7 @@ export class CalendarController {
 
     return res.status(200).json({
       message: '캘린더가 마감되었습니다',
-      calendar: this.changeToSafeCalendar(calendar, userParticipantUuid),
+      calendar: this.changeToSafeCalendar(calendar, hostParticipantUuid),
     });
   };
 

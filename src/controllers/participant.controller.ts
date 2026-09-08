@@ -179,36 +179,20 @@ export class ParticipantController {
     const { slug, participantUuid } = req.params;
     const targetUuid = participantUuid;
 
-    const userParticipantUuid = req.participantUuid;
-    const userParticipantRole = req.userRole;
-
-    if (!userParticipantUuid || !userParticipantRole) {
-      throw Errors.Internal('인증 실패'); //todo 주석 수정
-    }
-
-    if (userParticipantRole !== 'host') {
-      throw Errors.Forbidden('강퇴 권한이 없음');
-    }
-
-    if (!req.userUuid) {
-      throw Errors.Unauthorized('잘못된 토큰');
-    }
-
-    if (userParticipantUuid === targetUuid) {
-      throw Errors.BadRequest('방장은 방장을 삭제할 수 없습니다 캘린더 삭제 이용.');
-    }
+    if (!req.userUuid) throw Errors.Unauthorized();
+    const userId = await this.userService.getIdUsingUuid(req.userUuid);
 
     const calendar = await this.calendarService.getCalendarBySlug(slug);
 
-    const actingParticipant =
-      await this.participantService.getParticipantByUuid(userParticipantUuid);
-    if (actingParticipant.calendar_id !== calendar.id || actingParticipant.role !== 'host') {
+    if (calendar.owner_id !== userId) {
       throw Errors.Forbidden('이 캘린더의 방장만 참가자를 강퇴할 수 있습니다');
     }
-
-    const targetId = await this.participantService.getParticipantIdByUuid(targetUuid);
-
-    await this.participantService.deleteParticipant(targetId, calendar.id);
+    const target = await this.participantService.getParticipantByUuid(targetUuid);
+    if (target.calendar_id !== calendar.id) throw Errors.Forbidden('이 캘린더의 참가자가 아닙니다');
+    if (target.user_id === calendar.owner_id || target.role === 'host') {
+      throw Errors.BadRequest('방장은 강퇴할 수 없습니다. 캘린더 삭제를 이용하세요.');
+    }
+    await this.participantService.deleteParticipant(target.id, calendar.id);
 
     const io = getIO();
 

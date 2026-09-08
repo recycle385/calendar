@@ -150,9 +150,9 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | POST | `/api/v1/calendars` | UserAuth | 캘린더 생성 |
 | GET | `/api/v1/calendars/my` | UserAuth | 내 캘린더 목록 조회 |
 | GET | `/api/v1/calendars/:slug` | 없음 | slug로 캘린더 조회 |
-| PATCH | `/api/v1/calendars/:slug` | ParticipantAuth | 방장 캘린더 수정 |
-| DELETE | `/api/v1/calendars/:slug` | ParticipantAuth | 방장 캘린더 삭제 |
-| POST | `/api/v1/calendars/:slug/close` | ParticipantAuth | 방장 캘린더 마감 |
+| PATCH | `/api/v1/calendars/:slug` | UserAuth | 방장 캘린더 수정 |
+| DELETE | `/api/v1/calendars/:slug` | UserAuth | 방장 캘린더 삭제 |
+| POST | `/api/v1/calendars/:slug/close` | UserAuth | 방장 캘린더 마감 |
 
 ### Participants
 
@@ -162,7 +162,7 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | POST | `/api/v1/calendars/:slug/participants/login` | 선택 UserAuth | 참가자 로그인 |
 | GET | `/api/v1/calendars/:slug/participants` | 없음 | 참가자 및 투표 현황 조회 |
 | DELETE | `/api/v1/calendars/:slug/participants/self` | ParticipantAuth | 본인 참가자 삭제 |
-| DELETE | `/api/v1/calendars/:slug/participants/:uuid` | ParticipantAuth | 방장이 참가자 강퇴 |
+| DELETE | `/api/v1/calendars/:slug/participants/:uuid` | UserAuth | 방장이 참가자 강퇴 |
 
 ### Votes
 
@@ -194,7 +194,8 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 ## 인증 방식
 
 - `UserAuth`: Google 로그인 사용자의 JWT입니다. `Authorization: Bearer <accessToken>` 헤더를 사용합니다.
-- `ParticipantAuth`: 캘린더 참가자의 JWT입니다. 캘린더 수정, 삭제, 마감, 투표 제출 등에 사용합니다.
+- `ParticipantAuth`: 캘린더 참가자의 JWT입니다. 투표 제출, 본인 참가 취소, 소켓 연결에 사용합니다. `host` 역할이어도 관리 권한은 부여하지 않습니다.
+- 캘린더 수정·삭제·마감과 참가자 강퇴는 Main Access Token(`UserAuth`)을 보내야 하며, DB의 `calendar.owner_id`로 소유자를 확인합니다. 프론트의 해당 요청은 Participant Token 대신 Main Access Token을 사용해야 합니다.
 - Refresh Token은 쿠키 기반으로 처리합니다.
 
 ## Socket.IO

@@ -11,6 +11,10 @@ import { verifyWithOptionalLegacySecret } from './verifyWithFallback';
 //디코딩 결과를 MainTokenPayload로 변환
 function toMainTokenPayload(decoded: unknown): MainTokenPayload {
   validateDecodedToken(decoded);
+  // 기존 공용 서명키를 허용하더라도 다른 용도의 토큰을 사용자 인증에 쓰지 않는다.
+  if ('calendarSlug' in decoded || 'calendarId' in decoded || 'tokenId' in decoded) {
+    throw Errors.Unauthorized('Main Access Token이 필요합니다');
+  }
   validateRole(decoded, 'host');
 
   const subject = extractProperty.string(decoded, 'sub', '사용자 UUID');
