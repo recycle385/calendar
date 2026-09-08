@@ -33,7 +33,7 @@ async function startServer() {
     initializeSocketIO(server);
 
     cronService.start();
-    logger.info('[Cron] 서비스 시작 (매일 새벽 4시 실행)');
+    logger.info('[Cron] 서비스 시작 (매일 UTC 19:00 / KST 04:00 실행)');
 
     server.listen(env.PORT, () => {
       logger.info(`

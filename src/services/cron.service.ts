@@ -6,6 +6,7 @@ import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IDateInfoRepository } from '../repositories/dateInfo.repository';
 import { getIO } from '../sockets';
 import { dateKindCodeToDateKind } from '../utils/dateKindCodeChanger';
+import { addDateOnlyDays } from '../utils/dateOnly';
 import { getSpcdeInfoUrl } from '../utils/Spcde.api';
 
 export class CronService {
@@ -17,16 +18,18 @@ export class CronService {
 
   public start() {
     cron.schedule(
-      '0 4 * * *',
-      async () => {
-        logger.info('[Cron] 새벽 4시 정기 점검 시작');
+      '0 19 * * *',
+      async ({ date }) => {
+        // UTC 19시는 한국 기준 다음 날 04시다. 예약 시각으로 기준일을 고정한다.
+        const referenceDate = addDateOnlyDays(date, 1);
+        const [year, month, day] = referenceDate.split('-').map(Number);
+        logger.info('[Cron] 정기 점검 시작 (UTC 19:00 / KST 04:00)');
 
         await this.deleteExpiredCalendars();
 
-        await this.closeEndedCalendars();
-        const now = new Date();
-        const fullUpdate = now.getUTCMonth() === 11 && now.getUTCDate() === 1;
-        await this.runHolidayUpdate(!fullUpdate);
+        await this.closeEndedCalendars(referenceDate);
+        const fullUpdate = month === 12 && day === 1;
+        await this.runHolidayUpdate(!fullUpdate, year);
 
         logger.info('[Cron] 정기 점검 종료');
       },
@@ -71,9 +74,12 @@ export class CronService {
     }
   }
 
-  private async closeEndedCalendars() {
+  private async closeEndedCalendars(referenceDate: string) {
     try {
-      const targetCalendars = await this.calendarRepository.findEndedAndOpen();
+      const targetCalendars = await this.calendarRepository.findEndedAndOpen(
+        undefined,
+        referenceDate
+      );
 
       if (targetCalendars.length === 0) return;
 
@@ -108,24 +114,25 @@ export class CronService {
     }
   }
 
-  public runHolidayUpdate(onlyMissing = true): Promise<void> {
+  public runHolidayUpdate(
+    onlyMissing = true,
+    currentYear = new Date().getUTCFullYear()
+  ): Promise<void> {
     if (this.holidayUpdateInFlight) {
       // 연간 전체 갱신 요청은 진행 중인 누락 복구가 끝난 뒤 수행한다.
       return onlyMissing
         ? this.holidayUpdateInFlight
-        : this.holidayUpdateInFlight.then(() => this.runHolidayUpdate(false));
+        : this.holidayUpdateInFlight.then(() => this.runHolidayUpdate(false, currentYear));
     }
-    this.holidayUpdateInFlight = this.updateDateInfo(onlyMissing)
-      .then(() => this.deleteExpiredDateInfo())
+    this.holidayUpdateInFlight = this.updateDateInfo(onlyMissing, currentYear)
+      .then(() => this.deleteExpiredDateInfo(currentYear))
       .finally(() => {
         this.holidayUpdateInFlight = undefined;
       });
     return this.holidayUpdateInFlight;
   }
 
-  private async updateDateInfo(onlyMissing: boolean) {
-    const currentYear = new Date().getUTCFullYear();
-
+  private async updateDateInfo(onlyMissing: boolean, currentYear: number) {
     logger.info(`[Cron] ${currentYear}년 기준 공휴일 정보 업데이트 시작`);
 
     for (let year = currentYear - 3; year <= currentYear + 2; year++) {
@@ -156,8 +163,7 @@ export class CronService {
     logger.info(`[Cron] 공휴일 정보 업데이트 종료`);
   }
 
-  private async deleteExpiredDateInfo() {
-    const currentYear = new Date().getUTCFullYear();
+  private async deleteExpiredDateInfo(currentYear: number) {
     const expirationYear = currentYear - 3;
 
     try {

@@ -25,6 +25,10 @@ describe('공휴일 동기화 복구', () => {
     findByYearBefore: jest.fn(),
   };
   const year = new Date().getUTCFullYear();
+  const calendars = {
+    findExpired: jest.fn(),
+    findEndedAndOpen: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -33,11 +37,10 @@ describe('공휴일 동기화 복구', () => {
     repository.deleteByYearBefore.mockResolvedValue(0);
     repository.findByYearBefore.mockResolvedValue([]);
     api.mockResolvedValue([]);
+    calendars.findExpired.mockResolvedValue([]);
+    calendars.findEndedAndOpen.mockResolvedValue([]);
     service = new CronService(
-      {
-        findExpired: async () => [],
-        findEndedAndOpen: async () => [],
-      } as unknown as ICalendarRepository,
+      calendars as unknown as ICalendarRepository,
       repository as unknown as IDateInfoRepository
     );
   });
@@ -85,9 +88,47 @@ describe('공휴일 동기화 복구', () => {
     const run = jest.spyOn(service, 'runHolidayUpdate').mockResolvedValue();
     service.start();
     const schedule = cron.schedule as jest.Mock;
-    expect(schedule).toHaveBeenCalledWith('0 4 * * *', expect.any(Function), { timezone: 'UTC' });
-    await schedule.mock.calls[0][1]();
-    expect(run).toHaveBeenCalled();
+    expect(schedule).toHaveBeenCalledWith('0 19 * * *', expect.any(Function), { timezone: 'UTC' });
+    await schedule.mock.calls[0][1]({ date: new Date('2026-09-08T19:00:00Z') });
+    expect(run).toHaveBeenCalledWith(true, 2026);
+  });
+
+  it.each([
+    ['2026-09-08T19:00:00Z', '2026-09-09'],
+    ['2026-09-30T19:00:00Z', '2026-10-01'],
+    ['2026-12-31T19:00:00Z', '2027-01-01'],
+    ['2028-02-29T19:00:00Z', '2028-03-01'],
+  ])('UTC %s 실행은 %s 이전 종료분을 마감한다', async (scheduledAt, cutoff) => {
+    jest.spyOn(service, 'runHolidayUpdate').mockResolvedValue();
+    service.start();
+    await (cron.schedule as jest.Mock).mock.calls[0][1]({ date: new Date(scheduledAt) });
+    expect(calendars.findEndedAndOpen).toHaveBeenCalledWith(undefined, cutoff);
+    // 삭제 조회에는 다음 날짜를 넘기지 않아 실제 UTC 만료 시각 비교를 유지한다.
+    expect(calendars.findExpired).toHaveBeenCalledWith();
+  });
+
+  it.each([
+    ['2026-11-30T19:00:00Z', false, 2026],
+    ['2026-12-01T19:00:00Z', true, 2026],
+    ['2026-12-31T19:00:00Z', true, 2027],
+  ])(
+    'UTC %s의 공휴일 갱신은 한국 기준 날짜와 연도를 사용한다',
+    async (scheduledAt, onlyMissing, targetYear) => {
+      const run = jest.spyOn(service, 'runHolidayUpdate').mockResolvedValue();
+      service.start();
+      await (cron.schedule as jest.Mock).mock.calls[0][1]({ date: new Date(scheduledAt) });
+      expect(run).toHaveBeenCalledWith(onlyMissing, targetYear);
+    }
+  );
+
+  it('새해 첫 크론은 새 연도를 기준으로 수집 범위와 정리 범위를 맞춘다', async () => {
+    service.start();
+    await (cron.schedule as jest.Mock).mock.calls[0][1]({ date: new Date('2026-12-31T19:00:00Z') });
+    expect(
+      repository.findSyncedPublicApiDateKindsByYear.mock.calls.map(([value]) => value)
+    ).toEqual(['2024', '2025', '2026', '2027', '2028', '2029']);
+    expect(repository.deleteSyncStatusByYearBefore).toHaveBeenCalledWith('2024');
+    expect(repository.deleteByYearBefore).toHaveBeenCalledWith('2024');
   });
 
   it('전체 갱신은 이미 완료된 종류도 다시 가져온다', async () => {
