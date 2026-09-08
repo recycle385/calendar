@@ -138,6 +138,7 @@ export class AuthService implements IAuthService {
 
   private async handleExistingUser(user: User): Promise<ExistingUserResponse> {
     const token: TokenPair = await this.tokenService.generateTokenPair(user.user_uuid);
+    await this.userRepository.recordLogin(user.id);
     const existingUserResponse: ExistingUserResponse = {
       type: 'existingUser',
       token,

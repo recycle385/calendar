@@ -24,6 +24,7 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   findUserInfoByUuid: jest.fn(),
   getIdUsingUuid: jest.fn(),
   createUser: jest.fn(),
+  recordLogin: jest.fn(),
 };
 
 const mockTokenService: jest.Mocked<ITokenService> = {
@@ -48,6 +49,7 @@ describe('AuthService 테스트', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUserRepository.recordLogin.mockResolvedValue(undefined);
     authService = new AuthService(mockUserRepository, mockTokenService);
   });
 
@@ -96,6 +98,8 @@ describe('AuthService 테스트', () => {
       const result = await authService.handleGoogleCallback(mockCode);
 
       expect(mockUserRepository.findByOauthId).toHaveBeenCalledWith('google', 'google_123');
+
+      expect(mockUserRepository.recordLogin).toHaveBeenCalledWith(existingUser.id);
 
       expect(result).toEqual({
         type: 'existingUser',
@@ -168,6 +172,13 @@ describe('AuthService 테스트', () => {
     });
 
     // [failCases] ------------------------------
+    it('토큰 발급에 실패하면 로그인 시각을 갱신하지 않는다', async () => {
+      mockUserRepository.findByOauthId.mockResolvedValue({ id: 1, user_uuid: 'user' } as User);
+      mockTokenService.generateTokenPair.mockRejectedValueOnce(new Error('token failure'));
+      await expect(authService.handleGoogleCallback(mockCode)).rejects.toThrow('token failure');
+      expect(mockUserRepository.recordLogin).not.toHaveBeenCalled();
+    });
+
     it('[실패] Google API 호출 실패 (유효하지 않은 code)', async () => {
       (axios.post as jest.MockedFunction<typeof axios.post>).mockRejectedValue({
         response: {
@@ -177,6 +188,7 @@ describe('AuthService 테스트', () => {
       });
 
       await expect(authService.handleGoogleCallback('invalid_code')).rejects.toThrow();
+      expect(mockUserRepository.recordLogin).not.toHaveBeenCalled();
     });
 
     it('[실패] DB 연결 오류', async () => {
@@ -317,6 +329,7 @@ describe('AuthService 테스트', () => {
       const result = await authService.refreshToken(mockRefreshToken);
 
       expect(mockTokenService.refreshAccessToken).toHaveBeenCalledWith(mockRefreshToken);
+      expect(mockUserRepository.recordLogin).not.toHaveBeenCalled();
 
       expect(result).toEqual(mockTokenPair);
     });

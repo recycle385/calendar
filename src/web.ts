@@ -6,6 +6,7 @@ import { ensureHolidaySyncStatusTable } from './config/holidaySyncMigrations';
 import { runDatabaseMigrations } from './config/migrations';
 import { ensureParticipantCalendarUserUniqueKey } from './config/participantMigrations';
 import { connectRedis, redisClient } from './config/redis';
+import { ensureExplicitUserLoginTimestamp } from './config/userLoginMigrations';
 import { cronService } from './containers/cron.container';
 import { logger } from './middlewares/logger';
 import { initializeSocketIO } from './sockets';
@@ -27,6 +28,7 @@ async function startServer() {
     await ensureHolidaySyncStatusTable();
     await runDatabaseMigrations();
     await ensureParticipantCalendarUserUniqueKey();
+    await ensureExplicitUserLoginTimestamp();
     logger.info('db 연결 및 마이그레이션 성공');
 
     const server = http.createServer(app);

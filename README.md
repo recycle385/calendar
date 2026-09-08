@@ -237,6 +237,7 @@ io("http://localhost:4000", {
 스키마 파일은 `src/models/schema/calendar_db.sql`입니다.
 
 - `users`: Google OAuth 사용자
+- `users.last_login_at`: 가입 시 최초 기록하며, 기존 사용자 로그인 성공 시에만 갱신합니다. 프로필 수정과 토큰 재발급에는 갱신하지 않습니다. 서버 시작 시 기존 DB의 `ON UPDATE` 속성을 제거하며, 이미 잘못 기록된 과거 시각은 복원하지 않습니다.
 - `calendars`: 모임 캘린더
 - `date_info`: 공휴일/기념일 정보
 - `participants`: 캘린더 참가자

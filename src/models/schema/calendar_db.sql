@@ -15,7 +15,7 @@ CREATE TABLE users (
     profile_image_url VARCHAR(500),
     isTermsAgreed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY unique_oauth (oauth_provider, oauth_id),
     INDEX idx_email (email),

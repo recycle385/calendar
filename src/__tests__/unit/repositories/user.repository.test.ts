@@ -26,6 +26,20 @@ describe('userRepository 테스트', () => {
     expect(mockPool.execute).toHaveBeenCalledWith(expectedSql, expectedParams);
   });
 
+  it('로그인 시각은 지정한 사용자만 DB 현재 시각으로 갱신한다', async () => {
+    mockPool.execute.mockResolvedValue([{ affectedRows: 1 }]);
+    await userRepository.recordLogin(7);
+    expect(mockPool.execute).toHaveBeenCalledWith(
+      'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [7]
+    );
+  });
+
+  it('로그인 기록 대상이 사라졌으면 성공으로 처리하지 않는다', async () => {
+    mockPool.execute.mockResolvedValue([{ affectedRows: 0 }]);
+    await expect(userRepository.recordLogin(7)).rejects.toThrow('유저 조회 실패');
+  });
+
   it('DB에 유저가 존재하면 User 객체를 반환해야 한다', async () => {
     // 1. DB에서 리턴될 가짜 데이터 (Mock Data) 정의
     const mockDbRow = {

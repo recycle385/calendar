@@ -15,10 +15,19 @@ export interface IUserRepository {
   findUserInfoByUuid(userUuid: string, connection?: PoolConnection): Promise<User>;
   getIdUsingUuid(userUuid: string, connection?: PoolConnection): Promise<number>;
   createUser(userData: CreateUserInput, connection?: PoolConnection): Promise<User>;
+  recordLogin(userId: number): Promise<void>;
 }
 
 export class UserRepository implements IUserRepository {
   constructor(private pool = dbpool) {}
+
+  async recordLogin(userId: number): Promise<void> {
+    const [result] = await this.pool.execute<ResultSetHeader>(
+      'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [userId]
+    );
+    if (result.affectedRows === 0) throw Errors.NotFound('유저 조회 실패');
+  }
 
   async findByOauthId(
     provider: 'google' | 'kakao',
