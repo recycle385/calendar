@@ -1,3 +1,4 @@
+import { DateVoteInput } from '../Vote';
 import { CalendarForVoteStatus } from './calendar.dto';
 import { DefaultResponseDto } from './common.dto';
 import { CommonParticipant } from './participant.dto';
@@ -46,27 +47,30 @@ export interface VoteRecord {
  * @swagger
  * components:
  *   schemas:
- *     SubmitVoteRequest:
+ *     DateVoteInput:
  *       type: object
- *       required:
- *         - selectedDates
- *         - voteType
+ *       required: [date, voteType]
  *       properties:
- *         selectedDates:
- *           type: array
- *           minItems: 1
- *           uniqueItems: true
- *           items:
- *             type: string
- *             format: date
- *           example: ["2026-02-15", "2026-02-16"]
- *           description: "투표할 날짜 리스트 (YYYY-MM-DD)"
+ *         date:
+ *           type: string
+ *           format: date
+ *           example: "2026-09-10"
  *         voteType:
  *           $ref: "#/components/schemas/VoteTypeForDto"
+ *     SubmitVoteRequest:
+ *       type: object
+ *       required: [votes]
+ *       properties:
+ *         votes:
+ *           type: array
+ *           maxItems: 366
+ *           description: "참가자의 전체 투표 목록. 날짜 중복 불가. 빠진 날짜는 취소하며 빈 배열은 전체 취소."
+ *           items:
+ *             $ref: "#/components/schemas/DateVoteInput"
+ *           example: [{date: "2026-09-10", voteType: "available"}, {date: "2026-09-11", voteType: "maybe"}]
  */
 export interface SubmitVoteRequest {
-  selectedDates: string[];
-  voteType: VoteTypeForDto;
+  votes: DateVoteInput[];
 }
 
 /**
@@ -78,17 +82,17 @@ export interface SubmitVoteRequest {
  *         - $ref: "#/components/schemas/DefaultResponseDto"
  *         - type: object
  *           properties:
- *             selectedDates:
+ *             votes:
  *               type: array
  *               items:
- *                 type: string
- *               example: ["2026-02-15", "2026-02-16"]
+ *                 $ref: "#/components/schemas/DateVoteInput"
  *             votedCount:
  *               type: integer
+ *               description: "교체 후 해당 참가자의 투표 개수"
  *               example: 2
  */
 export interface SubmitVoteResponse extends DefaultResponseDto {
-  selectedDates: string[];
+  votes: DateVoteInput[];
   votedCount: number;
 }
 

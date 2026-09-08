@@ -190,21 +190,19 @@ export const participantSchemas = {
 
 export const voteSchemas = {
   subVoteRequest: Joi.object({
-    selectedDates: Joi.array()
+    votes: Joi.array()
       .items(
-        Joi.string().trim().required().custom(normalizeDateOnlyForJoi, 'Normalize date-only string')
+        Joi.object({
+          date: Joi.string()
+            .trim()
+            .required()
+            .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
+          voteType: Joi.string().valid('available', 'unavailable', 'maybe').required(),
+        })
       )
-      .min(1)
-      .unique()
-      .required()
-      .messages({
-        'any.required': '날짜를 선택해주세요',
-        'array.min': '날짜를 최소 1개 이상 선택해주세요',
-      }),
-    voteType: Joi.string().trim().valid('available', 'unavailable', 'maybe').required().messages({
-      'any.required': '투표 타입은 필수입니다',
-      'any.only': '유효하지 않은 투표 타입입니다 (available | unavailable | maybe)',
-    }),
+      .max(366)
+      .unique('date')
+      .required(),
   }),
 };
 

@@ -4,6 +4,11 @@
  */
 export type VoteType = 'available' | 'unavailable' | 'maybe';
 
+export interface DateVoteInput {
+  date: string;
+  voteType: VoteType;
+}
+
 export interface Vote {
   id: number;
   participant_id: number;

@@ -1,17 +1,11 @@
-import { TransactionManager } from '../infrastructure/transaction.manager';
-import { DateVoteStatus, VoteRecordForParticipant } from '../models/Vote';
-import { VoteType } from '../models/Vote';
+import { DateVoteInput, DateVoteStatus, VoteRecordForParticipant } from '../models/Vote';
 import { IDateOptionRepository } from '../repositories/dateOption.repository';
 import { IVoteRepository } from '../repositories/vote.repository';
+import { normalizeDateOnly } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 
 export interface IVoteService {
-  submitVotes(
-    participantId: number,
-    calendarId: number,
-    selectedDates: string[],
-    voteType?: VoteType
-  ): Promise<number>;
+  submitVotes(participantId: number, calendarId: number, votes: DateVoteInput[]): Promise<number>;
   getVotesByParticipant(participantId: number): Promise<VoteRecordForParticipant[]>;
   getVoteStatusByCalendar(calendarId: number): Promise<DateVoteStatus[]>;
   deleteVotes(participantId: number): Promise<void>;
@@ -29,30 +23,26 @@ export class VoteService implements IVoteService {
   async submitVotes(
     participantId: number,
     calendarId: number,
-    selectedDates: string[],
-    voteType: VoteType = 'available'
+    votes: DateVoteInput[]
   ): Promise<number> {
-    if (selectedDates.length === 0) {
-      throw Errors.BadRequest('최소 하나 이상의 날짜를 선택해야 합니다');
-    }
-
-    const dateOption = await this.dateOptionRepository.findDateOptionsByCalendarAndDate(
-      calendarId,
-      selectedDates
-    );
-
-    if (dateOption.length !== selectedDates.length) {
-      throw Errors.BadRequest('유효하지 않은 날짜가 포함되어 있습니다');
-    }
-
-    const dateOptionIds = dateOption.map((option) => {
-      if (!option.is_enabled) throw Errors.BadRequest(`비활성화된 날짜입니다`);
-      return option.id;
+    if (!Array.isArray(votes) || votes.length > 366)
+      throw Errors.BadRequest('투표 목록이 올바르지 않습니다');
+    const dates = new Set<string>();
+    const normalized = votes.map((vote) => {
+      if (!vote || !['available', 'unavailable', 'maybe'].includes(vote.voteType)) {
+        throw Errors.BadRequest('유효하지 않은 투표 타입입니다');
+      }
+      let date: string;
+      try {
+        date = normalizeDateOnly(vote.date);
+      } catch {
+        throw Errors.BadRequest('날짜는 유효한 YYYY-MM-DD 형식이어야 합니다');
+      }
+      if (dates.has(date)) throw Errors.BadRequest('중복된 날짜가 포함되어 있습니다');
+      dates.add(date);
+      return { date, voteType: vote.voteType };
     });
-
-    const count = await this.voteRepository.upsertVotes(participantId, dateOptionIds, voteType);
-
-    return count;
+    return this.voteRepository.replaceParticipantVotes(participantId, calendarId, normalized);
   }
 
   /**

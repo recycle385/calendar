@@ -5,12 +5,16 @@ import { io as Client, Socket as ClientSocket } from 'socket.io-client';
 import request from 'supertest';
 
 import { app } from '../../app';
+import { env } from '../../config/env';
+import { addDateOnlyDays, todayDateOnlyUtc } from '../../utils/dateOnly';
 import pool, { closeDatabaseConnection } from '../../config/database';
 import { connectRedis, disconnectRedis, redisClient } from '../../config/redis';
 import { initializeSocketIO } from '../../sockets';
 
 // 타임아웃 30초 설정 (통합 테스트용)
 jest.setTimeout(30000);
+env.SIGNUP_MODE = 'immediate';
+const voteDate = addDateOnlyDays(todayDateOnlyUtc(), 1);
 
 // Mocks
 jest.mock('axios');
@@ -96,8 +100,8 @@ describe('Socket.IO Integration Test', () => {
       .set('Authorization', `Bearer ${hostAccessToken}`)
       .send({
         title: '소켓 테스트 캘린더',
-        start_date: '2026-01-01',
-        end_date: '2026-01-05',
+        start_date: voteDate,
+        end_date: addDateOnlyDays(voteDate, 4),
         hostNickname: '방장',
       });
 
@@ -274,11 +278,11 @@ describe('Socket.IO Integration Test', () => {
       });
 
       // 호스트: API 투표 수행
-      const voteDate = '2026-01-01';
+
       await request(app)
         .post(`/api/v1/calendars/${calendarSlug}/votes`)
         .set('Authorization', `Bearer ${hostParticipantToken}`)
-        .send({ selectedDates: [voteDate], voteType: 'available' })
+        .send({ votes: [{ date: voteDate, voteType: 'available' }] })
         .expect(200);
 
       // 결과 검증
@@ -352,7 +356,7 @@ describe('Socket.IO Integration Test', () => {
       // API 호출: 캘린더 삭제
       await request(app)
         .delete(`/api/v1/calendars/${calendarSlug}`)
-        .set('Authorization', `Bearer ${hostParticipantToken}`)
+        .set('Authorization', `Bearer ${hostAccessToken}`)
         .expect(200);
 
       // 검증

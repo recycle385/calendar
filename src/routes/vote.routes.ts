@@ -21,7 +21,7 @@ export const createVoteRouter = (controller: VoteController): Router => {
    *   post:
    *     summary: 투표 제출 및 수정
    *     tags: [Votes]
-   *     description: 특정 캘린더의 날짜들에 대해 투표를 제출, 복수날짜 선택
+   *     description: 날짜별 상태로 전체 투표를 교체합니다. 누락된 날짜는 취소하며 빈 votes 배열은 전체 취소입니다.
    *     security:
    *       - ParticipantAuth: []
    *     parameters:

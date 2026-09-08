@@ -1,11 +1,9 @@
 import { RequestHandler } from 'express';
 
-import {} from '../middlewares/auth';
 import { ICalendarService } from '../services/calendar.service';
 import { IParticipantService } from '../services/participant.service';
 import { IVoteService } from '../services/vote.service';
 import { getIO } from '../sockets';
-import { compareDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 
 export class VoteController {
@@ -17,7 +15,7 @@ export class VoteController {
 
   public submitVotes: RequestHandler = async (req, res) => {
     const { slug } = req.params;
-    const { selectedDates, voteType } = req.body;
+    const { votes } = req.body;
 
     const userParticipantUuid = req.participantUuid;
     const userRole = req.userRole;
@@ -29,15 +27,6 @@ export class VoteController {
     // 캘린더 조회
     const calendar = await this.calendarService.getCalendarBySlug(slug);
 
-    // 마감된 캘린더는 투표 불가
-    if (calendar.is_closed) {
-      throw Errors.BadRequest('마감된 캘린더에는 투표할 수 없습니다');
-    }
-
-    if (compareDateOnly(todayDateOnlyUtc(), calendar.end_date) > 0) {
-      throw Errors.BadRequest('투표 기간이 종료되었습니다');
-    }
-
     // 참가자 인증
     const participant = await this.participantService.getParticipantByUuid(userParticipantUuid);
 
@@ -47,12 +36,7 @@ export class VoteController {
     }
 
     // 투표 저장
-    const count = await this.voteService.submitVotes(
-      participant.id,
-      calendar.id,
-      selectedDates,
-      voteType
-    );
+    const count = await this.voteService.submitVotes(participant.id, calendar.id, votes);
 
     // 실시간 투표 현황 조회 및 WebSocket 브로드캐스트
     const voteStatus = await this.voteService.getVoteStatusByCalendar(calendar.id);
@@ -68,7 +52,7 @@ export class VoteController {
     return res.status(200).json({
       message: '투표가 제출되었습니다',
       votedCount: count,
-      selectedDates,
+      votes,
     });
   };
 

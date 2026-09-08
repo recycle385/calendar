@@ -166,6 +166,12 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 
 ### Votes
 
+투표 제출은 `{"votes":[{"date":"2026-09-10","voteType":"available"},{"date":"2026-09-11","voteType":"maybe"}]}` 형식을 사용합니다. `voteType`은 `available`, `maybe`, `unavailable` 중 하나이며 날짜마다 필수입니다. 날짜는 중복 없이 최대 366개까지 허용하고, 해당 캘린더의 활성 날짜여야 합니다.
+
+한 요청은 해당 참가자의 전체 투표를 교체합니다. 빠진 날짜는 투표 취소이며 `{"votes":[]}`는 전체 취소입니다. `unavailable`은 미투표와 구분됩니다. 응답도 `selectedDates` 대신 `votes`를 반환하며 `votedCount`는 교체 후 투표 수입니다. 프론트는 기존 `selectedDates + voteType` 요청과 응답 처리를 함께 변경해야 합니다.
+
+투표 저장은 캘린더 공유 잠금, 참가자 배타 잠금, 날짜 옵션 공유 잠금 순서로 검증과 교체를 같은 트랜잭션에서 수행합니다. 기존 투표의 PK만 삭제하고 날짜 옵션 ID 순서로 다시 삽입하며, 데드락 발생 시 전체 트랜잭션을 최대 두 번 재시도합니다.
+
 | Method | Path | 인증 | 설명 |
 | --- | --- | --- | --- |
 | POST | `/api/v1/calendars/:slug/votes` | ParticipantAuth | 투표 제출 및 수정 |

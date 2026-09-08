@@ -3,18 +3,17 @@ import { PoolConnection } from 'mysql2/promise';
 
 import dbpool from '../config/database';
 import { DateOption } from '../models/DateOption';
-import { CreateVoteInput, DateVoteStatus, Vote, VoteType } from '../models/Vote';
-import { formatDateOnly } from '../utils/dateOnly';
+import { CreateVoteInput, DateVoteInput, DateVoteStatus, Vote, VoteType } from '../models/Vote';
+import { compareDateOnly, formatDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 
 export interface IVoteRepository {
   // 투표 생성/수정
   upsertVote(input: CreateVoteInput, connection?: PoolConnection): Promise<Vote>;
-  upsertVotes(
+  replaceParticipantVotes(
     participantId: number,
-    dateOptionIds: number[],
-    voteType: VoteType,
-    connection?: PoolConnection
+    calendarId: number,
+    votes: DateVoteInput[]
   ): Promise<number>;
 
   // 투표 조회
@@ -67,61 +66,87 @@ export class VoteRepository implements IVoteRepository {
   /**
    * 참가자의 기존 투표를 현재 선택 목록으로 교체
    */
-  async upsertVotes(
+  async replaceParticipantVotes(
     participantId: number,
-    dateOptionIds: number[],
-    voteType: VoteType,
-    connection?: PoolConnection
+    calendarId: number,
+    votes: DateVoteInput[]
   ): Promise<number> {
-    if (connection) {
-      return this.replaceVotes(connection, participantId, dateOptionIds, voteType);
-    }
-
-    const transactionConnection = await this.pool.getConnection();
-
-    try {
-      await transactionConnection.beginTransaction();
-      const affectedRows = await this.replaceVotes(
-        transactionConnection,
-        participantId,
-        dateOptionIds,
-        voteType
-      );
-      await transactionConnection.commit();
-      return affectedRows;
-    } catch (error) {
-      await transactionConnection.rollback();
-      throw error;
-    } finally {
-      transactionConnection.release();
+    // 같은 참가자는 행 잠금으로 직렬화하며, 다른 작업과의 교착은 트랜잭션 전체를 재시도한다.
+    for (let attempt = 0; ; attempt++) {
+      const connection = await this.pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const count = await this.replaceVotes(connection, participantId, calendarId, votes);
+        await connection.commit();
+        return count;
+      } catch (error) {
+        await connection.rollback();
+        if (attempt >= 2 || (error as { code?: string }).code !== 'ER_LOCK_DEADLOCK') throw error;
+      } finally {
+        connection.release();
+      }
     }
   }
 
   private async replaceVotes(
     connection: PoolConnection,
     participantId: number,
-    dateOptionIds: number[],
-    voteType: VoteType
+    calendarId: number,
+    votes: DateVoteInput[]
   ): Promise<number> {
-    await this.deleteAllByParticipant(participantId, connection);
-
-    if (dateOptionIds.length === 0) {
-      return 0;
+    // 캘린더 → 참가자 → 날짜 옵션 → 투표 순서로 잠근다.
+    // 공유 잠금은 다른 참가자의 투표를 허용하면서 마감/기간 수정/삭제와의 경합을 막는다.
+    const [calendars] = await connection.execute<RowDataPacket[]>(
+      'SELECT is_closed, end_date FROM calendars WHERE id = ? FOR SHARE',
+      [calendarId]
+    );
+    if (!calendars.length) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
+    if (calendars[0].is_closed) throw Errors.BadRequest('마감된 캘린더에는 투표할 수 없습니다');
+    if (compareDateOnly(todayDateOnlyUtc(), formatDateOnly(calendars[0].end_date)) > 0) {
+      throw Errors.BadRequest('투표 기간이 종료되었습니다');
+    }
+    const [participants] = await connection.execute<RowDataPacket[]>(
+      'SELECT calendar_id FROM participants WHERE id = ? FOR UPDATE',
+      [participantId]
+    );
+    if (!participants.length || participants[0].calendar_id !== calendarId) {
+      throw Errors.Forbidden('이 캘린더의 참가자가 아닙니다');
     }
 
-    const sortedIds = [...dateOptionIds].sort((a, b) => a - b);
-    const values = sortedIds.map((dateOptionId) => [participantId, dateOptionId, voteType]);
+    const typesByDate = new Map(votes.map((vote) => [vote.date, vote.voteType]));
+    const options = votes.length
+      ? (
+          await connection.query<RowDataPacket[]>(
+            'SELECT id, date_value, is_enabled FROM date_options WHERE calendar_id = ? AND date_value IN (?) ORDER BY id FOR SHARE',
+            [calendarId, [...typesByDate.keys()].sort()]
+          )
+        )[0]
+      : [];
+    if (options.length !== votes.length)
+      throw Errors.BadRequest('유효하지 않은 날짜가 포함되어 있습니다');
+    if (options.some((option) => !option.is_enabled))
+      throw Errors.BadRequest('비활성화된 날짜입니다');
 
-    const [result] = await connection.query<ResultSetHeader>(
-      `INSERT INTO votes (participant_id, date_option_id, vote_type)
-       VALUES ?
-       ON DUPLICATE KEY UPDATE
-        vote_type = VALUES(vote_type),
-        updated_at = CURRENT_TIMESTAMP`,
-      [values]
+    // 참가자 행 잠금을 보유한 채 기존 PK만 삭제한다. 빈 범위 DELETE의 gap lock 경합을 피한다.
+    const [existing] = await connection.execute<RowDataPacket[]>(
+      'SELECT id FROM votes WHERE participant_id = ? ORDER BY id',
+      [participantId]
     );
-
-    return result.affectedRows;
+    if (existing.length) {
+      await connection.query('DELETE FROM votes WHERE id IN (?)', [existing.map((row) => row.id)]);
+    }
+    if (options.length) {
+      const values = options.map((option) => [
+        participantId,
+        option.id,
+        typesByDate.get(formatDateOnly(option.date_value)),
+      ]);
+      await connection.query(
+        'INSERT INTO votes (participant_id, date_option_id, vote_type) VALUES ?',
+        [values]
+      );
+    }
+    return votes.length;
   }
 
   /**

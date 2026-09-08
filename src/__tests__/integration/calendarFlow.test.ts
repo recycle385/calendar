@@ -164,17 +164,11 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
   // [Scenario 4] 투표 로직 검증 (Upsert, Range Check)
   // =================================================================
   it('7. [Voting] 캘린더 범위 밖 날짜 투표 시 실패 (400)', async () => {
-    // *주의: Controller/Service에서 date 범위 체크 로직이 있어야 함.
-    // 없으면 200 뜰 수 있음. (보통은 체크해야 함)
-    // 일단 "성공하지 않음" 혹은 400을 기대.
-    /*
     await request(app)
       .post(`/api/v1/calendars/${calendarSlug}/votes`)
       .set('Authorization', `Bearer ${guestParticipantToken}`)
-      .send({ selectedDates: [OUT_OF_RANGE_DATE], voteType: 'available' })
-      .expect(400); 
-    */
-    // (로직이 확실치 않다면 주석 처리하거나, 체크 로직 구현 후 활성화)
+      .send({ votes: [{ date: OUT_OF_RANGE_DATE, voteType: 'available' }] })
+      .expect(400);
   });
 
   it('8. [Voting] 투표 제출 및 수정(Upsert) 확인', async () => {
@@ -182,7 +176,7 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     await request(app)
       .post(`/api/v1/calendars/${calendarSlug}/votes`)
       .set('Authorization', `Bearer ${guestParticipantToken}`)
-      .send({ selectedDates: [VOTE_DATE_1], voteType: 'available' })
+      .send({ votes: [{ date: VOTE_DATE_1, voteType: 'available' }] })
       .expect(200);
 
     // 확인
@@ -194,18 +188,16 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     await request(app)
       .post(`/api/v1/calendars/${calendarSlug}/votes`)
       .set('Authorization', `Bearer ${guestParticipantToken}`)
-      .send({ selectedDates: [VOTE_DATE_2], voteType: 'available' }) // DATE_1 제외됨
+      .send({ votes: [{ date: VOTE_DATE_2, voteType: 'available' }] }) // DATE_1 제외됨
       .expect(200);
 
     // 재확인: DATE_1은 없고(혹은 count 감소), DATE_2는 있어야 함
     res = await request(app).get(`/api/v1/calendars/${calendarSlug}/votes`);
-    const bodyStr = JSON.stringify(res.body);
-
-    // *주의: 구현 방식에 따라 기존걸 지우고 새로 넣는지, 아니면 추가만 하는지 확인 필요.
-    // 보통 캘린더 투표는 "내가 선택한 날짜 리스트"를 덮어쓰는(Replace) 방식이 일반적입니다.
-    // 만약 덮어쓰기 로직이라면 아래 검증이 통과해야 합니다.
-    // expect(bodyStr).not.toContain(VOTE_DATE_1); (구조에 따라 다름)
-    expect(bodyStr).toContain(VOTE_DATE_2);
+    const firstDate = res.body.voteStatus.find((entry: any) => entry.date_value === VOTE_DATE_1);
+    const secondDate = res.body.voteStatus.find((entry: any) => entry.date_value === VOTE_DATE_2);
+    expect(firstDate.votes).toEqual([]);
+    expect(secondDate.votes).toHaveLength(1);
+    expect(secondDate.votes[0].vote_type).toBe('available');
   });
 
   // =================================================================
@@ -232,20 +224,16 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     await request(app)
       .post(`/api/v1/calendars/${calendarSlug}/votes`)
       .set('Authorization', `Bearer ${guestParticipantToken}`)
-      .send({ selectedDates: [VOTE_DATE_2] })
+      .send({ votes: [{ date: VOTE_DATE_2, voteType: 'available' }] })
       .expect(400); // "마감된 캘린더입니다"
   });
 
-  it('12. [Post-Close] 마감 후 방장이 캘린더 수정 시도 시 차단/허용 여부', async () => {
-    // 기획에 따라 마감 후 수정이 될 수도 있고 안 될 수도 있음.
-    // 작성해주신 시나리오상 "마감된 캘린더 수정 시 400"이라고 하셨으므로 테스트
-    /*
+  it('12. [Post-Close] 마감 후 방장의 수정도 차단한다', async () => {
     await request(app)
       .patch(`/api/v1/calendars/${calendarSlug}`)
       .set('Authorization', `Bearer ${hostAccessToken}`)
       .send({ title: '마감 후 수정' })
-      .expect(400); 
-    */
+      .expect(400);
   });
 
   it('13. [Delete] 방장에 의한 삭제 성공 (200) 및 조회 불가 (404)', async () => {
