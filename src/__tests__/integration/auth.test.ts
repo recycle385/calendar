@@ -5,6 +5,7 @@ import { app } from '../../app';
 import pool, { closeDatabaseConnection } from '../../config/database';
 import { env } from '../../config/env';
 import { connectRedis, disconnectRedis, redisClient } from '../../config/redis';
+import { ensureExplicitUserLoginTimestamp } from '../../config/userLoginMigrations';
 
 // [중요] 1. Token Constants Mocking (유예 기간 제거)
 // 로그아웃 테스트 시 Grace Period 때문에 즉시 차단되지 않는 문제를 해결하기 위해 0으로 설정
@@ -58,6 +59,21 @@ describe('Auth Integration Test', () => {
   // =================================================================
   // 1. Google 로그인 및 회원가입
   // =================================================================
+  it('기존 DB 마이그레이션 후 프로필 수정은 로그인 시각을 바꾸지 않는다', async () => {
+    await pool.query(
+      'ALTER TABLE users MODIFY COLUMN last_login_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+    );
+    await pool.execute(
+      "INSERT INTO users (user_uuid, email, oauth_provider, oauth_id, nickname, last_login_at) VALUES ('migration-user', 'migration@test.invalid', 'google', 'migration-id', '이전 이름', '2020-01-01 00:00:00')"
+    );
+    await ensureExplicitUserLoginTimestamp();
+    await ensureExplicitUserLoginTimestamp();
+    await pool.query("UPDATE users SET nickname = '새 이름' WHERE user_uuid = 'migration-user'");
+    const [rows]: any = await pool.query(
+      "SELECT last_login_at FROM users WHERE user_uuid = 'migration-user'"
+    );
+    expect(rows[0].last_login_at.toISOString()).toBe('2020-01-01T00:00:00.000Z');
+  });
   describe('GET /api/v1/auth/google/callback', () => {
     it('신규 유저가 로그인하면 DB에 유저가 생성되고 토큰이 발급되어야 한다', async () => {
       mockedAxios.post.mockResolvedValueOnce({ data: mockGoogleTokens });
@@ -65,11 +81,12 @@ describe('Auth Integration Test', () => {
 
       const response = await request(app)
         .get('/api/v1/auth/google/callback')
-        .query({ code: mockAuthCode });
+        .set('Cookie', 'oauth_state=integration-state')
+        .query({ code: mockAuthCode, state: 'integration-state' });
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('로그인 성공');
-      expect(response.body.token).toBeDefined();
+      expect(response.body.accessToken).toBeDefined();
 
       // [수정] oauth_id는 Controller에서 제거해서 보내주므로 검증에서 제외
       expect(response.body.user).toMatchObject({
@@ -78,9 +95,9 @@ describe('Auth Integration Test', () => {
         // oauth_id: ...  <-- 삭제됨
       });
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       expect(cookies).toBeDefined();
-      expect(cookies[0]).toMatch(/jwt=eyJ/);
+      expect(cookies.some((cookie: string) => cookie.startsWith('jwt=eyJ'))).toBe(true);
 
       const [rows]: any = await pool.query('SELECT * FROM users WHERE email = ?', [
         mockGoogleProfile.email,
@@ -89,7 +106,7 @@ describe('Auth Integration Test', () => {
       expect(rows[0].nickname).toBe(mockGoogleProfile.name);
     });
 
-    it('기존 유저가 로그인하면 새로운 토큰만 발급되어야 한다 (DB 추가 없음)', async () => {
+    it('기존 유저 로그인은 계정을 추가하지 않고 로그인 시각을 갱신한다', async () => {
       await pool.query(
         `INSERT INTO users (user_uuid, email, oauth_provider, oauth_id, nickname, profile_image_url)
          VALUES (?, ?, ?, ?, ?, ?)`,
@@ -103,15 +120,20 @@ describe('Auth Integration Test', () => {
         ]
       );
 
+      await pool.query("UPDATE users SET last_login_at = '2020-01-01 00:00:00'");
+
       mockedAxios.post.mockResolvedValueOnce({ data: mockGoogleTokens });
       mockedAxios.get.mockResolvedValueOnce({ data: mockGoogleProfile });
 
       const response = await request(app)
         .get('/api/v1/auth/google/callback')
-        .query({ code: mockAuthCode });
+        .set('Cookie', 'oauth_state=integration-state')
+        .query({ code: mockAuthCode, state: 'integration-state' });
 
       expect(response.status).toBe(200);
       expect(response.body.isNewUser).toBe(false);
+      const [logins]: any = await pool.query('SELECT last_login_at FROM users');
+      expect(Date.now() - new Date(logins[0].last_login_at).getTime()).toBeLessThan(10000);
 
       const [rows]: any = await pool.query('SELECT COUNT(*) as count FROM users');
       expect(rows[0].count).toBe(1);
@@ -130,10 +152,13 @@ describe('Auth Integration Test', () => {
 
       const loginRes = await request(app)
         .get('/api/v1/auth/google/callback')
-        .query({ code: mockAuthCode });
+        .set('Cookie', 'oauth_state=integration-state')
+        .query({ code: mockAuthCode, state: 'integration-state' });
 
       if (loginRes.headers['set-cookie']) {
-        refreshTokenCookie = loginRes.headers['set-cookie'][0].split(';')[0];
+        refreshTokenCookie = (loginRes.headers['set-cookie'] as unknown as string[])
+          .find((cookie) => cookie.startsWith('jwt='))!
+          .split(';')[0];
       }
     });
 
@@ -170,10 +195,13 @@ describe('Auth Integration Test', () => {
 
       const loginRes = await request(app)
         .get('/api/v1/auth/google/callback')
-        .query({ code: mockAuthCode });
+        .set('Cookie', 'oauth_state=integration-state')
+        .query({ code: mockAuthCode, state: 'integration-state' });
 
       if (loginRes.headers['set-cookie']) {
-        const cookieStr = loginRes.headers['set-cookie'][0];
+        const cookieStr = (loginRes.headers['set-cookie'] as unknown as string[]).find((cookie) =>
+          cookie.startsWith('jwt=')
+        )!;
         refreshTokenCookie = cookieStr.split(';')[0];
       }
     });
@@ -214,9 +242,12 @@ describe('Auth Integration Test', () => {
 
       const loginRes = await request(app)
         .get('/api/v1/auth/google/callback')
-        .query({ code: mockAuthCode });
+        .set('Cookie', 'oauth_state=integration-state')
+        .query({ code: mockAuthCode, state: 'integration-state' });
 
-      oldRefreshTokenCookie = loginRes.headers['set-cookie'][0].split(';')[0];
+      oldRefreshTokenCookie = (loginRes.headers['set-cookie'] as unknown as string[])
+        .find((cookie) => cookie.startsWith('jwt='))!
+        .split(';')[0];
     });
 
     it('이미 사용된(갱신된) Refresh Token을 다시 사용하면 차단되어야 한다 (Reuse Detection)', async () => {
@@ -269,9 +300,10 @@ describe('Auth Integration Test', () => {
 
         const res = await request(app)
           .get('/api/v1/auth/google/callback')
-          .query({ code: mockAuthCode });
+          .set('Cookie', 'oauth_state=integration-state')
+          .query({ code: mockAuthCode, state: 'integration-state' });
 
-        validAccessToken = res.body.token;
+        validAccessToken = res.body.accessToken;
       });
 
       it('유효한 Access Token으로 보호된 라우트(내 캘린더 조회)에 접근할 수 있어야 한다', async () => {
@@ -317,9 +349,10 @@ describe('Auth Integration Test', () => {
 
         const hostLogin = await request(app)
           .get('/api/v1/auth/google/callback')
-          .query({ code: 'code_host_1' });
+          .set('Cookie', 'oauth_state=integration-state')
+          .query({ code: 'code_host_1', state: 'integration-state' });
 
-        hostToken = hostLogin.body.token;
+        hostToken = hostLogin.body.accessToken;
 
         // 2. 캘린더 생성
         const calRes = await request(app)
@@ -349,8 +382,9 @@ describe('Auth Integration Test', () => {
 
         const guestLoginRes = await request(app)
           .get('/api/v1/auth/google/callback')
-          .query({ code: 'code_guest' });
-        const guestAccessToken = guestLoginRes.body.token;
+          .set('Cookie', 'oauth_state=integration-state')
+          .query({ code: 'code_guest', state: 'integration-state' });
+        const guestAccessToken = guestLoginRes.body.accessToken;
 
         // 2. User Guest 참가 요청
         const joinRes = await request(app)
@@ -393,8 +427,9 @@ describe('Auth Integration Test', () => {
 
         const loginRes = await request(app)
           .get('/api/v1/auth/google/callback')
-          .query({ code: 'code_host_2' });
-        const token = loginRes.body.token;
+          .set('Cookie', 'oauth_state=integration-state')
+          .query({ code: 'code_host_2', state: 'integration-state' });
+        const token = loginRes.body.accessToken;
 
         // 2. 캘린더 생성
         const calRes = await request(app)
