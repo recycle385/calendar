@@ -100,6 +100,18 @@ describe('DateInfoService Unit Test', () => {
   });
 
   describe('getDateInfosByYears', () => {
+    it.each(['2026-12-31', '2027-01-01', '2028-02-29'])(
+      '공휴일 %s의 응답은 날짜 이동 없이 YYYYMMDD 형식을 유지한다',
+      async (date) => {
+        const year = date.slice(0, 4);
+        mockDateInfoRepository.findByYears.mockResolvedValue([
+          makeDateInfo({ year, locationDate: new Date(`${date}T00:00:00.000Z`) }),
+        ]);
+        const result = await service.getDateInfosByYears([year]);
+        expect(result[year][0].locationDate).toBe(date.replace(/-/g, ''));
+      }
+    );
+
     it('[성공] 조회 결과를 연도별 map으로 그룹핑하고 빈 연도도 포함해야 한다', async () => {
       mockDateInfoRepository.findByYears.mockResolvedValue([
         makeDateInfo({

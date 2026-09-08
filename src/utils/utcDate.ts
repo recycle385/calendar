@@ -37,17 +37,3 @@ export function formatUtcDateTimeForSql(value: string | Date): string {
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-
-export function formatKstDateOnly(value: string | Date): string {
-  const date = parseUtcDateOnly(value);
-
-  // convert UTC midnight to KST by adding 9 hours
-  const kstMs = date.getTime() + 9 * 60 * 60 * 1000;
-  const kst = new Date(kstMs);
-
-  const year = kst.getUTCFullYear();
-  const month = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(kst.getUTCDate()).padStart(2, '0');
-
-  return `${year}${month}${day}`;
-}

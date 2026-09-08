@@ -93,6 +93,10 @@ export function addDateOnlyDays(value: DateOnlyInput, days: number): DateOnlyStr
   return formatDateOnly(date);
 }
 
+export function formatCompactDateOnly(value: DateOnlyInput): string {
+  return formatDateOnly(value).replace(/-/g, '');
+}
+
 export function compareDateOnly(left: DateOnlyInput, right: DateOnlyInput): number {
   const leftTime = parseDateOnlyToUtcDate(left).getTime();
   const rightTime = parseDateOnlyToUtcDate(right).getTime();

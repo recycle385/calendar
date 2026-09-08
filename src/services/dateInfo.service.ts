@@ -8,8 +8,8 @@ import {
   SafeDateInfoForResponse,
 } from '../models/DateInfo';
 import { IDateInfoRepository } from '../repositories/dateInfo.repository';
+import { formatCompactDateOnly } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
-import { formatKstDateOnly } from '../utils/utcDate';
 
 export interface IDateInfoService {
   addDateInfo(dateInfo: SafeDateInfo): Promise<number>;
@@ -131,7 +131,7 @@ export class DateInfoService implements IDateInfoService {
 
   private changeToSafeDateInfo(dateInfo: DateInfo): SafeDateInfoForResponse {
     return {
-      locationDate: formatKstDateOnly(dateInfo.locationDate),
+      locationDate: formatCompactDateOnly(dateInfo.locationDate),
       year: dateInfo.year,
       seq: dateInfo.seq,
       dateName: dateInfo.dateName,
