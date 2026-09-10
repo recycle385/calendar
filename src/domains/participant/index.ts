@@ -5,7 +5,14 @@ export {
   loginParticipant,
   registerParticipant,
 } from './api/participantApi'
-export { getParticipantToken, removeParticipantToken, setParticipantToken } from './model/session'
+export {
+  getParticipantSession,
+  getParticipantToken,
+  removeParticipantToken,
+  setParticipantSession,
+  setParticipantToken,
+} from './model/session'
+export type { ParticipantSession } from './model/session'
 export type {
   GetParticipantsResponse,
   LoginParticipantRequest,
