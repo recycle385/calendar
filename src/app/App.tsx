@@ -1,10 +1,5 @@
-function App() {
-  return (
-    <main className="app-shell">
-      <h1>moim</h1>
-      <p>Frontend boilerplate</p>
-    </main>
-  )
-}
+import { AppRouter } from "./router";
 
-export default App
+export function App() {
+  return <AppRouter />;
+}

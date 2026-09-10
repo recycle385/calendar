@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --pretty false"
+    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "typecheck": "node ./node_modules/typescript/bin/tsc -b --pretty false"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.0",
     "@tanstack/react-query": "^5.0.0",
+    "lucide-react": "^1.44.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.0.0",
@@ -24,6 +26,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^5.0.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^5.0.0"
   }
 }
