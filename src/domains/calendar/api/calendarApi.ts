@@ -29,25 +29,25 @@ export function getCalendarBySlug(slug: string) {
 export function updateCalendar(
   slug: string,
   payload: UpdateCalendarRequest,
-  participantToken: string,
+  accessToken: string,
 ) {
   return apiRequest<DefaultResponse | CalendarResponse>(`/calendars/${slug}`, {
     method: 'PATCH',
     body: payload,
-    token: participantToken,
+    token: accessToken,
   })
 }
 
-export function deleteCalendar(slug: string, participantToken: string) {
+export function deleteCalendar(slug: string, accessToken: string) {
   return apiRequest<DefaultResponse>(`/calendars/${slug}`, {
     method: 'DELETE',
-    token: participantToken,
+    token: accessToken,
   })
 }
 
-export function closeCalendar(slug: string, participantToken: string) {
+export function closeCalendar(slug: string, accessToken: string) {
   return apiRequest<CalendarResponse>(`/calendars/${slug}/close`, {
     method: 'POST',
-    token: participantToken,
+    token: accessToken,
   })
 }

@@ -46,10 +46,10 @@ export function deleteParticipantSelf(slug: string, participantToken: string) {
 export function deleteParticipantByHost(
   slug: string,
   participantUuid: string,
-  participantToken: string,
+  accessToken: string,
 ) {
   return apiRequest<DefaultResponse>(`/calendars/${slug}/participants/${participantUuid}`, {
     method: 'DELETE',
-    token: participantToken,
+    token: accessToken,
   })
 }

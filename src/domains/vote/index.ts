@@ -7,6 +7,7 @@ export type {
   SubmitVoteRequest,
   SubmitVoteResponse,
   VoteCalendarSummary,
+  VoteInput,
   VoteParticipantSummary,
   VoteStatusItem,
   VoteType,

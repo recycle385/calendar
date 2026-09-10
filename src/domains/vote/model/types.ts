@@ -23,13 +23,17 @@ export interface ParticipantVoteRecord {
   created_at: string
 }
 
-export interface SubmitVoteRequest {
-  selectedDates: string[]
+export interface VoteInput {
+  date: string
   voteType: VoteType
 }
 
+export interface SubmitVoteRequest {
+  votes: VoteInput[]
+}
+
 export interface SubmitVoteResponse extends DefaultResponse {
-  selectedDates: string[]
+  votes: VoteInput[]
   votedCount: number
 }
 
