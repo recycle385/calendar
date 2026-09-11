@@ -21,7 +21,7 @@ html {
 }
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   background: #fff;
   color: #102650;
 }
@@ -2832,5 +2832,68 @@ body {
 
   .home-calendar-list {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Shared narrow-screen safeguards */
+@media (max-width: 768px) {
+  .site-footer {
+    padding: 24px 0 28px;
+    border-top: 1px solid #e8edf4;
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 18px;
+    text-align: center;
+  }
+
+  .footer-inner > div:first-child p {
+    margin-left: 0;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 20px;
+  }
+
+  .footer-meta {
+    grid-column: auto;
+    text-align: center;
+  }
+
+  .socials {
+    justify-content: center;
+  }
+
+  .auth-card,
+  .home-calendar-card,
+  .home-calendar-state {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-page {
+    padding-inline: 10px;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
+  }
+
+  .auth-card .button {
+    padding-inline: 14px;
+  }
+
+  .feature-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feature-card {
+    min-height: 132px;
   }
 }
