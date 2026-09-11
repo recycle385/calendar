@@ -11,6 +11,7 @@ export function submitVotes(slug: string, payload: SubmitVoteRequest, participan
     method: 'POST',
     body: payload,
     token: participantToken,
+    auth: 'participant',
   })
 }
 

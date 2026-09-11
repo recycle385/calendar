@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
-import { createCalendar } from '../../../domains/calendar'
+import { calendarKeys, createCalendar } from '../../../domains/calendar'
 import { setParticipantSession } from '../../../domains/participant'
 import { assetUrl } from '../../../shared/assets/assetUrl'
 import { useAuth } from '../../providers/AuthProvider'
@@ -30,7 +30,7 @@ type CalendarForm = z.infer<typeof calendarSchema>
 export function CalendarCreatePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { accessToken, status, user } = useAuth()
+  const { accessToken, status, user, userUuid } = useAuth()
   const form = useForm<CalendarForm>({
     resolver: zodResolver(calendarSchema),
     defaultValues: {
@@ -50,9 +50,9 @@ export function CalendarCreatePage() {
       setParticipantSession(result.calendar.slug, {
         participantToken: result.participantToken,
         participantUuid: result.calendar.hostParticipantUuid,
-        linkedUserUuid: user?.user_uuid,
+        linkedUserUuid: userUuid,
       })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', 'my'] })
+      void queryClient.invalidateQueries({ queryKey: calendarKeys.myRoot() })
       navigate(`/c/${result.calendar.slug}`, { state: { shareUrl: result.shareUrl }, replace: true })
     },
   })

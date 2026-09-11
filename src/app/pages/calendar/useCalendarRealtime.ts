@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react'
 
 import { removeParticipantToken } from '../../../domains/participant'
 import { createCalendarSocket } from '../../../shared/socket/socketClient'
+import {
+  clearDeletedCalendarData,
+  refreshCalendarData,
+  refreshParticipantData,
+  refreshVoteData,
+} from '../../cache/calendarCache'
 
 export interface OnlineCalendarUser {
   sub: string
@@ -50,17 +56,10 @@ export function useCalendarRealtime(
     setConnectionState('connecting')
     const socket = createCalendarSocket(participantToken)
 
-    const invalidateDetailQueries = () => {
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'participants'] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'vote-status'] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'votes', participantUuid] })
-    }
-
     const handleConnect = () => {
       setConnectionState('connected')
       socket.emit('joinCalendarRoom')
-      invalidateDetailQueries()
+      void refreshCalendarData(queryClient, slug, participantUuid)
     }
     const handleDisconnect = () => {
       setConnectionState('disconnected')
@@ -71,24 +70,19 @@ export function useCalendarRealtime(
       setOnlineUsers(null)
     }
     const handleVoteUpdated = () => {
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'vote-status'] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'participants'] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'votes', participantUuid] })
+      void refreshVoteData(queryClient, slug, participantUuid)
     }
     const handleCalendarUpdated = () => {
-      invalidateDetailQueries()
-      void queryClient.invalidateQueries({ queryKey: ['calendar', 'my'] })
+      void refreshCalendarData(queryClient, slug, participantUuid)
     }
     const handleCalendarClosed = () => {
       setIsClosed(true)
-      invalidateDetailQueries()
-      void queryClient.invalidateQueries({ queryKey: ['calendar', 'my'] })
+      void refreshCalendarData(queryClient, slug, participantUuid)
     }
     const handleCalendarDeleted = () => {
       setIsDeleted(true)
       removeParticipantToken(slug)
-      queryClient.removeQueries({ queryKey: ['calendar', slug] })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', 'my'] })
+      void clearDeletedCalendarData(queryClient, slug)
       socket.disconnect()
     }
     const handleOnlineUsers = (users: unknown) => {
@@ -101,7 +95,7 @@ export function useCalendarRealtime(
         const others = (current ?? []).filter((item) => item.sub !== user.sub)
         return [...others, user]
       })
-      void queryClient.invalidateQueries({ queryKey: ['calendar', slug, 'participants'] })
+      void refreshParticipantData(queryClient, slug, participantUuid)
     }
     const handleUserOffline = (user: unknown) => {
       if (!user || typeof user !== 'object' || typeof (user as { sub?: unknown }).sub !== 'string') return

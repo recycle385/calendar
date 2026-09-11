@@ -6,8 +6,8 @@ import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 
-import { getCalendarBySlug } from '../../../domains/calendar'
-import { getParticipantSession, loginParticipant, registerParticipant, setParticipantSession } from '../../../domains/participant'
+import { calendarDetailQuery } from '../../../domains/calendar'
+import { getParticipantSession, isParticipantSessionUsable, loginParticipant, registerParticipant, removeParticipantToken, setParticipantSession } from '../../../domains/participant'
 import { isApiError } from '../../../shared/api/httpClient'
 import { assetUrl } from '../../../shared/assets/assetUrl'
 import { formatDate } from '../../../shared/utils/format'
@@ -27,11 +27,14 @@ type JoinForm = z.infer<typeof joinSchema>
 export function CalendarJoinPage() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
-  const { accessToken, status, user } = useAuth()
+  const { accessToken, status, user, userUuid } = useAuth()
   const [mode, setMode] = useState<JoinMode>(status === 'authenticated' ? 'member-existing' : 'guest-new')
   const form = useForm<JoinForm>({ resolver: zodResolver(joinSchema), defaultValues: { nickname: user?.nickname ?? '', password: '' } })
-  const calendarQuery = useQuery({ queryKey: ['calendar', slug], queryFn: () => getCalendarBySlug(slug), enabled: Boolean(slug) })
+  const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug) })
   const existingSession = getParticipantSession(slug)
+  const memberIdentityUnavailable = (status === 'restoring' || status === 'restore-failed') && existingSession?.linkedUserUuid !== null
+  const usableExistingSession = !memberIdentityUnavailable
+    && isParticipantSessionUsable(existingSession, status === 'authenticated' ? userUuid : null)
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -39,6 +42,11 @@ export function CalendarJoinPage() {
       form.setValue('nickname', user?.nickname ?? '')
     }
   }, [form, status, user?.nickname])
+
+  useEffect(() => {
+    if (status === 'restoring' || status === 'restore-failed' || !existingSession || usableExistingSession) return
+    removeParticipantToken(slug)
+  }, [existingSession, slug, status, usableExistingSession])
 
   const isExisting = mode.endsWith('existing')
   const isMember = mode.startsWith('member')
@@ -54,7 +62,7 @@ export function CalendarJoinPage() {
       setParticipantSession(slug, {
         participantToken: result.participantToken,
         participantUuid: result.participant.uuid,
-        linkedUserUuid: isMember ? user?.user_uuid : null,
+        linkedUserUuid: isMember ? userUuid : null,
       })
       navigate(`/c/${slug}`, { replace: true })
     },
@@ -68,7 +76,8 @@ export function CalendarJoinPage() {
   }, [joinMutation.error])
 
   if (!slug) return <Navigate to="/" replace />
-  if (existingSession) return <Navigate to={`/c/${slug}`} replace />
+  if (memberIdentityUnavailable) return <WorkspaceLayout><section className="workspace-empty-state">{status === 'restore-failed' ? '네트워크 문제로 회원과 참여 세션을 확인하지 못했어요. 새로고침 후 다시 시도해주세요.' : '회원과 참여 세션을 확인하고 있어요.'}</section></WorkspaceLayout>
+  if (usableExistingSession) return <Navigate to={`/c/${slug}`} replace />
 
   if (calendarQuery.isPending) return <WorkspaceLayout><section className="workspace-empty-state">초대받은 캘린더 정보를 불러오는 중이에요.</section></WorkspaceLayout>
   if (calendarQuery.isError || !calendarQuery.data) return <WorkspaceLayout><section className="workspace-empty-state"><h1>캘린더를 찾지 못했어요.</h1><p>받은 링크를 다시 확인해주세요.</p><Link className="button button-secondary" to="/">홈으로 돌아가기</Link></section></WorkspaceLayout>

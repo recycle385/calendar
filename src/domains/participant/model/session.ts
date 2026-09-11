@@ -43,3 +43,47 @@ export function removeParticipantToken(slug: string) {
   storage?.removeItem(`${PARTICIPANT_TOKEN_PREFIX}${slug}`)
   storage?.removeItem(`${PARTICIPANT_SESSION_PREFIX}${slug}`)
 }
+
+export function isParticipantSessionUsable(
+  session: ParticipantSession | null,
+  currentUserUuid: string | null,
+) {
+  if (!session) return false
+  if (session.linkedUserUuid === null) return true
+  return typeof session.linkedUserUuid === 'string' && session.linkedUserUuid === currentUserUuid
+}
+
+export function removeLinkedParticipantSessions(userUuid?: string) {
+  const storage = getStorage()
+  const removed: Array<{ slug: string; participantUuid: string }> = []
+  if (!storage) return removed
+
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index))
+  for (const key of keys) {
+    if (!key?.startsWith(PARTICIPANT_SESSION_PREFIX)) continue
+    const slug = key.slice(PARTICIPANT_SESSION_PREFIX.length)
+    const session = getParticipantSession(slug)
+    if (!session || session.linkedUserUuid === null) continue
+    if (userUuid && session.linkedUserUuid && session.linkedUserUuid !== userUuid) continue
+    removed.push({ slug, participantUuid: session.participantUuid })
+    removeParticipantToken(slug)
+  }
+  return removed
+}
+
+export function removeParticipantSessionsExceptUser(userUuid: string) {
+  const storage = getStorage()
+  const removed: Array<{ slug: string; participantUuid: string }> = []
+  if (!storage) return removed
+
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index))
+  for (const key of keys) {
+    if (!key?.startsWith(PARTICIPANT_SESSION_PREFIX)) continue
+    const slug = key.slice(PARTICIPANT_SESSION_PREFIX.length)
+    const session = getParticipantSession(slug)
+    if (!session || session.linkedUserUuid === null || session.linkedUserUuid === userUuid) continue
+    removed.push({ slug, participantUuid: session.participantUuid })
+    removeParticipantToken(slug)
+  }
+  return removed
+}

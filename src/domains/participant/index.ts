@@ -6,13 +6,22 @@ export {
   registerParticipant,
 } from './api/participantApi'
 export {
+  isParticipantReentryRequiredError,
+  ParticipantReentryRequiredError,
+  runParticipantRequest,
+} from './model/authenticatedRequest'
+export {
   getParticipantSession,
   getParticipantToken,
+  isParticipantSessionUsable,
+  removeLinkedParticipantSessions,
+  removeParticipantSessionsExceptUser,
   removeParticipantToken,
   setParticipantSession,
   setParticipantToken,
 } from './model/session'
 export type { ParticipantSession } from './model/session'
+export { participantKeys, participantsQuery } from './model/queries'
 export type {
   GetParticipantsResponse,
   LoginParticipantRequest,

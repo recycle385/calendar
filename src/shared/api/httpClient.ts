@@ -6,11 +6,25 @@ interface RequestOptions {
   method?: HttpMethod
   body?: unknown
   token?: string | null
+  auth?: 'none' | 'main' | 'participant'
   signal?: AbortSignal
   headers?: HeadersInit
 }
 
+interface MainAuthController {
+  getAccessToken: () => string | null
+  refreshAccessToken: () => Promise<string>
+  onAuthExpired: () => void
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+let mainAuthController: MainAuthController | null = null
+let mainRefreshInFlight: Promise<string> | null = null
+
+export function configureMainAuth(controller: MainAuthController | null) {
+  mainAuthController = controller
+  if (!controller) mainRefreshInFlight = null
+}
 
 export class ApiError extends Error {
   readonly status: number
@@ -35,10 +49,34 @@ function getCsrfToken() {
   )
 }
 
+async function refreshMainAccessToken() {
+  if (!mainAuthController) throw new Error('Main 인증 갱신 핸들러가 설정되지 않았습니다.')
+  if (!mainRefreshInFlight) {
+    const controller = mainAuthController
+    mainRefreshInFlight = controller.refreshAccessToken()
+      .catch((error) => {
+        if (isApiError(error) && error.status === 401) controller.onAuthExpired()
+        throw error
+      })
+      .finally(() => {
+        mainRefreshInFlight = null
+      })
+  }
+  return mainRefreshInFlight
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  return executeRequest<T>(path, options, false)
+}
+
+async function executeRequest<T>(path: string, options: RequestOptions, hasRetried: boolean): Promise<T> {
   const method = options.method ?? 'GET'
+  const auth = options.auth ?? 'none'
   const headers = new Headers(options.headers)
   const csrfToken = getCsrfToken()
+  const token = auth === 'main'
+    ? mainAuthController?.getAccessToken() ?? options.token
+    : options.token
 
   headers.set('Accept', 'application/json')
 
@@ -46,8 +84,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.set('Content-Type', 'application/json')
   }
 
-  if (options.token) {
-    headers.set('Authorization', `Bearer ${options.token}`)
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
   if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
@@ -68,7 +106,18 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     : undefined
 
   if (!response.ok) {
-    throw new ApiError(response.status, data as ApiErrorBody | undefined)
+    const error = new ApiError(response.status, data as ApiErrorBody | undefined)
+
+    if (response.status === 401 && auth === 'main' && !hasRetried && mainAuthController) {
+      try {
+        await refreshMainAccessToken()
+      } catch (refreshError) {
+        throw refreshError
+      }
+      return executeRequest<T>(path, options, true)
+    }
+
+    throw error
   }
 
   return data as T

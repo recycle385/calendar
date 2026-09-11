@@ -14,3 +14,4 @@ export type {
   GetMyCalendarsResponse,
   UpdateCalendarRequest,
 } from './model/types'
+export { calendarDetailQuery, calendarKeys, myCalendarsQuery } from './model/queries'

@@ -5,7 +5,16 @@ export {
   refreshAccessToken,
   signupWithGoogle,
 } from './api/authApi'
-export { clearAccessToken, getAccessToken, isAuthenticated, setAccessToken } from './model/session'
+export {
+  clearAccessToken,
+  clearStoredAuthProfile,
+  getAccessToken,
+  getAccessTokenSubject,
+  getStoredAuthProfile,
+  isAuthenticated,
+  setAccessToken,
+  setStoredAuthProfile,
+} from './model/session'
 export type {
   AuthUser,
   GoogleCallbackLoginResponse,

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getMyCalendars, type Calendar } from '../../../../domains/calendar'
+import { myCalendarsQuery, type Calendar } from '../../../../domains/calendar'
 import { formatDate } from '../../../../shared/utils/format'
 import { useAuth } from '../../../providers/AuthProvider'
 
@@ -22,11 +22,10 @@ function CalendarCard({ calendar }: { calendar: Calendar }) {
 }
 
 export function MyCalendarsSection() {
-  const { accessToken, status, user } = useAuth()
+  const { accessToken, status, user, userUuid } = useAuth()
   const calendarsQuery = useQuery({
-    queryKey: ['calendar', 'my', user?.user_uuid ?? 'restored-session'],
-    queryFn: () => getMyCalendars(accessToken!),
-    enabled: status === 'authenticated' && Boolean(accessToken),
+    ...myCalendarsQuery(userUuid ?? '', accessToken ?? ''),
+    enabled: status === 'authenticated' && Boolean(accessToken && userUuid),
   })
 
   if (status === 'restore-failed') {

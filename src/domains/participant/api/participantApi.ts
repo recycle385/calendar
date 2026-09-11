@@ -17,6 +17,7 @@ export function registerParticipant(
     method: 'POST',
     body: payload,
     token: accessToken,
+    auth: accessToken ? 'main' : 'none',
   })
 }
 
@@ -29,6 +30,7 @@ export function loginParticipant(
     method: 'POST',
     body: payload,
     token: accessToken,
+    auth: accessToken ? 'main' : 'none',
   })
 }
 
@@ -40,6 +42,7 @@ export function deleteParticipantSelf(slug: string, participantToken: string) {
   return apiRequest<DefaultResponse>(`/calendars/${slug}/participants/self`, {
     method: 'DELETE',
     token: participantToken,
+    auth: 'participant',
   })
 }
 
@@ -51,5 +54,6 @@ export function deleteParticipantByHost(
   return apiRequest<DefaultResponse>(`/calendars/${slug}/participants/${participantUuid}`, {
     method: 'DELETE',
     token: accessToken,
+    auth: 'main',
   })
 }

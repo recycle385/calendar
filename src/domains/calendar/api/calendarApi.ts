@@ -13,12 +13,14 @@ export function createCalendar(payload: CreateCalendarRequest, accessToken: stri
     method: 'POST',
     body: payload,
     token: accessToken,
+    auth: 'main',
   })
 }
 
 export function getMyCalendars(accessToken: string) {
   return apiRequest<GetMyCalendarsResponse>('/calendars/my', {
     token: accessToken,
+    auth: 'main',
   })
 }
 
@@ -35,6 +37,7 @@ export function updateCalendar(
     method: 'PATCH',
     body: payload,
     token: accessToken,
+    auth: 'main',
   })
 }
 
@@ -42,6 +45,7 @@ export function deleteCalendar(slug: string, accessToken: string) {
   return apiRequest<DefaultResponse>(`/calendars/${slug}`, {
     method: 'DELETE',
     token: accessToken,
+    auth: 'main',
   })
 }
 
@@ -49,5 +53,6 @@ export function closeCalendar(slug: string, accessToken: string) {
   return apiRequest<CalendarResponse>(`/calendars/${slug}/close`, {
     method: 'POST',
     token: accessToken,
+    auth: 'main',
   })
 }

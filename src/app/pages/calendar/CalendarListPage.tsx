@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarDays, ChevronRight, Plus, Search, SlidersHorizontal, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { getMyCalendars, type Calendar } from '../../../domains/calendar'
+import { myCalendarsQuery, type Calendar } from '../../../domains/calendar'
 import { assetUrl } from '../../../shared/assets/assetUrl'
 import { formatDate } from '../../../shared/utils/format'
 import { useAuth } from '../../providers/AuthProvider'
@@ -36,14 +36,13 @@ function CalendarCard({ calendar }: { calendar: Calendar }) {
 }
 
 export function CalendarListPage() {
-  const { accessToken, status, user } = useAuth()
+  const { accessToken, status, user, userUuid } = useAuth()
   const [filter, setFilter] = useState<CalendarFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOrder>('newest')
   const calendarsQuery = useQuery({
-    queryKey: ['calendar', 'my', user?.user_uuid ?? 'restored-session'],
-    queryFn: () => getMyCalendars(accessToken!),
-    enabled: status === 'authenticated' && Boolean(accessToken),
+    ...myCalendarsQuery(userUuid ?? '', accessToken ?? ''),
+    enabled: status === 'authenticated' && Boolean(accessToken && userUuid),
   })
 
   const calendars = useMemo(() => {
