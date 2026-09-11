@@ -8,5 +8,6 @@ export function createCalendarSocket(token: string): Socket {
     auth: { token },
     transports: ['websocket'],
     autoConnect: false,
+    forceNew: true,
   })
 }
