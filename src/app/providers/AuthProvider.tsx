@@ -61,12 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (identity) queryClient.removeQueries({ queryKey: calendarKeys.my(identity), exact: true })
   }, [queryClient])
 
-  const applyAuthenticatedToken = useCallback((token: string, nextUser?: AuthUser | null) => {
+  const applyAuthenticatedToken = useCallback((token: string, nextUser?: AuthUser | null, sessionChangeAlreadyMarked = false) => {
     const nextUserUuid = getAccessTokenSubject(token) ?? nextUser?.user_uuid ?? null
     if (!nextUserUuid) throw new Error('Access Token에서 회원 식별자를 확인할 수 없습니다.')
 
     const previousUserUuid = identityRef.current
-    if (previousUserUuid && previousUserUuid !== nextUserUuid) clearMemberData(previousUserUuid)
+    if (previousUserUuid && previousUserUuid !== nextUserUuid) {
+      if (!sessionChangeAlreadyMarked) sessionEpoch.current += 1
+      clearMemberData(previousUserUuid)
+    }
     clearParticipantPrivateData(queryClient, removeParticipantSessionsExceptUser(nextUserUuid))
 
     const restoredUser = nextUser ?? getStoredAuthProfile(nextUserUuid)
@@ -109,6 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     configureMainAuth({
       getAccessToken,
+      getSessionSnapshot: () => ({
+        userUuid: identityRef.current,
+        sessionVersion: sessionEpoch.current,
+        accessToken: getAccessToken(),
+      }),
       refreshAccessToken: refreshForRequest,
       onAuthExpired: expireAuthentication,
     })
@@ -146,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const completeLogin = useCallback((token: string, nextUser: AuthUser) => {
     sessionEpoch.current += 1
-    applyAuthenticatedToken(token, nextUser)
+    applyAuthenticatedToken(token, nextUser, true)
   }, [applyAuthenticatedToken])
 
   const value = useMemo(

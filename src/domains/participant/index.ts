@@ -14,6 +14,7 @@ export {
   getParticipantSession,
   getParticipantToken,
   isParticipantSessionUsable,
+  isLinkedMemberParticipantSession,
   removeLinkedParticipantSessions,
   removeParticipantSessionsExceptUser,
   removeParticipantToken,

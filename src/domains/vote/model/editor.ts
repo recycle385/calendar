@@ -59,7 +59,7 @@ export function areVoteDraftsEqual(left: VoteDraft, right: VoteDraft) {
 export function voteEditorReducer(state: VoteEditorState, action: VoteEditorAction): VoteEditorState {
   switch (action.type) {
     case 'REMOTE_SYNC':
-      if (state.isDirty || state.isSaving) {
+      if (state.isDirty || state.isSaving || state.hasConflict) {
         return areVoteDraftsEqual(state.baseline, action.draft)
           ? state
           : { ...state, remoteDraft: action.draft, hasConflict: true }
@@ -89,7 +89,20 @@ export function voteEditorReducer(state: VoteEditorState, action: VoteEditorActi
       return { ...state, isSaving: true, submittedDraft: action.draft }
     case 'SAVE_SUCCEEDED': {
       const savedDraft = state.submittedDraft ?? state.draft
-      return { ...state, baseline: savedDraft, draft: savedDraft, remoteDraft: null, isDirty: false, isSaving: false, hasConflict: false, removedDateCount: 0, submittedDraft: null }
+      const hasPendingConflict = Boolean(
+        state.remoteDraft && !areVoteDraftsEqual(savedDraft, state.remoteDraft),
+      )
+      return {
+        ...state,
+        baseline: savedDraft,
+        draft: savedDraft,
+        remoteDraft: hasPendingConflict ? state.remoteDraft : null,
+        isDirty: false,
+        isSaving: false,
+        hasConflict: hasPendingConflict,
+        removedDateCount: 0,
+        submittedDraft: null,
+      }
     }
     case 'SAVE_FAILED':
       return { ...state, isSaving: false, submittedDraft: null }

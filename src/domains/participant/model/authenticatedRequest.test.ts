@@ -30,7 +30,12 @@ describe('runParticipantRequest', () => {
   it('회원 Participant Token의 401은 Main 기반 재입장 후 원 요청을 한 번 재시도한다', async () => {
     const session = { participantToken: 'expired-participant', participantUuid: 'participant-1', linkedUserUuid: 'user-1' }
     setParticipantSession('study', session)
-    configureMainAuth({ getAccessToken: () => 'main-token', refreshAccessToken: vi.fn(), onAuthExpired: vi.fn() })
+    configureMainAuth({
+      getAccessToken: () => 'main-token',
+      getSessionSnapshot: () => ({ userUuid: 'user-1', sessionVersion: 1, accessToken: 'main-token' }),
+      refreshAccessToken: vi.fn(),
+      onAuthExpired: vi.fn(),
+    })
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       message: 'ok',
       participantToken: 'fresh-participant',

@@ -53,6 +53,10 @@ export function isParticipantSessionUsable(
   return typeof session.linkedUserUuid === 'string' && session.linkedUserUuid === currentUserUuid
 }
 
+export function isLinkedMemberParticipantSession(session: ParticipantSession | null) {
+  return typeof session?.linkedUserUuid === 'string'
+}
+
 export function removeLinkedParticipantSessions(userUuid?: string) {
   const storage = getStorage()
   const removed: Array<{ slug: string; participantUuid: string }> = []

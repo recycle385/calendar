@@ -7,7 +7,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 
 import { calendarDetailQuery } from '../../../domains/calendar'
-import { getParticipantSession, isParticipantSessionUsable, loginParticipant, registerParticipant, removeParticipantToken, setParticipantSession } from '../../../domains/participant'
+import { getParticipantSession, isLinkedMemberParticipantSession, isParticipantSessionUsable, loginParticipant, registerParticipant, removeParticipantToken, setParticipantSession } from '../../../domains/participant'
 import { isApiError } from '../../../shared/api/httpClient'
 import { assetUrl } from '../../../shared/assets/assetUrl'
 import { formatDate } from '../../../shared/utils/format'
@@ -32,7 +32,8 @@ export function CalendarJoinPage() {
   const form = useForm<JoinForm>({ resolver: zodResolver(joinSchema), defaultValues: { nickname: user?.nickname ?? '', password: '' } })
   const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug) })
   const existingSession = getParticipantSession(slug)
-  const memberIdentityUnavailable = (status === 'restoring' || status === 'restore-failed') && existingSession?.linkedUserUuid !== null
+  const memberIdentityUnavailable = isLinkedMemberParticipantSession(existingSession)
+    && (status === 'restoring' || status === 'restore-failed')
   const usableExistingSession = !memberIdentityUnavailable
     && isParticipantSessionUsable(existingSession, status === 'authenticated' ? userUuid : null)
 

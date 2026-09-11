@@ -13,13 +13,27 @@ interface RequestOptions {
 
 interface MainAuthController {
   getAccessToken: () => string | null
+  getSessionSnapshot: () => MainAuthSessionSnapshot
   refreshAccessToken: () => Promise<string>
   onAuthExpired: () => void
 }
 
+export interface MainAuthSessionSnapshot {
+  userUuid: string | null
+  sessionVersion: number
+  accessToken: string | null
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
 let mainAuthController: MainAuthController | null = null
-let mainRefreshInFlight: Promise<string> | null = null
+let mainRefreshInFlight: { session: MainAuthSessionSnapshot; promise: Promise<string> } | null = null
+
+export class AuthSessionChangedError extends Error {
+  constructor() {
+    super('요청 중 로그인 계정이 변경되어 작업을 중단했습니다.')
+    this.name = 'AuthSessionChangedError'
+  }
+}
 
 export function configureMainAuth(controller: MainAuthController | null) {
   mainAuthController = controller
@@ -49,27 +63,43 @@ function getCsrfToken() {
   )
 }
 
-async function refreshMainAccessToken() {
+function isSameMainSession(left: MainAuthSessionSnapshot, right: MainAuthSessionSnapshot) {
+  return left.sessionVersion === right.sessionVersion && left.userUuid === right.userUuid
+}
+
+async function refreshMainAccessToken(requestSession: MainAuthSessionSnapshot) {
   if (!mainAuthController) throw new Error('Main 인증 갱신 핸들러가 설정되지 않았습니다.')
-  if (!mainRefreshInFlight) {
+  if (!mainRefreshInFlight || !isSameMainSession(mainRefreshInFlight.session, requestSession)) {
     const controller = mainAuthController
-    mainRefreshInFlight = controller.refreshAccessToken()
+    const promise = controller.refreshAccessToken()
       .catch((error) => {
-        if (isApiError(error) && error.status === 401) controller.onAuthExpired()
+        if (isApiError(error) && error.status === 401
+          && isSameMainSession(requestSession, controller.getSessionSnapshot())) {
+          controller.onAuthExpired()
+        }
         throw error
       })
       .finally(() => {
-        mainRefreshInFlight = null
+        if (mainRefreshInFlight?.promise === promise) mainRefreshInFlight = null
       })
+    mainRefreshInFlight = { session: requestSession, promise }
   }
-  return mainRefreshInFlight
+  return mainRefreshInFlight.promise
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  return executeRequest<T>(path, options, false)
+  const requestSession = options.auth === 'main' && mainAuthController
+    ? mainAuthController.getSessionSnapshot()
+    : null
+  return executeRequest<T>(path, options, false, requestSession)
 }
 
-async function executeRequest<T>(path: string, options: RequestOptions, hasRetried: boolean): Promise<T> {
+async function executeRequest<T>(
+  path: string,
+  options: RequestOptions,
+  hasRetried: boolean,
+  requestSession: MainAuthSessionSnapshot | null,
+): Promise<T> {
   const method = options.method ?? 'GET'
   const auth = options.auth ?? 'none'
   const headers = new Headers(options.headers)
@@ -109,12 +139,19 @@ async function executeRequest<T>(path: string, options: RequestOptions, hasRetri
     const error = new ApiError(response.status, data as ApiErrorBody | undefined)
 
     if (response.status === 401 && auth === 'main' && !hasRetried && mainAuthController) {
-      try {
-        await refreshMainAccessToken()
-      } catch (refreshError) {
-        throw refreshError
+      const currentSession = mainAuthController.getSessionSnapshot()
+      if (!requestSession || !isSameMainSession(requestSession, currentSession)) {
+        throw new AuthSessionChangedError()
       }
-      return executeRequest<T>(path, options, true)
+
+      if (currentSession.accessToken === token) {
+        await refreshMainAccessToken(requestSession)
+      }
+
+      if (!isSameMainSession(requestSession, mainAuthController.getSessionSnapshot())) {
+        throw new AuthSessionChangedError()
+      }
+      return executeRequest<T>(path, options, true, requestSession)
     }
 
     throw error

@@ -8,6 +8,7 @@ import {
   deleteParticipantByHost,
   deleteParticipantSelf,
   getParticipantSession,
+  isLinkedMemberParticipantSession,
   isParticipantSessionUsable,
   participantsQuery,
   removeParticipantToken,
@@ -46,7 +47,8 @@ export function CalendarDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { accessToken, status, userUuid } = useAuth()
   const currentUserUuid = status === 'authenticated' ? userUuid : null
-  const memberIdentityUnavailable = (status === 'restoring' || status === 'restore-failed') && session?.linkedUserUuid !== null
+  const memberIdentityUnavailable = isLinkedMemberParticipantSession(session)
+    && (status === 'restoring' || status === 'restore-failed')
   const usableSession = !memberIdentityUnavailable && isParticipantSessionUsable(session, currentUserUuid) ? session : null
   const requestedTab = searchParams.get('tab')
   const requestedDetailTab: DetailTab = requestedTab && DETAIL_TABS.includes(requestedTab as DetailTab) ? requestedTab as DetailTab : 'vote'

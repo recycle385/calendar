@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import {
   getParticipantSession,
+  isLinkedMemberParticipantSession,
   isParticipantSessionUsable,
   removeParticipantSessionsExceptUser,
   setParticipantSession,
@@ -54,5 +55,12 @@ describe('Participant 세션 회원 격리', () => {
     setParticipantSession('legacy', { participantToken: 'legacy', participantUuid: 'p-legacy' })
     removeParticipantSessionsExceptUser('user-b')
     expect(getParticipantSession('legacy')).toBeNull()
+  })
+
+  it('실제 회원 UUID가 연결된 세션만 회원 인증 복원 대상이다', () => {
+    expect(isLinkedMemberParticipantSession(null)).toBe(false)
+    expect(isLinkedMemberParticipantSession({ participantToken: 'legacy', participantUuid: 'p-legacy' })).toBe(false)
+    expect(isLinkedMemberParticipantSession({ participantToken: 'guest', participantUuid: 'p-guest', linkedUserUuid: null })).toBe(false)
+    expect(isLinkedMemberParticipantSession({ participantToken: 'member', participantUuid: 'p-member', linkedUserUuid: 'user-1' })).toBe(true)
   })
 })
