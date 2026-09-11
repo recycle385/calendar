@@ -56,12 +56,16 @@ export function areVoteDraftsEqual(left: VoteDraft, right: VoteDraft) {
   return JSON.stringify(leftEntries) === JSON.stringify(rightEntries)
 }
 
+export function canSaveVoteEditor(state: VoteEditorState) {
+  return !state.isSaving && (state.isDirty || state.hasConflict)
+}
+
 export function voteEditorReducer(state: VoteEditorState, action: VoteEditorAction): VoteEditorState {
   switch (action.type) {
     case 'REMOTE_SYNC':
       if (state.isDirty || state.isSaving || state.hasConflict) {
         return areVoteDraftsEqual(state.baseline, action.draft)
-          ? state
+          ? { ...state, remoteDraft: null, hasConflict: false }
           : { ...state, remoteDraft: action.draft, hasConflict: true }
       }
       return { ...state, baseline: action.draft, draft: action.draft, remoteDraft: null, hasConflict: false }

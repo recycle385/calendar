@@ -3,6 +3,7 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 
 import { formatDate } from '../../../shared/utils/format'
 import {
+  canSaveVoteEditor,
   createVoteDraft,
   initialVoteEditorState,
   serializeVoteDraft,
@@ -79,6 +80,6 @@ export function VotePanel({ isClosed, voteStatus, ownVotes, loading, onSubmit, o
     <div className="vote-tools" aria-label="투표 상태 선택">{VOTE_TOOL.map((item) => <button key={item.value} type="button" disabled={state.isSaving} className={`${item.className}${tool === item.value ? ' is-selected' : ''}`} onClick={() => setTool(item.value)}><i />{item.label}</button>)}</div>
     <div className="vote-date-grid">{enabledDates.map((item) => { const date = item.date_value.slice(0, 10); const selected = state.draft[date]; return <button type="button" disabled={state.isSaving} className={`vote-date-cell${selected ? ` ${VOTE_TOOL.find((toolItem) => toolItem.value === selected)?.className}` : ''}`} key={date} onClick={() => dispatch({ type: 'SELECT', date, voteType: tool })}><span>{formatDate(date)}</span><strong>{selected ? VOTE_TOOL.find((toolItem) => toolItem.value === selected)?.label : '선택 안 함'}</strong>{selected && <small>같은 상태를 누르면 해제돼요</small>}</button> })}</div>
     {saveError && <p className="form-error workspace-request-error">{saveError}</p>}
-    <div className="vote-submit-row"><button className="vote-reset-button" type="button" disabled={state.isSaving} onClick={() => dispatch({ type: 'CLEAR_ALL' })}><RotateCcw size={14} /> 선택 초기화</button><button className="button button-primary" type="button" disabled={state.isSaving || !state.isDirty} onClick={() => void saveVotes()}>{state.isSaving ? '저장 중…' : <><Check size={18} /> 투표 저장하기</>}</button></div>
+    <div className="vote-submit-row"><button className="vote-reset-button" type="button" disabled={state.isSaving} onClick={() => dispatch({ type: 'CLEAR_ALL' })}><RotateCcw size={14} /> 선택 초기화</button><button className="button button-primary" type="button" disabled={!canSaveVoteEditor(state)} onClick={() => void saveVotes()}>{state.isSaving ? '저장 중…' : <><Check size={18} /> {state.hasConflict ? '현재 편집본으로 저장' : '투표 저장하기'}</>}</button></div>
   </section>
 }
