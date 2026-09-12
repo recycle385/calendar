@@ -1,0 +1,199 @@
+import { DateVoteInput } from '../Vote';
+import { CalendarForVoteStatus } from './calendar.dto';
+import { DefaultResponseDto } from './common.dto';
+import { CommonParticipant } from './participant.dto';
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     VoteTypeForDto:
+ *       type: string
+ *       enum: [available, unavailable, maybe]
+ *       description: "투표 상태 (available: 가능, unavailable: 불가능, maybe: 미정)"
+ *       example: "available"
+ */
+export type VoteTypeForDto = 'available' | 'unavailable' | 'maybe';
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     VoteRecord:
+ *       type: object
+ *       required: [vote_id, date_value, vote_type, created_at]
+ *       properties:
+ *         vote_id:
+ *           type: integer
+ *           example: 1
+ *         date_value:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-15"
+ *         vote_type:
+ *           $ref: "#/components/schemas/VoteTypeForDto"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2026-02-19T12:00:00Z"
+ */
+export interface VoteRecord {
+  vote_id: number;
+  date_value: string;
+  vote_type: VoteTypeForDto;
+  created_at: Date;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     DateVoteInput:
+ *       type: object
+ *       required: [date, voteType]
+ *       properties:
+ *         date:
+ *           type: string
+ *           format: date
+ *           description: 해당 캘린더의 투표 대상 날짜
+ *           example: "2026-09-10"
+ *         voteType:
+ *           $ref: "#/components/schemas/VoteTypeForDto"
+ *     SubmitVoteRequest:
+ *       type: object
+ *       required: [votes]
+ *       properties:
+ *         votes:
+ *           type: array
+ *           maxItems: 366
+ *           description: "참가자의 전체 투표 목록. 날짜 중복 불가. 빠진 날짜는 취소하며 빈 배열은 전체 취소입니다."
+ *           items:
+ *             $ref: "#/components/schemas/DateVoteInput"
+ *           example: [{date: "2026-09-10", voteType: "available"}, {date: "2026-09-11", voteType: "maybe"}]
+ */
+export interface SubmitVoteRequest {
+  votes: DateVoteInput[];
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SubmitVoteResponse:
+ *       allOf:
+ *         - $ref: "#/components/schemas/DefaultResponseDto"
+ *         - type: object
+ *           properties:
+ *             votes:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/DateVoteInput"
+ *             votedCount:
+ *               type: integer
+ *               description: "교체 후 해당 참가자의 투표 개수"
+ *               example: 2
+ *           required: [votes, votedCount]
+ */
+export interface SubmitVoteResponse extends DefaultResponseDto {
+  votes: DateVoteInput[];
+  votedCount: number;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     DateVoteStatusDto:
+ *       type: object
+ *       required: [date_option_id, date_value, is_enabled, votes]
+ *       properties:
+ *         date_option_id:
+ *           type: integer
+ *           example: 10
+ *         date_value:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-15"
+ *         is_enabled:
+ *           type: boolean
+ *           example: true
+ *         votes:
+ *           type: array
+ *           items:
+ *             type: object
+ *             required: [participant_id, participant_nickname, participant_color, vote_type]
+ *             properties:
+ *               participant_id:
+ *                 type: integer
+ *               participant_nickname:
+ *                 type: string
+ *               participant_color:
+ *                 type: string
+ *                 pattern: "^#[0-9A-Fa-f]{6}$"
+ *               vote_type:
+ *                 $ref: "#/components/schemas/VoteTypeForDto"
+ */
+interface DateVoteStatusDto {
+  date_option_id: number;
+  date_value: string;
+  is_enabled: boolean;
+  votes: {
+    participant_id: number;
+    participant_nickname: string;
+    participant_color: string;
+    vote_type: VoteTypeForDto;
+  }[];
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     GetVoteStatusResponse:
+ *       type: object
+ *       required: [calendar, voteStatus]
+ *       properties:
+ *         calendar:
+ *           $ref: "#/components/schemas/CalendarForVoteStatus"
+ *         voteStatus:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/DateVoteStatusDto"
+ */
+export interface GetVoteStatusResponse {
+  calendar: CalendarForVoteStatus;
+  voteStatus: DateVoteStatusDto[];
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     GetParticipantVotesResponse:
+ *       type: object
+ *       required: [participant, votes, voteCount]
+ *       properties:
+ *         participant:
+ *           type: object
+ *           properties:
+ *             uuid:
+ *               type: string
+ *               format: uuid
+ *             nickname:
+ *               type: string
+ *             color_code:
+ *               type: string
+ *               pattern: "^#[0-9A-Fa-f]{6}$"
+ *         votes:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/VoteRecord"
+ *         voteCount:
+ *           type: integer
+ *           example: 5
+ */
+export interface GetParticipantVotesResponse {
+  participant: Omit<CommonParticipant, 'joined_at'>;
+  votes: VoteRecord[];
+  voteCount: number;
+}

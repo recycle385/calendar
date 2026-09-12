@@ -1,0 +1,58 @@
+.vote-calendar {
+  width: 100%;
+}
+
+.vote-calendar__weekdays,
+.vote-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.vote-calendar__weekdays {
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.vote-calendar__day {
+  aspect-ratio: 1;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.vote-calendar__day--available {
+  cursor: pointer;
+  border-color: #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+}
+
+.vote-calendar__day--selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.vote-calendar__day:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .vote-calendar__weekdays,
+  .vote-calendar__grid {
+    gap: 0.25rem;
+  }
+
+  .vote-calendar__day {
+    min-height: 40px;
+    border-radius: 0.55rem;
+    padding: 0;
+    font-size: 0.75rem;
+  }
+}
