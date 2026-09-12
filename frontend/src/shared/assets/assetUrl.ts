@@ -1,3 +1,5 @@
+import type { SyntheticEvent } from "react";
+
 const assetBaseUrl = (import.meta.env.VITE_ASSET_BASE_URL ?? "").replace(
   /\/+$/,
   "",
@@ -7,6 +9,11 @@ const gameAssetProxyPrefix = "/__game-assets";
 export function assetUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${assetBaseUrl}${normalizedPath}`;
+}
+
+export function hideUnavailableAsset(event: SyntheticEvent<HTMLImageElement>) {
+  event.currentTarget.style.visibility = "hidden";
+  event.currentTarget.setAttribute("aria-hidden", "true");
 }
 
 export function resolveGameAssetUrl(

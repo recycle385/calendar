@@ -1,5 +1,9 @@
 import { Link2 } from 'lucide-react';
-import { assetUrl } from '../../../../shared/assets/assetUrl';
+import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { parseCalendarJoinPath } from '../../../../domains/calendar';
+import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl';
 
 const days = [
   ['30', '31', '1', '2', '3', '4', '5'],
@@ -9,9 +13,23 @@ const days = [
   ['27', '28', '29', '30', '1', '2', '3'],
 ];
 
-const placeholderImageUrl = assetUrl('main/dotoffice_header_logo.webp');
+const mobileHeroImageUrl = assetUrl('edit/calendar-3d.webp');
 
 export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const navigate = useNavigate();
+  const [shareLink, setShareLink] = useState('');
+  const [shareLinkError, setShareLinkError] = useState<string | null>(null);
+
+  function joinCalendar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const joinPath = parseCalendarJoinPath(shareLink, window.location.origin);
+    if (!joinPath) {
+      setShareLinkError('moim에서 받은 캘린더 공유 링크를 확인해주세요.');
+      return;
+    }
+    navigate(joinPath);
+  }
+
   return (
     <section className="hero" id="top">
       <div className="shell hero-grid">
@@ -20,7 +38,7 @@ export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
             좋은 사람들이
             <br />좋은 시간을 만들어요!
           </div>
-          <img className="mobile-hero-art" src={placeholderImageUrl} alt="" />
+          <img className="mobile-hero-art" src={mobileHeroImageUrl} alt="" onError={hideUnavailableAsset} />
         </div>
 
         <div className="hero-copy">
@@ -49,12 +67,13 @@ export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                 </>
               )}
             </a>
-            <a className="button button-secondary" href="#features">
-              <Link2 className="hero-link-icon" size={18} />
-              <span className="hero-label-wide">링크로 참여하기</span>
-              <span className="hero-label-tablet">서비스 소개 보기</span>
-            </a>
+            <form className="hero-join-form" onSubmit={joinCalendar} noValidate>
+              <label className="sr-only" htmlFor="calendar-share-link">캘린더 공유 링크</label>
+              <input id="calendar-share-link" value={shareLink} onChange={(event) => { setShareLink(event.target.value); setShareLinkError(null); }} placeholder="공유 링크 붙여넣기" />
+              <button className="button button-secondary" type="submit"><Link2 className="hero-link-icon" size={18} /><span>링크로 참여하기</span></button>
+            </form>
           </div>
+          {shareLinkError && <p className="hero-join-error" role="alert">{shareLinkError}</p>}
           <small>지금 바로 무료로 시작할 수 있어요.</small>
         </div>
 

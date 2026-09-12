@@ -1,6 +1,6 @@
 import type { Calendar } from '../../../domains/calendar'
 
-export const PLACEHOLDER_IMAGE_PATH = 'main/dotoffice_header_logo.webp'
+export const PLACEHOLDER_IMAGE_PATH = 'edit/calendar-3d.webp'
 
 export function calendarStateLabel(calendar: Calendar) {
   return calendar.is_closed ? '마감' : '진행 중'

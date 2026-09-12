@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, Check, ChevronLeft, Crown, LogOut, Settings, Share2, Trash2, UserMinus, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { calendarDetailQuery, closeCalendar, deleteCalendar, updateCalendar, type Calendar } from '../../../domains/calendar'
@@ -18,15 +18,17 @@ import {
 } from '../../../domains/participant'
 import {
   participantVotesQuery,
+  initialVoteEditorState,
   submitVotes,
   VotePanel,
   VoteRecommendations,
   VoteStatusPanel,
   voteStatusQuery,
+  voteEditorReducer,
   type DateVoteStatus,
   type VoteInput,
 } from '../../../domains/vote'
-import { assetUrl } from '../../../shared/assets/assetUrl'
+import { assetUrl, hideUnavailableAsset } from '../../../shared/assets/assetUrl'
 import { formatDate, formatPercent } from '../../../shared/utils/format'
 import { useAuth } from '../../providers/AuthProvider'
 import { clearDeletedCalendarData, clearParticipantPrivateData, refreshCalendarData, refreshParticipantData, refreshVoteData } from '../../cache/calendarCache'
@@ -58,6 +60,14 @@ export function CalendarDetailPage() {
   const voteStatus = useQuery({ ...voteStatusQuery(slug), enabled: Boolean(slug && usableSession) })
   const ownVotes = useQuery({ ...participantVotesQuery(slug, usableSession?.participantUuid ?? ''), enabled: Boolean(slug && usableSession?.participantUuid) })
   const realtime = useCalendarRealtime(slug, usableSession?.participantToken, usableSession?.participantUuid)
+  const [voteEditorState, voteEditorDispatch] = useReducer(voteEditorReducer, initialVoteEditorState)
+  const editorSessionKey = `${slug}:${usableSession?.participantUuid ?? ''}`
+
+  useEffect(() => {
+    voteEditorDispatch({ type: 'RESET' })
+  }, [editorSessionKey])
+
+  useUnsavedVoteNavigationWarning(voteEditorState.isDirty)
 
   useEffect(() => {
     if (status === 'restoring' || status === 'restore-failed' || !session || usableSession) return
@@ -100,7 +110,7 @@ export function CalendarDetailPage() {
           {isHost && <button type="button" className={tab === 'settings' ? 'is-active' : ''} onClick={() => changeTab('settings')}><Settings size={18} /> 설정</button>}
         </nav>
         <section className="detail-tab-content">
-          {tab === 'vote' && <VotePanel isClosed={liveCalendar.is_closed} voteStatus={voteStatus.data?.voteStatus ?? []} ownVotes={ownVotes.data?.votes ?? []} loading={voteStatus.isPending || ownVotes.isPending} onSubmit={submitParticipantVotes} onReentryRequired={() => rerenderSession((version) => version + 1)} />}
+          {tab === 'vote' && <VotePanel isClosed={liveCalendar.is_closed} voteStatus={voteStatus.data?.voteStatus} ownVotes={ownVotes.data?.votes} loading={(!voteStatus.data && voteStatus.isPending) || (!ownVotes.data && ownVotes.isPending)} loadError={Boolean((voteStatus.isError && !voteStatus.data) || (ownVotes.isError && !ownVotes.data))} refetchError={Boolean((voteStatus.isRefetchError && voteStatus.data) || (ownVotes.isRefetchError && ownVotes.data))} state={voteEditorState} dispatch={voteEditorDispatch} onRetry={() => { void Promise.all([voteStatus.refetch(), ownVotes.refetch()]) }} onSubmit={submitParticipantVotes} onReentryRequired={() => rerenderSession((version) => version + 1)} />}
           {tab === 'status' && <VoteStatusPanel voteStatus={voteStatus.data?.voteStatus ?? []} participantsCount={participants.data?.count ?? 0} loading={voteStatus.isPending || participants.isPending} />}
           {tab === 'participants' && <ParticipantsPanel slug={slug} participants={participants.data?.participants ?? []} session={usableSession} currentUserUuid={currentUserUuid} hostUuid={liveCalendar.hostParticipantUuid} isHost={isHost} accessToken={accessToken} onlineUsers={realtime.onlineUsers} connectionState={realtime.connectionState} onSessionChanged={updateSession} />}
           {tab === 'settings' && isHost && <SettingsPanel calendar={liveCalendar} accessToken={accessToken!} participantUuid={usableSession.participantUuid} />}
@@ -110,13 +120,52 @@ export function CalendarDetailPage() {
   </WorkspaceLayout>
 }
 
+function useUnsavedVoteNavigationWarning(isDirty: boolean) {
+  const allowNavigation = useRef(false)
+
+  useEffect(() => {
+    allowNavigation.current = false
+    if (!isDirty) return
+
+    const confirmDiscard = () => window.confirm(
+      '저장하지 않은 투표 변경이 있어요. 변경을 버리고 이동할까요?\n취소하면 계속 편집할 수 있어요.',
+    )
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (allowNavigation.current) return
+      event.preventDefault()
+    }
+    const guardLinkNavigation = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target
+      const link = target instanceof Element ? target.closest('a[href]') : null
+      if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.hasAttribute('download')) return
+
+      const destination = new URL(link.href, window.location.href)
+      if (destination.href === window.location.href) return
+      if (!confirmDiscard()) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
+      allowNavigation.current = true
+    }
+
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    document.addEventListener('click', guardLinkNavigation, true)
+    return () => {
+      window.removeEventListener('beforeunload', warnBeforeUnload)
+      document.removeEventListener('click', guardLinkNavigation, true)
+    }
+  }, [isDirty])
+}
+
 function CalendarHero({ calendar, shareUrl, connectionState }: { calendar: Calendar; shareUrl: string; connectionState: RealtimeConnectionState }) {
   const [copied, setCopied] = useState(false)
   async function copyLink() {
     try { await navigator.clipboard.writeText(shareUrl); setCopied(true); window.setTimeout(() => setCopied(false), 1800) }
     catch { window.prompt('아래 참여 링크를 복사해주세요.', shareUrl) }
   }
-  return <section className="workspace-panel detail-calendar-hero"><img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={`${calendar.title} 대표 이미지`} /><div className="detail-calendar-hero-body"><div className="detail-status-row"><span className={calendar.is_closed ? 'workspace-status is-closed' : 'workspace-status'}>{calendar.is_closed ? '마감됨' : '진행 중'}</span><span className={`realtime-state is-${connectionState}`}><i />{connectionState === 'connected' ? '실시간 연결됨' : connectionState === 'connecting' ? '실시간 연결 중' : '연결 확인 필요'}</span></div><h1>{calendar.title}</h1><p>{calendar.description || '참여자와 가능한 날짜를 선택해보세요.'}</p><span className="detail-hero-date"><CalendarDays size={16} /> {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}</span></div><button type="button" className="button button-secondary detail-share-button" onClick={() => void copyLink()}>{copied ? <><Check size={17} /> 복사됨</> : <><Share2 size={17} /> 링크 공유</>}</button></section>
+  return <section className="workspace-panel detail-calendar-hero"><img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={`${calendar.title} 대표 이미지`} onError={hideUnavailableAsset} /><div className="detail-calendar-hero-body"><div className="detail-status-row"><span className={calendar.is_closed ? 'workspace-status is-closed' : 'workspace-status'}>{calendar.is_closed ? '마감됨' : '진행 중'}</span><span className={`realtime-state is-${connectionState}`}><i />{connectionState === 'connected' ? '실시간 연결됨' : connectionState === 'connecting' ? '실시간 연결 중' : '연결 확인 필요'}</span></div><h1>{calendar.title}</h1><p>{calendar.description || '참여자와 가능한 날짜를 선택해보세요.'}</p><span className="detail-hero-date"><CalendarDays size={16} /> {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}</span></div><button type="button" className="button button-secondary detail-share-button" onClick={() => void copyLink()}>{copied ? <><Check size={17} /> 복사됨</> : <><Share2 size={17} /> 링크 공유</>}</button></section>
 }
 
 interface ParticipantsPanelProps { slug: string; participants: Participant[]; session: ParticipantSession; currentUserUuid: string | null; hostUuid: string; isHost: boolean; accessToken: string | null; onlineUsers: OnlineCalendarUser[] | null; connectionState: RealtimeConnectionState; onSessionChanged: (session: ParticipantSession | null) => void }
@@ -143,5 +192,5 @@ function SettingsPanel({ calendar, accessToken, participantUuid }: { calendar: C
 
 function DetailAside({ calendar, participants, voteStatus, onlineUsers, connectionState }: { calendar?: Calendar; participants: Participant[]; voteStatus: DateVoteStatus[]; onlineUsers: OnlineCalendarUser[] | null; connectionState: RealtimeConnectionState }) {
   const onlineUuids = new Set(onlineUsers?.map((user) => user.sub) ?? [])
-  return <>{calendar && <section className="workspace-aside-card detail-aside-image"><img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="캘린더 이미지" /><p className="eyebrow">CALENDAR STATUS</p><strong>{calendar.is_closed ? '투표가 마감되었어요.' : '참여자의 응답을 기다리고 있어요.'}</strong></section>}<section className="workspace-aside-card participant-summary-card"><h2>참여자 ({participants.length})</h2>{participants.slice(0, 5).map((participant) => <div key={participant.uuid}><span className="participant-avatar" style={{ backgroundColor: participant.color_code }}>{participant.nickname.slice(0, 1)}</span><strong>{participant.nickname}</strong><i className={connectionState === 'connected' && onlineUuids.has(participant.uuid) ? 'is-online' : ''} title={connectionState === 'connected' && onlineUuids.has(participant.uuid) ? '온라인' : '오프라인 또는 확인 중'} /></div>)}</section><VoteRecommendations voteStatus={voteStatus} /></>
+  return <>{calendar && <section className="workspace-aside-card detail-aside-image"><img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="캘린더 이미지" onError={hideUnavailableAsset} /><p className="eyebrow">CALENDAR STATUS</p><strong>{calendar.is_closed ? '투표가 마감되었어요.' : '참여자의 응답을 기다리고 있어요.'}</strong></section>}<section className="workspace-aside-card participant-summary-card"><h2>참여자 ({participants.length})</h2>{participants.slice(0, 5).map((participant) => <div key={participant.uuid}><span className="participant-avatar" style={{ backgroundColor: participant.color_code }}>{participant.nickname.slice(0, 1)}</span><strong>{participant.nickname}</strong><i className={connectionState === 'connected' && onlineUuids.has(participant.uuid) ? 'is-online' : ''} title={connectionState === 'connected' && onlineUuids.has(participant.uuid) ? '온라인' : '오프라인 또는 확인 중'} /></div>)}</section><VoteRecommendations voteStatus={voteStatus} /></>
 }

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { calendarDetailQuery } from '../../../domains/calendar'
 import { getParticipantSession, isLinkedMemberParticipantSession, isParticipantSessionUsable, loginParticipant, registerParticipant, removeParticipantToken, setParticipantSession } from '../../../domains/participant'
 import { isApiError } from '../../../shared/api/httpClient'
-import { assetUrl } from '../../../shared/assets/assetUrl'
+import { assetUrl, hideUnavailableAsset } from '../../../shared/assets/assetUrl'
 import { formatDate } from '../../../shared/utils/format'
 import { useAuth } from '../../providers/AuthProvider'
 import { WorkspaceLayout } from '../components/WorkspaceLayout'
@@ -158,7 +158,7 @@ interface JoinCalendarSummaryProps { slug: string; title: string; description: s
 function JoinCalendarSummary({ slug, title, description, startDate, endDate, isClosed }: JoinCalendarSummaryProps) {
   return <>
     <section className="workspace-aside-card join-summary-card">
-      <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={`${title} 대표 이미지`} />
+      <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={`${title} 대표 이미지`} onError={hideUnavailableAsset} />
       <span className={isClosed ? 'workspace-status is-closed' : 'workspace-status'}>{isClosed ? '마감됨' : '참여 가능'}</span>
       <h2>{title}</h2><p>{description || '함께 가능한 시간을 찾아보세요.'}</p>
       <dl><div><dt><CalendarDays size={16} /> 기간</dt><dd>{formatDate(startDate)} — {formatDate(endDate)}</dd></div><div><dt><KeyRound size={16} /> 참여 코드</dt><dd>{slug}</dd></div></dl>

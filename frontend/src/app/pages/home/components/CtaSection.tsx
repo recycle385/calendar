@@ -1,12 +1,12 @@
-import { assetUrl } from '../../../../shared/assets/assetUrl';
+import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl';
 
-const placeholderImageUrl = assetUrl('main/dotoffice_header_logo.webp');
+const calendarImageUrl = assetUrl('edit/calendar-3d.webp');
 
 export function CtaSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <section className="section cta-section">
       <div className="shell cta-panel">
-        <div className="cta-people"><img src={placeholderImageUrl} alt="" /></div>
+        <div className="cta-people"><img src={calendarImageUrl} alt="" onError={hideUnavailableAsset} /></div>
         <div className="cta-copy">
           <p className="eyebrow">TOGETHER, A BETTER TIME</p>
           <h2>지금, 더 좋은 시간을 만들어보세요</h2>

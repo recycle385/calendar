@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { canSaveVoteEditor, initialVoteEditorState, voteEditorReducer } from './editor'
+import { canSaveVoteEditor, hasVoteEditorSourceData, initialVoteEditorState, voteEditorReducer } from './editor'
 
 describe('voteEditorReducer', () => {
+  it('조회 실패의 undefined와 정상적인 미투표 빈 배열을 구분한다', () => {
+    expect(hasVoteEditorSourceData([], [])).toBe(true)
+    expect(hasVoteEditorSourceData([], undefined)).toBe(false)
+    expect(hasVoteEditorSourceData(undefined, [])).toBe(false)
+  })
+
   it('저장 중 추가 편집을 막아 제출본과 화면 초안이 어긋나지 않는다', () => {
     let state = voteEditorReducer(initialVoteEditorState, { type: 'REMOTE_SYNC', draft: { '2026-09-10': 'available' } })
     state = voteEditorReducer(state, { type: 'SELECT', date: '2026-09-11', voteType: 'maybe' })
@@ -72,5 +78,14 @@ describe('voteEditorReducer', () => {
 
     state = voteEditorReducer(state, { type: 'SAVE_STARTED', draft: state.draft })
     expect(canSaveVoteEditor(state)).toBe(false)
+  })
+
+  it('상세 페이지의 참가 세션이 바뀌면 이전 캘린더 편집본을 초기화한다', () => {
+    let state = voteEditorReducer(initialVoteEditorState, { type: 'REMOTE_SYNC', draft: {} })
+    state = voteEditorReducer(state, { type: 'SELECT', date: '2026-09-10', voteType: 'available' })
+
+    state = voteEditorReducer(state, { type: 'RESET' })
+
+    expect(state).toEqual(initialVoteEditorState)
   })
 })

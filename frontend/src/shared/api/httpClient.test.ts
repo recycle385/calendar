@@ -84,6 +84,20 @@ describe('apiRequest Main 인증 갱신', () => {
     expect(onAuthExpired).toHaveBeenCalledTimes(1)
   })
 
+  it('공유 refresh가 503으로 실패하면 로그인 만료로 처리하지 않고 재시도 가능한 오류를 유지한다', async () => {
+    const onAuthExpired = vi.fn()
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(401, { success: false })))
+    configureMainAuth({
+      getAccessToken: () => 'expired',
+      getSessionSnapshot: () => ({ userUuid: 'user-1', sessionVersion: 1, accessToken: 'expired' }),
+      refreshAccessToken: async () => { throw new ApiError(503, { success: false, message: 'temporary' }) },
+      onAuthExpired,
+    })
+
+    await expect(apiRequest('/calendars', { auth: 'main' })).rejects.toMatchObject({ status: 503 })
+    expect(onAuthExpired).not.toHaveBeenCalled()
+  })
+
   it('요청 도중 계정이 바뀌면 새 계정 토큰으로 원 요청을 재전송하지 않는다', async () => {
     let session = { userUuid: 'user-a', sessionVersion: 1, accessToken: 'token-a' }
     const fetchMock = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => (

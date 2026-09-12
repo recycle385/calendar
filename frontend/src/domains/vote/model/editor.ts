@@ -1,4 +1,4 @@
-import type { ParticipantVoteRecord, VoteInput, VoteType } from './types'
+import type { DateVoteStatus, ParticipantVoteRecord, VoteInput, VoteType } from './types'
 
 export type VoteDraft = Record<string, VoteType>
 
@@ -14,6 +14,7 @@ export interface VoteEditorState {
 }
 
 export type VoteEditorAction =
+  | { type: 'RESET' }
   | { type: 'REMOTE_SYNC'; draft: VoteDraft }
   | { type: 'RELOAD_REMOTE' }
   | { type: 'SELECT'; date: string; voteType: VoteType }
@@ -60,8 +61,17 @@ export function canSaveVoteEditor(state: VoteEditorState) {
   return !state.isSaving && (state.isDirty || state.hasConflict)
 }
 
+export function hasVoteEditorSourceData(
+  voteStatus: DateVoteStatus[] | undefined,
+  ownVotes: ParticipantVoteRecord[] | undefined,
+) {
+  return voteStatus !== undefined && ownVotes !== undefined
+}
+
 export function voteEditorReducer(state: VoteEditorState, action: VoteEditorAction): VoteEditorState {
   switch (action.type) {
+    case 'RESET':
+      return initialVoteEditorState
     case 'REMOTE_SYNC':
       if (state.isDirty || state.isSaving || state.hasConflict) {
         return areVoteDraftsEqual(state.baseline, action.draft)

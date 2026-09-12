@@ -4,7 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 
 import { Footer } from "../../../shared/ui/Footer";
 import { Header } from "../../../shared/ui/Header";
-import { assetUrl } from "../../../shared/assets/assetUrl";
+import { assetUrl, hideUnavailableAsset } from "../../../shared/assets/assetUrl";
 import { useAuth } from "../../providers/AuthProvider";
 
 interface WorkspaceLayoutProps {
@@ -58,6 +58,7 @@ export function WorkspaceLayout({
                 src={assetUrl("edit/calendar-3d.webp")}
                 alt=""
                 aria-hidden="true"
+                onError={hideUnavailableAsset}
               />
             </div>
           </aside>

@@ -1,5 +1,5 @@
 import { CalendarDays, Users } from "lucide-react";
-import { assetUrl } from "../../../../shared/assets/assetUrl";
+import { assetUrl, hideUnavailableAsset } from "../../../../shared/assets/assetUrl";
 
 const cards = [
   [
@@ -48,7 +48,7 @@ export function UseCasesSection() {
           {cards.map(([tag, title, text, people, date, imageUrl]) => (
             <article className="usecase-card" key={title}>
               <div className="usecase-image">
-                <img src={assetUrl(imageUrl)} alt="" />
+                <img src={assetUrl(imageUrl)} alt="" onError={hideUnavailableAsset} />
                 <span>{tag}</span>
               </div>
               <div className="usecase-body">

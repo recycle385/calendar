@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 import { calendarKeys, createCalendar } from '../../../domains/calendar'
 import { setParticipantSession } from '../../../domains/participant'
-import { assetUrl } from '../../../shared/assets/assetUrl'
+import { assetUrl, hideUnavailableAsset } from '../../../shared/assets/assetUrl'
 import { useAuth } from '../../providers/AuthProvider'
 import { LoginRequired, WorkspaceLayout } from '../components/WorkspaceLayout'
 import { isValidCalendarRange, PLACEHOLDER_IMAGE_PATH } from './calendarHelpers'
@@ -132,7 +132,7 @@ function CreateAside() {
   return (
     <>
       <section className="workspace-aside-card create-preview-card">
-        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="캘린더 대표 이미지 미리보기" />
+        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="캘린더 대표 이미지 미리보기" onError={hideUnavailableAsset} />
         <p className="eyebrow">CALENDAR PREVIEW</p>
         <strong>모임이 만들어지면<br />바로 링크를 공유할 수 있어요.</strong>
       </section>

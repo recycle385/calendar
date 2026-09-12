@@ -4,7 +4,7 @@ import { CalendarDays, ChevronRight, Plus, Search, SlidersHorizontal, Users } fr
 import { Link } from 'react-router-dom'
 
 import { myCalendarsQuery, type Calendar } from '../../../domains/calendar'
-import { assetUrl } from '../../../shared/assets/assetUrl'
+import { assetUrl, hideUnavailableAsset } from '../../../shared/assets/assetUrl'
 import { formatDate } from '../../../shared/utils/format'
 import { useAuth } from '../../providers/AuthProvider'
 import { LoginRequired, WorkspaceLayout } from '../components/WorkspaceLayout'
@@ -17,7 +17,7 @@ function CalendarCard({ calendar }: { calendar: Calendar }) {
   return (
     <Link className="calendar-workspace-card" to={`/c/${calendar.slug}`}>
       <div className="calendar-workspace-card-image">
-        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={getCalendarImageAlt(calendar.title)} />
+        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt={getCalendarImageAlt(calendar.title)} onError={hideUnavailableAsset} />
         <span className={calendar.is_closed ? 'workspace-status is-closed' : 'workspace-status'}>
           {calendarStateLabel(calendar)}
         </span>
@@ -121,7 +121,7 @@ function CalendarListAside() {
   return (
     <>
       <section className="workspace-aside-card workspace-aside-image">
-        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="모임 캘린더 안내 이미지" />
+        <img src={assetUrl(PLACEHOLDER_IMAGE_PATH)} alt="모임 캘린더 안내 이미지" onError={hideUnavailableAsset} />
         <div><p className="eyebrow">ONE LINK, TOGETHER</p><strong>링크 하나로<br />일정을 시작하세요.</strong></div>
       </section>
       <section className="workspace-aside-card aside-tip-card">

@@ -3,6 +3,7 @@ export { participantVotesQuery, voteKeys, voteStatusQuery } from './model/querie
 export {
   areVoteDraftsEqual,
   createVoteDraft,
+  hasVoteEditorSourceData,
   initialVoteEditorState,
   serializeVoteDraft,
   voteEditorReducer,

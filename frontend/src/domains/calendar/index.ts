@@ -15,3 +15,4 @@ export type {
   UpdateCalendarRequest,
 } from './model/types'
 export { calendarDetailQuery, calendarKeys, myCalendarsQuery } from './model/queries'
+export { parseCalendarJoinPath } from './model/shareLink'

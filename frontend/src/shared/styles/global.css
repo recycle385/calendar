@@ -206,6 +206,44 @@ input {
   gap: 14px;
   margin-top: 28px;
 }
+.hero-join-form {
+  display: flex;
+  min-width: min(100%, 390px);
+  gap: 8px;
+}
+.hero-join-form input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #d6e2f1;
+  border-radius: 11px;
+  padding: 0 12px;
+  color: #263d61;
+  background: #fff;
+  outline: 0;
+}
+.hero-join-form input:focus {
+  border-color: #72adff;
+  box-shadow: 0 0 0 3px #e9f3ff;
+}
+.hero-join-form .button {
+  flex: 0 0 auto;
+}
+.hero-join-error {
+  margin: 8px 0 0;
+  color: #cf4b4b;
+  font-size: 12px;
+}
+.sr-only {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 .hero-copy small,
 .cta-panel small {
   display: block;
@@ -883,6 +921,10 @@ input {
   font-size: 11px;
   color: #728198;
 }
+.footer-links > span {
+  color: #a7b0be;
+  cursor: default;
+}
 .footer-meta {
   text-align: right;
   font-size: 11px;
@@ -1447,6 +1489,10 @@ input {
     flex-direction: column;
     gap: 9px;
     margin-top: 20px;
+  }
+  .hero-join-form {
+    width: 100%;
+    min-width: 0;
   }
   .hero-actions .button {
     width: 100%;
