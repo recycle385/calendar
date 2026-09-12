@@ -11,6 +11,7 @@ import { formatUtcDateTimeForSql } from '../utils/utcDate';
 export interface ICalendarRepository {
   create(input: CreateCalendarInput, connection?: PoolConnection): Promise<Calendar>;
   findById(id: number, connection?: PoolConnection): Promise<Calendar | null>;
+  findByIdForUpdate(id: number, connection: PoolConnection): Promise<Calendar | null>;
   findBySlug(slug: string, connection?: PoolConnection): Promise<Calendar | null>;
   findBySlugForUpdate(slug: string, connection: PoolConnection): Promise<Calendar | null>;
   getIdUsingSlug(slug: string, connection?: PoolConnection): Promise<number>;
@@ -25,6 +26,10 @@ export interface ICalendarRepository {
   ): Promise<CalendarWithHostUuid[]>;
   slugExists(slug: string, connection?: PoolConnection): Promise<boolean>;
   findEndedAndOpen(connection?: PoolConnection, referenceDate?: DateOnlyInput): Promise<Calendar[]>;
+  findEndedAndOpenForUpdate(
+    connection: PoolConnection,
+    referenceDate?: DateOnlyInput
+  ): Promise<Calendar[]>;
   findExpired(connection?: PoolConnection, referenceTime?: Date): Promise<Calendar[]>;
 }
 
@@ -77,6 +82,15 @@ export class CalendarRepository implements ICalendarRepository {
     }
 
     return this.mapToCalendar(rows[0]);
+  }
+
+  async findByIdForUpdate(id: number, connection: PoolConnection): Promise<Calendar | null> {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      'SELECT * FROM calendars WHERE id = ? FOR UPDATE',
+      [id]
+    );
+
+    return rows.length === 0 ? null : this.mapToCalendar(rows[0]);
   }
 
   /**
@@ -249,6 +263,18 @@ export class CalendarRepository implements ICalendarRepository {
 
     const [rows] = await poolToUse.execute<RowDataPacket[]>(
       'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ?',
+      [formatDateOnly(referenceDate)]
+    );
+
+    return rows.map((row) => this.mapToCalendar(row));
+  }
+
+  async findEndedAndOpenForUpdate(
+    connection: PoolConnection,
+    referenceDate: DateOnlyInput = todayDateOnlyUtc()
+  ): Promise<Calendar[]> {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ? FOR UPDATE',
       [formatDateOnly(referenceDate)]
     );
 

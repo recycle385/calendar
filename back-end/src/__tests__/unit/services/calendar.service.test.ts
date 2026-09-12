@@ -20,6 +20,7 @@ jest.mock('../../../infrastructure/transaction.manager', () => ({
 const mockCalendarRepository: jest.Mocked<ICalendarRepository> = {
   create: jest.fn(),
   findById: jest.fn(),
+  findByIdForUpdate: jest.fn(),
   findBySlug: jest.fn(),
   findBySlugForUpdate: jest.fn(),
   getIdUsingSlug: jest.fn(),
@@ -31,6 +32,7 @@ const mockCalendarRepository: jest.Mocked<ICalendarRepository> = {
   getCalAndPUuidDatasByUserIds: jest.fn(),
   slugExists: jest.fn(),
   findEndedAndOpen: jest.fn(),
+  findEndedAndOpenForUpdate: jest.fn(),
   findExpired: jest.fn(),
 };
 
@@ -362,7 +364,10 @@ describe('CalendarService Unit Test', () => {
 
       const result = await calendarService.closeCalendar(slug, ownerId);
 
-      expect(mockCalendarRepository.close).toHaveBeenCalledWith(targetCalendar.id);
+      expect(mockCalendarRepository.close).toHaveBeenCalledWith(
+        targetCalendar.id,
+        expect.anything()
+      );
       expect(result.is_closed).toBe(true);
     });
 

@@ -9,8 +9,15 @@ import { errorHandler } from '../../../middlewares/errorHandler';
 import { createCalendarRouter } from '../../../routes/calendar.routes';
 import { createParticipantRouter } from '../../../routes/participant.routes';
 import { CalendarService } from '../../../services/calendar.service';
+import { participantSocketRoom } from '../../../sockets/socketRooms';
 import { generateMainToken } from '../../../utils/jwt/mainToken';
 import { generateParticipantToken } from '../../../utils/jwt/participantToken';
+
+const mockDisconnectSockets = jest.fn();
+const mockIoIn = jest.fn(() => ({
+  disconnectSockets: mockDisconnectSockets,
+  fetchSockets: async () => [],
+}));
 
 jest.mock('../../../containers/service.container', () => ({
   tokenService: {
@@ -26,7 +33,7 @@ jest.mock('../../../infrastructure/transaction.manager', () => ({
 jest.mock('../../../sockets', () => ({
   getIO: () => ({
     to: () => ({ emit: jest.fn() }),
-    in: () => ({ disconnectSockets: jest.fn(), fetchSockets: async () => [] }),
+    in: mockIoIn,
   }),
 }));
 
@@ -67,6 +74,10 @@ describe('관리 API는 Main Token과 DB 소유권으로 인가한다', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    mockIoIn.mockImplementation(() => ({
+      disconnectSockets: mockDisconnectSockets,
+      fetchSockets: async () => [],
+    }));
     repository.findBySlug.mockResolvedValue(calendar);
     repository.findBySlugForUpdate.mockResolvedValue(calendar);
     repository.findById.mockResolvedValue(calendar);
@@ -169,5 +180,15 @@ describe('관리 API는 Main Token과 DB 소유권으로 인가한다', () => {
       .set('Authorization', `Bearer ${generateMainToken({ sub: 'owner' })}`);
     expect([400, 403]).toContain(response.status);
     expect(participants.deleteParticipant).not.toHaveBeenCalled();
+  });
+
+  it('강퇴 시 캘린더 방 밖 연결까지 포함하는 참가자 전용 룸을 종료한다', async () => {
+    await request(app)
+      .delete(`/calendars/${slug}/participants/${targetUuid}`)
+      .set('Authorization', `Bearer ${generateMainToken({ sub: 'owner' })}`)
+      .expect(200);
+
+    expect(mockIoIn).toHaveBeenCalledWith(participantSocketRoom(targetUuid));
+    expect(mockDisconnectSockets).toHaveBeenCalledWith(true);
   });
 });

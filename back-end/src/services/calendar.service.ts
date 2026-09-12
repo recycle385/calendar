@@ -305,24 +305,31 @@ export class CalendarService implements ICalendarService {
    * 캘린더 마감 (방장만 가능)
    */
   async closeCalendar(slug: string, ownerId: number): Promise<Calendar> {
-    const calendar = await this.getCalendarBySlug(slug);
+    return TransactionManager.run(async (connection) => {
+      const calendar = await this.calendarRepository.findBySlugForUpdate(slug, connection);
+      if (!calendar) {
+        throw Errors.NotFound('캘린더를 찾을 수 없습니다');
+      }
 
-    // 권한 검증
-    if (calendar.owner_id !== ownerId) {
-      throw Errors.Forbidden('캘린더를 마감할 권한이 없습니다');
-    }
+      // 권한 검증
+      if (calendar.owner_id !== ownerId) {
+        throw Errors.Forbidden('캘린더를 마감할 권한이 없습니다');
+      }
 
-    // 이미 마감된 경우
-    if (calendar.is_closed) {
-      throw Errors.BadRequest('이미 마감된 캘린더입니다');
-    }
+      // 이미 마감된 경우
+      if (calendar.is_closed) {
+        throw Errors.BadRequest('이미 마감된 캘린더입니다');
+      }
 
-    const closed = await this.calendarRepository.close(calendar.id);
+      const closed = await this.calendarRepository.close(calendar.id, connection);
 
-    if (!closed) {
-      throw Errors.Internal('캘린더 마감에 실패했습니다');
-    }
+      if (!closed) {
+        throw Errors.Internal('캘린더 마감에 실패했습니다');
+      }
 
-    return await this.getCalendarById(calendar.id);
+      const result = await this.calendarRepository.findById(calendar.id, connection);
+      if (!result) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
+      return result;
+    });
   }
 }

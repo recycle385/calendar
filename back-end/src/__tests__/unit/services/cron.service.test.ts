@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 
+import { TransactionManager } from '../../../infrastructure/transaction.manager';
 import { VALID_DATE_KINDS } from '../../../models/DateInfo';
 import { ICalendarRepository } from '../../../repositories/calendar.repository';
 import { IDateInfoRepository } from '../../../repositories/dateInfo.repository';
@@ -11,6 +12,10 @@ jest.mock('../../../middlewares/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 jest.mock('../../../utils/Spcde.api', () => ({ getSpcdeInfoUrl: jest.fn() }));
+jest.mock('../../../infrastructure/transaction.manager', () => ({
+  TransactionManager: { run: jest.fn() },
+}));
+jest.mock('../../../sockets', () => ({ getIO: jest.fn() }));
 
 const api = getSpcdeInfoUrl as jest.Mock;
 
@@ -27,7 +32,8 @@ describe('공휴일 동기화 복구', () => {
   const year = new Date().getUTCFullYear();
   const calendars = {
     findExpired: jest.fn(),
-    findEndedAndOpen: jest.fn(),
+    findEndedAndOpenForUpdate: jest.fn(),
+    closeByIds: jest.fn(),
   };
 
   beforeEach(() => {
@@ -38,7 +44,11 @@ describe('공휴일 동기화 복구', () => {
     repository.findByYearBefore.mockResolvedValue([]);
     api.mockResolvedValue([]);
     calendars.findExpired.mockResolvedValue([]);
-    calendars.findEndedAndOpen.mockResolvedValue([]);
+    calendars.findEndedAndOpenForUpdate.mockResolvedValue([]);
+    calendars.closeByIds.mockResolvedValue(0);
+    (TransactionManager.run as jest.Mock).mockImplementation(
+      (callback: (connection: object) => unknown) => callback({ transaction: true })
+    );
     service = new CronService(
       calendars as unknown as ICalendarRepository,
       repository as unknown as IDateInfoRepository
@@ -102,7 +112,7 @@ describe('공휴일 동기화 복구', () => {
     jest.spyOn(service, 'runHolidayUpdate').mockResolvedValue();
     service.start();
     await (cron.schedule as jest.Mock).mock.calls[0][1]({ date: new Date(scheduledAt) });
-    expect(calendars.findEndedAndOpen).toHaveBeenCalledWith(undefined, cutoff);
+    expect(calendars.findEndedAndOpenForUpdate).toHaveBeenCalledWith(expect.anything(), cutoff);
     // 삭제 조회에는 다음 날짜를 넘기지 않아 실제 UTC 만료 시각 비교를 유지한다.
     expect(calendars.findExpired).toHaveBeenCalledWith();
   });
@@ -134,5 +144,19 @@ describe('공휴일 동기화 복구', () => {
   it('전체 갱신은 이미 완료된 종류도 다시 가져온다', async () => {
     await service.runHolidayUpdate(false);
     expect(api).toHaveBeenCalledTimes(6 * VALID_DATE_KINDS.length);
+  });
+
+  it('잠금을 얻기 전에 종료일이 연장되면 자동 마감하지 않는다', async () => {
+    calendars.findEndedAndOpenForUpdate.mockResolvedValue([]);
+    jest.spyOn(service, 'runHolidayUpdate').mockResolvedValue();
+    service.start();
+
+    await (cron.schedule as jest.Mock).mock.calls[0][1]({ date: new Date('2026-09-08T19:00:00Z') });
+
+    expect(calendars.findEndedAndOpenForUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      '2026-09-09'
+    );
+    expect(calendars.closeByIds).not.toHaveBeenCalled();
   });
 });

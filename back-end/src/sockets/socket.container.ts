@@ -2,15 +2,19 @@ import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 
 import { env } from '../config/env';
-import { participantService, tokenService } from '../containers/service.container';
+import { calendarService, participantService, tokenService } from '../containers/service.container';
 import { logger } from '../middlewares/logger';
 import { CustomSocket } from '../types/socket.types';
 import { Errors } from '../utils/errors';
 import { CalendarSocketController } from './socket.controller';
+import { participantSocketRoom } from './socketRooms';
 
 let io: Server;
 export const initializeSocketIO = (httpServer: HttpServer) => {
-  const calendarSocketController = new CalendarSocketController();
+  const calendarSocketController = new CalendarSocketController(
+    calendarService,
+    participantService
+  );
   io = new Server(httpServer, {
     cors: { origin: env.CLIENT_URL, credentials: true },
     pingTimeout: 5000,
@@ -29,21 +33,31 @@ export const initializeSocketIO = (httpServer: HttpServer) => {
 
       const token = tokenService.verifyParticipantToken(tokenStr);
 
-      const exists = await participantService.existsParticipantByUuid(token.sub);
+      const calendarSlug = token.calendarSlug || token.calendarId;
+      if (!calendarSlug) {
+        return next(Errors.Unauthorized('Socket 토큰의 캘린더 정보가 없습니다'));
+      }
 
-      if (!exists) {
+      const [participant, calendar] = await Promise.all([
+        participantService.getParticipantByUuid(token.sub),
+        calendarService.getCalendarBySlug(calendarSlug),
+      ]);
+
+      if (participant.calendar_id !== calendar.id) {
         return next(Errors.Unauthorized('유효하지 않은 참가자입니다'));
       }
 
       socket.data = token;
       next();
-    } catch (err) {
+    } catch {
       next(Errors.Unauthorized('Socket 인증 실패'));
     }
   });
 
   io.on('connection', (socket: CustomSocket) => {
     logger.info(`소켓이 연결됐습니다. 방: ${socket.id} (유저: ${socket.data.sub})`);
+
+    void socket.join(participantSocketRoom(socket.data.sub));
 
     calendarSocketController.handleSocketEvent(socket);
 

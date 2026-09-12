@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 
+import { TransactionManager } from '../infrastructure/transaction.manager';
 import { logger } from '../middlewares/logger';
 import { dateKindMap, SafeDateInfo } from '../models/DateInfo';
 import { ICalendarRepository } from '../repositories/calendar.repository';
@@ -76,28 +77,36 @@ export class CronService {
 
   private async closeEndedCalendars(referenceDate: string) {
     try {
-      const targetCalendars = await this.calendarRepository.findEndedAndOpen(
-        undefined,
-        referenceDate
-      );
-
-      if (targetCalendars.length === 0) return;
-
-      logger.info(`[Cron] 투표 기간이 끝난 ${targetCalendars.length}개의 캘린더를 마감`);
-
-      const targetCalendarIds = targetCalendars.map((calendar) => calendar.id);
-
-      const closedCalendarsCount = await this.calendarRepository.closeByIds(targetCalendarIds);
-
-      if (targetCalendars.length !== closedCalendarsCount) {
-        logger.warn(
-          `[Cron] 캘린더 마감 개수 불일치. (대상: ${targetCalendars.length}개, 실제 마감: ${closedCalendarsCount}개)`
+      const closedCalendars = await TransactionManager.run(async (connection) => {
+        const targetCalendars = await this.calendarRepository.findEndedAndOpenForUpdate(
+          connection,
+          referenceDate
         );
-      }
+
+        if (targetCalendars.length === 0) return [];
+
+        const targetCalendarIds = targetCalendars.map((calendar) => calendar.id);
+        const closedCalendarsCount = await this.calendarRepository.closeByIds(
+          targetCalendarIds,
+          connection
+        );
+
+        if (targetCalendars.length !== closedCalendarsCount) {
+          throw new Error(
+            `[Cron] 캘린더 마감 개수 불일치. (대상: ${targetCalendars.length}개, 실제 마감: ${closedCalendarsCount}개)`
+          );
+        }
+
+        return targetCalendars;
+      });
+
+      if (closedCalendars.length === 0) return;
+
+      logger.info(`[Cron] 투표 기간이 끝난 ${closedCalendars.length}개의 캘린더를 마감`);
 
       const io = getIO();
 
-      for (const calendar of targetCalendars) {
+      for (const calendar of closedCalendars) {
         try {
           io.to(calendar.slug).emit('calendarClosed', {
             message: '투표 기간이 종료되어 자동 마감되었습니다.',

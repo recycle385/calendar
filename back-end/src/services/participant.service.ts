@@ -1,12 +1,14 @@
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
+import { TransactionManager } from '../infrastructure/transaction.manager';
 import {
   CreateParticipantInput,
   Participant,
   ParticipantServiceInput,
   ParticipantWithVotes,
 } from '../models/Participant';
+import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IParticipantRepository } from '../repositories/participant.repository';
 import { Errors } from '../utils/errors';
 
@@ -41,7 +43,10 @@ export interface IParticipantService {
 }
 
 export class ParticipantService implements IParticipantService {
-  constructor(private participantRepository: IParticipantRepository) {}
+  constructor(
+    private participantRepository: IParticipantRepository,
+    private calendarRepository: ICalendarRepository
+  ) {}
 
   /**
    * 참가자 등록 (닉네임 + 비밀번호)
@@ -58,33 +63,9 @@ export class ParticipantService implements IParticipantService {
       throw Errors.BadRequest('닉네임은 20자 이하여야 합니다');
     }
 
-    if ('userId' in input) {
-      if (!input.userId) {
-        throw Errors.BadRequest('유효하지 않은 User ID입니다.');
-      }
-
-      const alreadyJoined = await this.participantRepository.existsByCalendarAndUser(
-        input.calendarId,
-        input.userId
-      );
-
-      if (alreadyJoined) {
-        throw Errors.Conflict('이미 이 캘린더에 참여한 회원입니다');
-      }
-    }
-
-    // 닉네임 중복 체크
-    const exists = await this.participantRepository.nicknameExists({
-      calendar_id: input.calendarId,
-      nickname: input.nickname.trim(),
-    });
-
-    if (exists) {
-      throw Errors.Conflict('이미 사용 중인 닉네임입니다');
-    }
-
     // UUID 생성
     const participantUuid = randomUUID();
+    const memberUserId = 'userId' in input ? input.userId : undefined;
 
     let createInput: CreateParticipantInput;
 
@@ -134,13 +115,48 @@ export class ParticipantService implements IParticipantService {
       };
     }
 
-    // 참가자 생성
-    const participant = await this.participantRepository.create(createInput);
+    return TransactionManager.run(async (connection) => {
+      // 마감/기간 수정과 동일한 캘린더 행 잠금을 사용해 상태 확인과 생성을 직렬화한다.
+      const calendar = await this.calendarRepository.findByIdForUpdate(
+        input.calendarId,
+        connection
+      );
+      if (!calendar) {
+        throw Errors.NotFound('캘린더를 찾을 수 없습니다');
+      }
+      if (calendar.is_closed) {
+        throw Errors.BadRequest('마감된 캘린더에는 참가할 수 없습니다');
+      }
 
-    return {
-      participant,
-      participantUuid: participantUuid, // UUID를 토큰으로 사용
-    };
+      if (memberUserId !== undefined) {
+        const alreadyJoined = await this.participantRepository.existsByCalendarAndUser(
+          input.calendarId,
+          memberUserId,
+          connection
+        );
+        if (alreadyJoined) {
+          throw Errors.Conflict('이미 이 캘린더에 참여한 회원입니다');
+        }
+      }
+
+      const exists = await this.participantRepository.nicknameExists(
+        {
+          calendar_id: input.calendarId,
+          nickname: input.nickname.trim(),
+        },
+        connection
+      );
+      if (exists) {
+        throw Errors.Conflict('이미 사용 중인 닉네임입니다');
+      }
+
+      const participant = await this.participantRepository.create(createInput, connection);
+
+      return {
+        participant,
+        participantUuid: participantUuid,
+      };
+    });
   }
 
   /**

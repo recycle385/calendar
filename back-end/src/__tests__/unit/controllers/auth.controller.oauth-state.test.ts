@@ -1,10 +1,11 @@
+import { describe, expect, it, jest } from '@jest/globals';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import { describe, expect, it, jest } from '@jest/globals';
 import request from 'supertest';
 
 import { AuthController } from '../../../controllers/auth.controller';
-import { errorHandler, asyncHandler } from '../../../middlewares/errorHandler';
+import { asyncHandler, errorHandler } from '../../../middlewares/errorHandler';
+import { Errors } from '../../../utils/errors';
 
 type AuthService = ConstructorParameters<typeof AuthController>[0];
 
@@ -15,6 +16,7 @@ function createTestApp(authService: jest.Mocked<AuthService>) {
   app.use(cookieParser());
   app.get('/google', asyncHandler(controller.redirectToGoogle));
   app.get('/google/callback', asyncHandler(controller.handleGoogleCallback));
+  app.post('/refresh', asyncHandler(controller.refreshToken));
   app.use(errorHandler);
 
   return app;
@@ -31,7 +33,9 @@ function createMockAuthService(): jest.Mocked<AuthService> {
 
 describe('AuthController OAuth state', () => {
   it('Google 인증 URL의 state와 HttpOnly 쿠키 state가 일치해야 한다', async () => {
-    const response = await request(createTestApp(createMockAuthService())).get('/google').expect(302);
+    const response = await request(createTestApp(createMockAuthService()))
+      .get('/google')
+      .expect(302);
     const loginUrl = new URL(response.headers.location);
     const setCookies = response.headers['set-cookie'] as unknown as string[];
     const stateCookie = setCookies.find((cookie) => cookie.startsWith('oauth_state='));
@@ -68,5 +72,31 @@ describe('AuthController OAuth state', () => {
 
     expect(authService.handleGoogleCallback).toHaveBeenCalledWith('google-code');
     expect(response.headers['set-cookie']?.[0]).toContain('oauth_state=;');
+  });
+});
+
+describe('AuthController refresh cookie', () => {
+  it('Redis 장애로 갱신이 503이면 기존 Refresh Token 쿠키를 지우지 않는다', async () => {
+    const authService = createMockAuthService();
+    authService.refreshToken.mockRejectedValue(Errors.ServiceUnavailable());
+
+    const response = await request(createTestApp(authService))
+      .post('/refresh')
+      .set('Cookie', 'jwt=still-valid-token')
+      .expect(503);
+
+    expect(response.headers['set-cookie']).toBeUndefined();
+  });
+
+  it('토큰 만료처럼 인증 무효가 확인된 401이면 Refresh Token 쿠키를 지운다', async () => {
+    const authService = createMockAuthService();
+    authService.refreshToken.mockRejectedValue(Errors.Unauthorized('만료된 토큰'));
+
+    const response = await request(createTestApp(authService))
+      .post('/refresh')
+      .set('Cookie', 'jwt=expired-token')
+      .expect(401);
+
+    expect(response.headers['set-cookie']?.[0]).toContain('jwt=;');
   });
 });

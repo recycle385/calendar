@@ -5,11 +5,11 @@ import { io as Client, Socket as ClientSocket } from 'socket.io-client';
 import request from 'supertest';
 
 import { app } from '../../app';
-import { env } from '../../config/env';
-import { addDateOnlyDays, todayDateOnlyUtc } from '../../utils/dateOnly';
 import pool, { closeDatabaseConnection } from '../../config/database';
+import { env } from '../../config/env';
 import { connectRedis, disconnectRedis, redisClient } from '../../config/redis';
 import { initializeSocketIO } from '../../sockets';
+import { addDateOnlyDays, todayDateOnlyUtc } from '../../utils/dateOnly';
 
 // 타임아웃 30초 설정 (통합 테스트용)
 jest.setTimeout(30000);
@@ -264,9 +264,9 @@ describe('Socket.IO Integration Test', () => {
         [clientSocketHost, clientSocketGuest].map(
           (s) =>
             new Promise<void>((resolve) => {
+              s.once('onlineUsers', () => resolve());
               s.on('connect', () => {
                 s.emit('joinCalendarRoom');
-                resolve();
               });
             })
         )
@@ -313,9 +313,9 @@ describe('Socket.IO Integration Test', () => {
         [clientSocketHost, clientSocketGuest].map(
           (s) =>
             new Promise<void>((resolve) => {
+              s.once('onlineUsers', () => resolve());
               s.on('connect', () => {
                 s.emit('joinCalendarRoom');
-                resolve();
               });
             })
         )

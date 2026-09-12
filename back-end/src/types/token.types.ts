@@ -12,6 +12,8 @@ export interface ParticipantTokenPayload {
   role: 'host' | 'guest';
 
   userUuid?: string; // 선택적 사용자 UUID (연결된 사용자 있을 경우)
+  exp?: number;
+  iat?: number;
 }
 
 export interface RefreshTokenPayload {

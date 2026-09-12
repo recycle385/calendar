@@ -1,15 +1,22 @@
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
+import { TransactionManager } from '../../../infrastructure/transaction.manager';
+import { Calendar } from '../../../models/Calendar';
 import { Participant } from '../../../models/Participant';
+import { ICalendarRepository } from '../../../repositories/calendar.repository';
 import { IParticipantRepository } from '../../../repositories/participant.repository';
 import { ParticipantService } from '../../../services/participant.service';
-import { Errors } from '../../../utils/errors';
 
 // 외부 라이브러리 Mocking
 jest.mock('bcrypt');
 jest.mock('crypto', () => ({
   randomUUID: jest.fn(),
+}));
+jest.mock('../../../infrastructure/transaction.manager', () => ({
+  TransactionManager: {
+    run: jest.fn((callback: (connection: object) => unknown) => callback({ transaction: true })),
+  },
 }));
 
 // Repository Mocking
@@ -30,14 +37,25 @@ const mockParticipantRepository: jest.Mocked<IParticipantRepository> = {
   delete: jest.fn(),
 };
 
+const mockCalendarRepository = {
+  findByIdForUpdate: jest.fn(),
+} as unknown as jest.Mocked<ICalendarRepository>;
+
 describe('ParticipantService Unit Test', () => {
   let participantService: ParticipantService;
 
   beforeEach(() => {
     // 모든 모의 객체의 호출 기록과 반환값 설정을 초기화합니다.
     jest.resetAllMocks();
+    (TransactionManager.run as jest.Mock).mockImplementation(
+      (callback: (connection: object) => unknown) => callback({ transaction: true })
+    );
     mockParticipantRepository.existsByCalendarAndUser.mockResolvedValue(false);
-    participantService = new ParticipantService(mockParticipantRepository);
+    mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
+      id: 1,
+      is_closed: false,
+    } as Calendar);
+    participantService = new ParticipantService(mockParticipantRepository, mockCalendarRepository);
   });
 
   // =================================================================
@@ -85,10 +103,13 @@ describe('ParticipantService Unit Test', () => {
       const result = await participantService.registerParticipant(input);
 
       // 검증
-      expect(mockParticipantRepository.nicknameExists).toHaveBeenCalledWith({
-        calendar_id: calendarId,
-        nickname,
-      });
+      expect(mockParticipantRepository.nicknameExists).toHaveBeenCalledWith(
+        {
+          calendar_id: calendarId,
+          nickname,
+        },
+        expect.anything()
+      );
       expect(bcrypt.hash).toHaveBeenCalledWith(password, 10);
 
       // 수정됨: Service 코드에서 connection 인자를 넘기지 않으므로 expect.anything() 제거
@@ -98,7 +119,8 @@ describe('ParticipantService Unit Test', () => {
           nickname,
           password_hash: hashedPassword,
           participant_uuid: mockUuid,
-        })
+        }),
+        expect.anything()
       );
       expect(result.participantUuid).toBe(mockUuid);
     });
@@ -116,7 +138,7 @@ describe('ParticipantService Unit Test', () => {
       } as Participant);
 
       // 실행
-      const result = await participantService.registerParticipant(input);
+      await participantService.registerParticipant(input);
 
       // 검증: 비밀번호 해싱은 호출되지 않아야 함
       expect(bcrypt.hash).not.toHaveBeenCalled();
@@ -127,7 +149,8 @@ describe('ParticipantService Unit Test', () => {
           role: 'guest',
           user_id: userId,
           nickname,
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -139,6 +162,23 @@ describe('ParticipantService Unit Test', () => {
       await expect(participantService.registerParticipant(input)).rejects.toThrow(
         '이미 사용 중인 닉네임입니다'
       );
+    });
+
+    it('캘린더 행 잠금 뒤 마감 상태를 다시 확인하고 신규 등록을 거부한다', async () => {
+      mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
+        id: calendarId,
+        is_closed: true,
+      } as Calendar);
+
+      await expect(
+        participantService.registerParticipant({ calendarId, nickname, password })
+      ).rejects.toThrow('마감된 캘린더에는 참가할 수 없습니다');
+
+      expect(mockCalendarRepository.findByIdForUpdate).toHaveBeenCalledWith(
+        calendarId,
+        expect.anything()
+      );
+      expect(mockParticipantRepository.create).not.toHaveBeenCalled();
     });
 
     it('[실패] 비밀번호가 너무 짧은 경우 BadRequest 에러를 던져야 한다', async () => {

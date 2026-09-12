@@ -31,11 +31,26 @@ describe('CalendarRepository UTC 기준 조회', () => {
   });
 
   it('수정용 조회는 지정한 트랜잭션 연결에서 행 잠금을 사용한다', async () => {
-    const connection = { execute: jest.fn(async (..._args: unknown[]) => [[]]) };
+    const connection = { execute: jest.fn(async () => [[]]) as jest.Mock };
     await repository.findBySlugForUpdate('slug', connection as any);
     expect(connection.execute).toHaveBeenCalledWith(
       'SELECT * FROM calendars WHERE slug = ? FOR UPDATE',
       ['slug']
+    );
+    expect(mockPool.execute).not.toHaveBeenCalled();
+  });
+
+  it('자동 마감 대상도 변경 직전에 같은 트랜잭션 연결로 잠근다', async () => {
+    const connection = { execute: jest.fn(async () => [[]]) as jest.Mock };
+
+    await repository.findEndedAndOpenForUpdate(
+      connection as any,
+      new Date('2026-06-08T23:30:00.000Z')
+    );
+
+    expect(connection.execute).toHaveBeenCalledWith(
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ? FOR UPDATE',
+      ['2026-06-08']
     );
     expect(mockPool.execute).not.toHaveBeenCalled();
   });

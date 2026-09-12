@@ -7,6 +7,7 @@ import { IParticipantService } from '../services/participant.service';
 import { ITokenService } from '../services/token.service';
 import { IUserService } from '../services/user.service';
 import { getIO } from '../sockets';
+import { participantSocketRoom } from '../sockets/socketRooms';
 import { Errors } from '../utils/errors';
 
 export class ParticipantController {
@@ -161,14 +162,8 @@ export class ParticipantController {
 
     const io = getIO();
 
-    const sockets = await io.in(slug).fetchSockets();
-
-    for (const socket of sockets) {
-      if (socket.data.sub === targetUuid) {
-        socket.disconnect(true);
-        logger.warn(`삭제된 유저(${targetUuid}) 소켓 연결 해제`);
-      }
-    }
+    io.in(participantSocketRoom(targetUuid)).disconnectSockets(true);
+    logger.warn(`삭제된 유저(${targetUuid})의 모든 소켓 연결 해제`);
 
     return res.status(200).json({
       message: '참가자가 삭제되었습니다',
@@ -196,14 +191,8 @@ export class ParticipantController {
 
     const io = getIO();
 
-    const sockets = await io.in(slug).fetchSockets();
-
-    for (const socket of sockets) {
-      if (socket.data.sub === targetUuid) {
-        socket.disconnect(true);
-        logger.warn(`삭제된 유저(${targetUuid}) 소켓 연결 해제`);
-      }
-    }
+    io.in(participantSocketRoom(targetUuid)).disconnectSockets(true);
+    logger.warn(`삭제된 유저(${targetUuid})의 모든 소켓 연결 해제`);
 
     return res.status(200).json({
       message: '참가자가 삭제되었습니다',

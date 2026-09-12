@@ -8,7 +8,7 @@ import { User } from '../models';
 import { IAuthService } from '../services/auth.service';
 import { OAuthCallbackResponse, SafeUser } from '../types/auth.types';
 import { TokenPair } from '../types/token.types';
-import { Errors } from '../utils/errors';
+import { AppError, Errors } from '../utils/errors';
 import { toMilliseconds } from '../utils/timeConverter';
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
@@ -139,7 +139,11 @@ export class AuthController {
         accessToken: newTokenPair.accessToken,
       });
     } catch (err) {
-      this.clearRefreshTokenCookie(res);
+      // 저장소 장애(503)나 예상하지 못한 서버 오류에서는 유효할 수 있는 쿠키를 보존한다.
+      // 만료·위변조·폐기처럼 인증 무효가 확인된 경우에만 브라우저 세션을 제거한다.
+      if (err instanceof AppError && err.statusCode === 401) {
+        this.clearRefreshTokenCookie(res);
+      }
       throw err;
     }
   };

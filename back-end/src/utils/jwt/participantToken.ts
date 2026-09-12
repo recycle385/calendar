@@ -61,6 +61,8 @@ export function toParticipantTokenPayload(decoded: unknown): ParticipantTokenPay
     extractProperty.string(decoded, 'calendarId', '캘린더 slug');
 
   const user_uuid = extractProperty.nullableString(decoded, 'userUuid', '사용자 UUID');
+  const exp = extractProperty.number(decoded, 'exp', '만료 시간');
+  const iat = extractProperty.number(decoded, 'iat', '발급 시간');
 
   return {
     sub: subject,
@@ -68,5 +70,7 @@ export function toParticipantTokenPayload(decoded: unknown): ParticipantTokenPay
     calendarSlug,
     role: role,
     userUuid: user_uuid,
+    exp,
+    iat,
   };
 }
