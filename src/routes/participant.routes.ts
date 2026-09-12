@@ -26,14 +26,16 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *     security:
    *       - UserAuth: []
    *       - {}
-   *     tags: [participant]
+   *     tags: [Participants]
    *     parameters:
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     requestBody:
    *       required: true
    *       content:
@@ -49,6 +51,12 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *               $ref: "#/components/schemas/RegisterParticipantResponse"
    *       400:
    *         description: "잘못된 요청 (이미 마감된 캘린더거나 필수 파라미터 누락)"
+   *       401:
+   *         description: 선택한 사용자 토큰이 유효하지 않습니다.
+   *       404:
+   *         description: 캘린더를 찾을 수 없습니다.
+   *       409:
+   *         description: 이미 참여했거나 닉네임이 이미 사용 중입니다.
    */
   router.post(
     '/',
@@ -67,14 +75,16 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *     security:
    *       - UserAuth: []
    *       - {}
-   *     tags: [participant]
+   *     tags: [Participants]
    *     parameters:
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     requestBody:
    *       required: true
    *       content:
@@ -90,6 +100,8 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *               $ref: "#/components/schemas/LoginParticipantResponse"
    *       400:
    *         description: "닉네임/비밀번호 누락 또는 잘못된 정보"
+   *       401:
+   *         description: 참가자 인증 정보가 없거나 닉네임/비밀번호가 일치하지 않습니다.
    *       404:
    *         description: "존재하지 않는 캘린더"
    */
@@ -108,14 +120,16 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *   get:
    *     summary: 캘린더의 모든 참가자 조회 (투표 현황 포함)
    *     description: "해당 캘린더에 참여 중인 모든 유저의 목록과 각자의 투표 통계를 반환합니다."
-   *     tags: [participant]
+   *     tags: [Participants]
    *     parameters:
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     responses:
    *       200:
    *         description: 참가자 목록 조회 완료
@@ -140,10 +154,12 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예: Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
-   *     tags: [participant]
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
+   *     tags: [Participants]
    *     responses:
    *       200:
    *         description: 참가자 삭제 완료
@@ -151,10 +167,12 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *           application/json:
    *             schema:
    *               $ref: "#/components/schemas/DefaultResponseDto"
-   *       500:
-   *         description: 인증 중 오류
-   *       403:
-   *         description: 방장은 방장을 삭제 불가 => 캘린더 삭제
+   *       400:
+   *         description: 방장은 참가자 자기 삭제를 할 수 없습니다.
+   *       401:
+   *         description: 참가자 인증이 필요하거나 토큰이 유효하지 않습니다.
+   *       404:
+   *         description: 캘린더 또는 참가자를 찾을 수 없습니다.
    */
   router.delete(
     PARTICIPANT_ROUTES.DELETE_SELF,
@@ -175,16 +193,19 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예: Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *       - in: path
    *         name: participantUuid
    *         required: true
-   *         description: "강퇴할 유저의 participantUuid"
+   *         description: "강퇴할 참가자의 UUID"
    *         schema:
    *           type: string
-   *     tags: [participant]
+   *           format: uuid
+   *     tags: [Participants]
    *     responses:
    *       200:
    *         description: 방장의 유저 강퇴 성공
@@ -192,10 +213,14 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
    *           application/json:
    *             schema:
    *               $ref: "#/components/schemas/DefaultResponseDto"
-   *       500:
-   *         description: 인증 중 오류
+   *       400:
+   *         description: 방장은 강퇴할 수 없습니다.
+   *       401:
+   *         description: 사용자 인증이 필요하거나 토큰이 유효하지 않습니다.
    *       403:
    *         description: 권한 부족 방장만 가능
+   *       404:
+   *         description: 캘린더 또는 참가자를 찾을 수 없습니다.
    */
   router.delete(
     PARTICIPANT_ROUTES.DELETE_BY_HOST,

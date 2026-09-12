@@ -16,6 +16,8 @@ import { DefaultResponseDto } from './common.dto';
  *           example: "민수"
  *         password:
  *           type: string
+ *           format: password
+ *           writeOnly: true
  *           minLength: 4
  *           maxLength: 50
  *           example: "1234"
@@ -34,9 +36,13 @@ export interface RegisterParticipantRequest {
  *       properties:
  *         nickname:
  *           type: string
+ *           description: 회원 인증 시 생략할 수 있으며, 게스트 로그인 시 필요합니다.
  *           example: "민수"
  *         password:
  *           type: string
+ *           format: password
+ *           writeOnly: true
+ *           description: 게스트 로그인 시 필요합니다.
  *           example: "1234"
  */
 export interface LoginParticipantRequest {
@@ -50,6 +56,7 @@ export interface LoginParticipantRequest {
  *   schemas:
  *     CommonParticipant:
  *       type: object
+ *       required: [uuid, nickname, color_code, joined_at]
  *       properties:
  *         uuid:
  *           type: string
@@ -83,11 +90,12 @@ export interface CommonParticipant {
  *         - type: object
  *           properties:
  *             vote_count:
- *               type: number
+ *               type: integer
  *             total_dates:
- *               type: number
+ *               type: integer
  *             vote_rate:
  *               type: number
+ *           required: [vote_count, total_dates, vote_rate]
  */
 export interface DefaultParticipantDoc extends CommonParticipant {
   vote_count: number;
@@ -108,6 +116,7 @@ export interface DefaultParticipantDoc extends CommonParticipant {
  *               type: string
  *               enum: [host, guest]
  *               example: "host"
+ *           required: [role]
  */
 export interface ParticipantForRegister extends CommonParticipant {
   role: 'host' | 'guest';
@@ -129,6 +138,8 @@ export interface ParticipantForRegister extends CommonParticipant {
  *               $ref: "#/components/schemas/ParticipantForRegister"
  *             participantToken:
  *               type: string
+ *               description: 해당 캘린더의 참가자 인증에 사용하는 JWT
+ *           required: [participant, participantToken]
  */
 export interface RegisterParticipantResponse extends DefaultResponseDto {
   participant: ParticipantForRegister;
@@ -151,6 +162,8 @@ export interface RegisterParticipantResponse extends DefaultResponseDto {
  *               $ref: "#/components/schemas/CommonParticipant"
  *             participantToken:
  *               type: string
+ *               description: 해당 캘린더의 참가자 인증에 사용하는 JWT
+ *           required: [participant, participantToken]
  */
 export interface LoginParticipantResponse extends DefaultResponseDto {
   participant: CommonParticipant;
@@ -163,6 +176,7 @@ export interface LoginParticipantResponse extends DefaultResponseDto {
  *   schemas:
  *     GetParticipantsResponse:
  *       type: object
+ *       required: [participants, count]
  *       properties:
  *         participants:
  *           type: array

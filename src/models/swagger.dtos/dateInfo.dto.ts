@@ -77,6 +77,7 @@
  *         dateName:
  *           type: string
  *           minLength: 1
+ *           description: 공휴일 또는 기념일 이름
  *           example: "어린이날"
  *         dateKind:
  *           $ref: "#/components/schemas/DateKind"
@@ -95,6 +96,7 @@
  *         dateInfos:
  *           type: array
  *           minItems: 1
+ *           description: 등록할 date-info 목록
  *           items:
  *             $ref: "#/components/schemas/AddDateInfoRequest"
  *     DateInfoMapByYear:
@@ -110,7 +112,7 @@
  *             seq: 1
  *             dateName: "어린이날"
  *             dateKind: "03"
- *             isHoliday: false
+ *             isHoliday: true
  *             dataSource: "public-api"
  *             updatedAt: "2026-07-11T15:44:54.000Z"
  *     DeleteDateInfoPairsRequest:

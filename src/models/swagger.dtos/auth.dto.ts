@@ -5,6 +5,14 @@ import { DefaultResponseDto } from './common.dto';
  *   schemas:
  *     SafeUserForDto:
  *       type: object
+ *       required:
+ *         - user_uuid
+ *         - email
+ *         - oauth_provider
+ *         - nickname
+ *         - profile_image_url
+ *         - isTermsAgreed
+ *         - created_at
  *       properties:
  *         user_uuid:
  *           type: string
@@ -53,6 +61,7 @@ export interface SafeUserForDto {
  *               type: string
  *               description: "회원가입 완료를 위해 필요한 임시 토큰"
  *               example: "eyJhbGciOiJIUzI1Ni..."
+ *           required: [signupToken]
  */
 export interface GoogleCallbackResForNewUser extends DefaultResponseDto {
   signupToken: string;
@@ -62,21 +71,23 @@ export interface GoogleCallbackResForNewUser extends DefaultResponseDto {
  * @swagger
  * components:
  *   schemas:
- *     GoogleCallbackResForExistingUser:
+ *     GoogleCallbackResForAuthenticatedUser:
  *       allOf:
  *         - $ref: "#/components/schemas/DefaultResponseDto"
  *         - type: object
  *           properties:
  *             isNewUser:
  *               type: boolean
- *               example: false
+ *               description: 즉시 가입 모드에서 새로 가입한 사용자인지 여부
+ *               example: true
  *             accessToken:
  *               type: string
  *               example: "eyJhbGciOiJIUzI1Ni..."
  *             user:
  *               $ref: "#/components/schemas/SafeUserForDto"
+ *           required: [isNewUser, accessToken, user]
  */
-export interface GoogleCallbackResForExistingUser extends DefaultResponseDto {
+export interface GoogleCallbackResForAuthenticatedUser extends DefaultResponseDto {
   isNewUser: boolean;
   accessToken: string;
   user: SafeUserForDto;
@@ -95,8 +106,10 @@ export interface GoogleCallbackResForExistingUser extends DefaultResponseDto {
  *         signupToken:
  *           type: string
  *           description: "콜백에서 전달받은 임시 가입 토큰"
+ *           example: "signup-token-from-google-callback"
  *         isTermsAgreed:
  *           type: boolean
+ *           enum: [true]
  *           description: "이용약관 동의 여부"
  */
 export interface GoogleSignupRequest {
@@ -117,6 +130,7 @@ export interface GoogleSignupRequest {
  *               type: string
  *             user:
  *               $ref: "#/components/schemas/SafeUserForDto"
+ *           required: [accessToken, user]
  */
 export interface GoogleSignupResponse extends DefaultResponseDto {
   accessToken: string;
@@ -134,7 +148,8 @@ export interface GoogleSignupResponse extends DefaultResponseDto {
  *           properties:
  *             accessToken:
  *               type: string
- *               description: "새로 발급된 엑세스 토큰"
+ *               description: "새로 발급된 액세스 토큰"
+ *           required: [accessToken]
  */
 export interface RefreshTokenResponse extends DefaultResponseDto {
   accessToken: string;

@@ -30,6 +30,8 @@ export const createVoteRouter = (controller: VoteController): Router => {
    *         required: true
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *         description: 캘린더 식별자 (slug)
    *     requestBody:
    *       required: true
@@ -50,6 +52,8 @@ export const createVoteRouter = (controller: VoteController): Router => {
    *         description: 인증 실패
    *       403:
    *         description: 권한 없음 (해당 캘린더 참여자 아님)
+   *       404:
+   *         description: 캘린더 또는 참가자를 찾을 수 없음
    */
   router.post(
     '/',
@@ -72,6 +76,8 @@ export const createVoteRouter = (controller: VoteController): Router => {
    *         required: true
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *         description: 캘린더 식별자 (slug)
    *     responses:
    *       200:
@@ -98,11 +104,14 @@ export const createVoteRouter = (controller: VoteController): Router => {
    *         required: true
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *       - in: path
    *         name: participantUuid
    *         required: true
    *         schema:
    *           type: string
+   *           format: uuid
    *         description: 참가자 고유 UUID
    *     responses:
    *       200:

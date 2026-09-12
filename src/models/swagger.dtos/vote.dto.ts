@@ -21,6 +21,7 @@ export type VoteTypeForDto = 'available' | 'unavailable' | 'maybe';
  *   schemas:
  *     VoteRecord:
  *       type: object
+ *       required: [vote_id, date_value, vote_type, created_at]
  *       properties:
  *         vote_id:
  *           type: integer
@@ -54,6 +55,7 @@ export interface VoteRecord {
  *         date:
  *           type: string
  *           format: date
+ *           description: 해당 캘린더의 투표 대상 날짜
  *           example: "2026-09-10"
  *         voteType:
  *           $ref: "#/components/schemas/VoteTypeForDto"
@@ -64,7 +66,7 @@ export interface VoteRecord {
  *         votes:
  *           type: array
  *           maxItems: 366
- *           description: "참가자의 전체 투표 목록. 날짜 중복 불가. 빠진 날짜는 취소하며 빈 배열은 전체 취소."
+ *           description: "참가자의 전체 투표 목록. 날짜 중복 불가. 빠진 날짜는 취소하며 빈 배열은 전체 취소입니다."
  *           items:
  *             $ref: "#/components/schemas/DateVoteInput"
  *           example: [{date: "2026-09-10", voteType: "available"}, {date: "2026-09-11", voteType: "maybe"}]
@@ -90,6 +92,7 @@ export interface SubmitVoteRequest {
  *               type: integer
  *               description: "교체 후 해당 참가자의 투표 개수"
  *               example: 2
+ *           required: [votes, votedCount]
  */
 export interface SubmitVoteResponse extends DefaultResponseDto {
   votes: DateVoteInput[];
@@ -102,6 +105,7 @@ export interface SubmitVoteResponse extends DefaultResponseDto {
  *   schemas:
  *     DateVoteStatusDto:
  *       type: object
+ *       required: [date_option_id, date_value, is_enabled, votes]
  *       properties:
  *         date_option_id:
  *           type: integer
@@ -117,6 +121,7 @@ export interface SubmitVoteResponse extends DefaultResponseDto {
  *           type: array
  *           items:
  *             type: object
+ *             required: [participant_id, participant_nickname, participant_color, vote_type]
  *             properties:
  *               participant_id:
  *                 type: integer
@@ -124,6 +129,7 @@ export interface SubmitVoteResponse extends DefaultResponseDto {
  *                 type: string
  *               participant_color:
  *                 type: string
+ *                 pattern: "^#[0-9A-Fa-f]{6}$"
  *               vote_type:
  *                 $ref: "#/components/schemas/VoteTypeForDto"
  */
@@ -145,6 +151,7 @@ interface DateVoteStatusDto {
  *   schemas:
  *     GetVoteStatusResponse:
  *       type: object
+ *       required: [calendar, voteStatus]
  *       properties:
  *         calendar:
  *           $ref: "#/components/schemas/CalendarForVoteStatus"
@@ -164,16 +171,19 @@ export interface GetVoteStatusResponse {
  *   schemas:
  *     GetParticipantVotesResponse:
  *       type: object
+ *       required: [participant, votes, voteCount]
  *       properties:
  *         participant:
  *           type: object
  *           properties:
  *             uuid:
  *               type: string
+ *               format: uuid
  *             nickname:
  *               type: string
  *             color_code:
  *               type: string
+ *               pattern: "^#[0-9A-Fa-f]{6}$"
  *         votes:
  *           type: array
  *           items:

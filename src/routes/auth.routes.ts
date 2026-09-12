@@ -29,8 +29,8 @@ export const createAuthRouter = (controller: AuthController): Router => {
    *     tags: [Auth]
    *     description: |
    *       구글 인증 완료 후 리디렉션되는 콜백 API입니다.
-   *       - 신규 사용자: `signupToken`을 반환하며 회원가입 페이지로 유도합니다.
-   *       - 기존 사용자: 로그인 처리 후 `accessToken`을 반환하고 쿠키에 `refreshToken`을 설정합니다.
+   *       - pending 가입 모드의 신규 사용자: `signupToken`을 반환하며 회원가입 페이지로 유도합니다.
+   *       - 기존 사용자 또는 immediate 가입 모드의 신규 사용자: `accessToken`을 반환하고 `jwt` 쿠키에 refresh token을 설정합니다.
    *     parameters:
    *       - in: query
    *         name: code
@@ -52,7 +52,7 @@ export const createAuthRouter = (controller: AuthController): Router => {
    *             schema:
    *               oneOf:
    *                 - $ref: "#/components/schemas/GoogleCallbackResForNewUser"
-   *                 - $ref: "#/components/schemas/GoogleCallbackResForExistingUser"
+   *                 - $ref: "#/components/schemas/GoogleCallbackResForAuthenticatedUser"
    */
   router.get(
     AUTH_ROUTES.GOOGLE_CALLBACK,
@@ -94,6 +94,8 @@ export const createAuthRouter = (controller: AuthController): Router => {
    *     summary: 액세스 토큰 갱신
    *     tags: [Auth]
    *     description: "쿠키의 Refresh Token을 사용하여 새로운 Access Token을 발급합니다."
+   *     security:
+   *       - RefreshTokenCookie: []
    *     responses:
    *       200:
    *         description: "토큰 갱신 성공"
@@ -113,6 +115,8 @@ export const createAuthRouter = (controller: AuthController): Router => {
    *     summary: 로그아웃
    *     tags: [Auth]
    *     description: "리프레시 토큰을 무효화하고 쿠키를 삭제합니다."
+   *     security:
+   *       - RefreshTokenCookie: []
    *     responses:
    *       200:
    *         description: "로그아웃 성공"

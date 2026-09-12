@@ -66,8 +66,6 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *               $ref: "#/components/schemas/GetMyCalendarsResponse"
    *       401:
    *         description: 로그인 필요
-   *       500:
-   *         description: 인증 실패
    */
   router.get(
     CALENDAR_ROUTES.MY_CALENDAR_LIST,
@@ -86,9 +84,11 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예: Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     responses:
    *       200:
    *         description: 캘린더 조회 완료
@@ -119,9 +119,11 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예: Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     requestBody:
    *       required: true
    *       content:
@@ -134,15 +136,17 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *         content:
    *           application/json:
    *             schema:
-   *               oneOf:
+   *               anyOf:
    *                 - $ref: "#/components/schemas/DefaultResponseDto"
    *                 - $ref: "#/components/schemas/CommonCalendarResponse"
-   *       500:
-   *         description: 토큰 인증 실패
+   *       401:
+   *         description: 사용자 인증이 필요하거나 토큰이 유효하지 않습니다.
    *       400:
-   *         description: slug가 없음
+   *         description: slug 또는 수정할 값이 유효하지 않습니다.
    *       403:
    *         description: 방장만 수정가능
+   *       404:
+   *         description: 캘린더가 없음
    */
   router.patch(
     CALENDAR_ROUTES.CALENDAR_SLUG,
@@ -164,9 +168,11 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예 Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     responses:
    *       200:
    *         description: 삭제완료
@@ -174,12 +180,14 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *           application/json:
    *             schema:
    *               $ref: "#/components/schemas/DefaultResponseDto"
-   *       500:
-   *         description: 인증실패
+   *       401:
+   *         description: 사용자 인증이 필요하거나 토큰이 유효하지 않습니다.
    *       400:
    *         description: slug가 없음
    *       403:
    *         description: 방장만 가능
+   *       404:
+   *         description: 캘린더가 없음
    */
   router.delete(
     CALENDAR_ROUTES.CALENDAR_SLUG,
@@ -200,9 +208,11 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *       - in: path
    *         name: slug
    *         required: true
-   *         description: "캘린더의 고유 식별 토큰 (예: Ab3dE9xR)"
+   *         description: "16자리 소문자 hexadecimal 캘린더 식별 slug"
    *         schema:
    *           type: string
+   *           pattern: "^[a-f0-9]{16}$"
+   *           example: "a1b2c3d4e5f60718"
    *     responses:
    *       200:
    *         description: 캘린더 마감 완료
@@ -210,12 +220,14 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
    *           application/json:
    *             schema:
    *               $ref: "#/components/schemas/CommonCalendarResponse"
-   *       500:
-   *         description: 토큰 인증 실패
+   *       401:
+   *         description: 사용자 인증이 필요하거나 토큰이 유효하지 않습니다.
    *       400:
    *         description: slug가 없음
    *       403:
    *         description: 방장만 마감 가능
+   *       404:
+   *         description: 캘린더가 없음
    */
   router.post(
     CALENDAR_ROUTES.CALENDAR_CLOSE,

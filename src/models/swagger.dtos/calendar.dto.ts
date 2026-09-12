@@ -20,7 +20,9 @@ import { DefaultResponseDto } from './common.dto';
  *       properties:
  *         slug:
  *           type: string
- *           example: "Ab3dE9xR"
+ *           pattern: "^[a-f0-9]{16}$"
+ *           description: 16자리 소문자 hexadecimal slug
+ *           example: "a1b2c3d4e5f60718"
  *         title:
  *           type: string
  *           example: "스터디 모임"
@@ -31,14 +33,17 @@ import { DefaultResponseDto } from './common.dto';
  *         start_date:
  *           type: string
  *           format: date
+ *           example: "2026-09-10"
  *         end_date:
  *           type: string
  *           format: date
+ *           example: "2026-09-20"
  *         is_closed:
  *           type: boolean
  *           example: false
  *         hostParticipantUuid:
  *           type: string
+ *           format: uuid
  *         created_at:
  *           type: string
  *           format: date-time
@@ -49,7 +54,7 @@ import { DefaultResponseDto } from './common.dto';
  *           example: "2026-03-01T12:00:00Z"
  */
 export interface SafeCalendarDto {
-  slug: string; // 랜덤 토큰 (Ab3dE9xR)
+  slug: string; // 랜덤 16자리 hexadecimal 토큰
   title: string;
   description: string | null;
   start_date: string; // YYYY-MM-DD
@@ -95,7 +100,7 @@ export interface CreateCalendarRequest {
   title: string;
   start_date: string; //YYYY-MM-DD
   end_date: string; //YYYY-MM-DD
-  description?: string;
+  description?: string | null;
   hostNickname: string;
 }
 
@@ -126,7 +131,7 @@ export interface CreateCalendarRequest {
  */
 export interface UpdateCalendarRequest {
   title?: string;
-  description?: string;
+  description?: string | null;
   start_date?: string;
   end_date?: string;
 }
@@ -146,9 +151,11 @@ export interface UpdateCalendarRequest {
  *               $ref: "#/components/schemas/SafeCalendarDto"
  *             shareUrl:
  *               type: string
+ *               format: uri
  *             participantToken:
  *               type: string
  *               description: 특정 캘린더에서 회원/비회원 구분 없이 참여자를 식별하고 권한을 제어하는 JWT 토큰
+ *           required: [calendar, shareUrl, participantToken]
  */
 export interface CreateCalendarResponse extends DefaultResponseDto {
   calendar: SafeCalendarDto;
@@ -162,6 +169,7 @@ export interface CreateCalendarResponse extends DefaultResponseDto {
  *   schemas:
  *     GetMyCalendarsResponse:
  *       type: object
+ *       required: [calendars, count]
  *       properties:
  *         calendars:
  *           type: array
@@ -186,6 +194,7 @@ export interface GetMyCalendarsResponse {
  *           properties:
  *             calendar:
  *               $ref: "#/components/schemas/SafeCalendarDto"
+ *           required: [calendar]
  */
 export interface CommonCalendarResponse extends DefaultResponseDto {
   calendar: SafeCalendarDto;
@@ -197,10 +206,12 @@ export interface CommonCalendarResponse extends DefaultResponseDto {
  *   schemas:
  *     CalendarForVoteStatus:
  *       type: object
+ *       required: [slug, title, start_date, end_date, is_closed]
  *       properties:
  *         slug:
  *           type: string
- *           example: "Ab3dE9xR"
+ *           pattern: "^[a-f0-9]{16}$"
+ *           example: "a1b2c3d4e5f60718"
  *         title:
  *           type: string
  *           example: "ㅇㄹ"
