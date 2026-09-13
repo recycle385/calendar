@@ -1,6 +1,5 @@
-import { Check, Sparkles } from 'lucide-react'
+import { ChevronDown, Sparkles } from 'lucide-react'
 
-import type { VoteDraft } from '../model/editor'
 import { rankVoteDates } from '../model/ranking'
 import type { DateVoteStatus, VoteType } from '../model/types'
 
@@ -19,15 +18,13 @@ function formatKoreanDate(value: string) {
 }
 
 interface VoteDetailAsideProps {
-  draft: VoteDraft
   participantsCount: number
   selectedDate: string
   voteStatus: DateVoteStatus[]
-  onChooseAvailable: (date: string) => void
   onSelectDate: (date: string) => void
 }
 
-export function VoteDetailAside({ draft, participantsCount, selectedDate, voteStatus, onChooseAvailable, onSelectDate }: VoteDetailAsideProps) {
+export function VoteDetailAside({ participantsCount, selectedDate, voteStatus, onSelectDate }: VoteDetailAsideProps) {
   const selectedStatus = voteStatus.find((item) => item.date_value.slice(0, 10) === selectedDate)
   const counts = selectedStatus?.votes.reduce<Record<VoteType, number>>((result, vote) => {
     result[vote.vote_type] += 1
@@ -49,26 +46,23 @@ export function VoteDetailAside({ draft, participantsCount, selectedDate, voteSt
               <span className="is-maybe"><i />애매함 <b>{counts.maybe}명</b></span>
               <span className="is-unavailable"><i />불가 <b>{counts.unavailable}명</b></span>
             </div>
-            <div className="vote-date-participants">
-              <div><strong>참여자</strong><span>{selectedStatus.votes.length}</span></div>
-              {selectedStatus.votes.length > 0 ? selectedStatus.votes.map((vote) => (
-                <div className="vote-date-participant" key={vote.participant_id}>
-                  <span className="participant-avatar" style={{ backgroundColor: vote.participant_color }}>
-                    {vote.participant_nickname.slice(0, 1)}
-                  </span>
-                  <strong>{vote.participant_nickname}</strong>
-                  <small className={`is-${vote.vote_type}`}>{voteLabel[vote.vote_type]}</small>
-                </div>
-              )) : <p>아직 이 날짜에 응답한 참여자가 없어요.</p>}
-            </div>
-            <button
-              className="button button-primary vote-date-choose-button"
-              type="button"
-              disabled={draft[selectedDate] === 'available'}
-              onClick={() => onChooseAvailable(selectedDate)}
-            >
-              <Check size={16} /> {draft[selectedDate] === 'available' ? '가능으로 선택했어요' : '이 날짜를 가능으로 선택하기'}
-            </button>
+            <details className="vote-date-participants" open>
+              <summary>
+                <span><strong>투표 참여자</strong><b>{selectedStatus.votes.length}</b></span>
+                <ChevronDown aria-hidden="true" size={18} />
+              </summary>
+              <div className="vote-date-participant-list">
+                {selectedStatus.votes.length > 0 ? selectedStatus.votes.map((vote) => (
+                  <div className="vote-date-participant" key={vote.participant_id}>
+                    <span className="participant-avatar" style={{ backgroundColor: vote.participant_color }}>
+                      {vote.participant_nickname.slice(0, 1)}
+                    </span>
+                    <strong>{vote.participant_nickname}</strong>
+                    <small className={`is-${vote.vote_type}`}>{voteLabel[vote.vote_type]}</small>
+                  </div>
+                )) : <p>아직 이 날짜에 응답한 참여자가 없어요.</p>}
+              </div>
+            </details>
           </>
         ) : <p className="vote-date-empty">달력에서 날짜를 선택해주세요.</p>}
       </section>

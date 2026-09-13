@@ -833,25 +833,49 @@
 }
 
 .vote-date-participants {
-  display: grid;
-  max-height: 250px;
-  gap: 2px;
-  overflow-y: auto;
   padding-top: 12px;
   border-top: 1px solid #e6edf5;
 }
 
-.vote-date-participants > div:first-child {
+.vote-date-participants > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #2a4569;
+  font-size: 13px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.vote-date-participants > summary::-webkit-details-marker {
+  display: none;
+}
+
+.vote-date-participants > summary > span {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 5px;
-  color: #2a4569;
-  font-size: 13px;
 }
 
-.vote-date-participants > div:first-child span {
+.vote-date-participants > summary b {
   color: #1677ff;
+}
+
+.vote-date-participants > summary svg {
+  transition: transform .18s ease;
+}
+
+.vote-date-participants:not([open]) > summary svg {
+  transform: rotate(-90deg);
+}
+
+.vote-date-participant-list {
+  display: grid;
+  max-height: 250px;
+  gap: 2px;
+  overflow-y: auto;
+  margin-top: 7px;
 }
 
 .vote-date-participant {
@@ -900,19 +924,13 @@
   background: #fde9eb;
 }
 
-.vote-date-participants > p,
+.vote-date-participant-list > p,
 .vote-date-empty,
 .vote-recommendations-card > p {
   margin: 4px 0;
   color: #8192a9;
   font-size: 12px;
   line-height: 1.55;
-}
-
-.vote-date-choose-button {
-  width: 100%;
-  padding: 11px 8px;
-  font-size: 13px;
 }
 
 .vote-recommendations-card {

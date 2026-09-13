@@ -98,15 +98,9 @@ export function CalendarDetailPage() {
     <WorkspaceLayout
       sideContent={tab === 'vote' ? (
         <VoteDetailAside
-          draft={voteEditor.state.draft}
           participantsCount={participants.data?.count ?? 0}
           selectedDate={voteDateSelection.selectedDate}
           voteStatus={voteEditor.enabledDates}
-          onChooseAvailable={(date) => {
-            if (voteEditor.state.draft[date] !== 'available') {
-              voteEditor.dispatch({ type: 'SELECT', date, voteType: 'available' })
-            }
-          }}
           onSelectDate={voteDateSelection.setSelectedDate}
         />
       ) : (
