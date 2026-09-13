@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { getGoogleLoginUrl } from '../../../../domains/auth'
 import { Brand } from '../../../../shared/ui/Brand'
+import { GoogleIcon } from '../../../../shared/ui/GoogleIcon'
 
 export function LoginPage() {
   return (
@@ -14,7 +15,7 @@ export function LoginPage() {
           <p>Google 계정으로 로그인하면 내 캘린더를 만들고 관리할 수 있어요.</p>
         </div>
         <a className="button button-primary auth-google-button" href={getGoogleLoginUrl()}>
-          <span className="google-dot">G</span>
+          <GoogleIcon />
           Google로 계속하기
         </a>
         <Link className="auth-back-link" to="/">

@@ -130,13 +130,9 @@ input {
 .google-dot {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  background: #fff;
-  color: #4285f4;
-  font-weight: 900;
-  font-family: Arial;
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 .google-dot.large {
   width: 30px;

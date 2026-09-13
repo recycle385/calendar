@@ -1,4 +1,5 @@
 import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl';
+import { GoogleIcon } from '../../../../shared/ui/GoogleIcon';
 
 const calendarImageUrl = assetUrl('edit/calendar-3d.webp');
 
@@ -18,7 +19,7 @@ export function CtaSection({ isAuthenticated }: { isAuthenticated: boolean }) {
               <span>내 캘린더 보기</span>
             ) : (
               <>
-                <span className="google-dot cta-google">G</span>
+                <GoogleIcon className="cta-google" />
                 <span className="cta-label-wide">Google로 시작하기</span>
                 <span className="cta-label-tablet">무료로 시작하기 →</span>
               </>

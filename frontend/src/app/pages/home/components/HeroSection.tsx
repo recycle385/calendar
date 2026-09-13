@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { parseCalendarJoinPath } from '../../../../domains/calendar';
 import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl';
+import { GoogleIcon } from '../../../../shared/ui/GoogleIcon';
 
 const days = [
   ['30', '31', '1', '2', '3', '4', '5'],
@@ -61,7 +62,7 @@ export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                 <span>내 캘린더 보기</span>
               ) : (
                 <>
-                  <span className="google-dot hero-google">G</span>
+                  <GoogleIcon className="hero-google" />
                   <span className="hero-label-wide">Google로 시작하기</span>
                   <span className="hero-label-tablet">지금 시작하기 →</span>
                 </>

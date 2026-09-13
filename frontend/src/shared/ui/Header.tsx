@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Brand } from './Brand';
+import { GoogleIcon } from './GoogleIcon';
 
 interface HeaderProps {
   isAuthenticated?: boolean;
@@ -46,7 +47,7 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
             <>
               <Link className="login-link" to="/login">로그인</Link>
               <Link className="button button-primary button-small" to="/login">
-                <span className="google-dot header-google">G</span>
+                <GoogleIcon className="header-google" />
                 <span className="header-label-wide">Google로 시작하기</span>
                 <span className="header-label-tablet">시작하기</span>
               </Link>
