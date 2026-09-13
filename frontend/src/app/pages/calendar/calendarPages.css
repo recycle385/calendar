@@ -628,26 +628,45 @@
   background: #f4f8ff;
 }
 
+.vote-calendar-day.heat-1 {
+  background: #f0faf5;
+}
+
+.vote-calendar-day.heat-2 {
+  background: #ddf5e8;
+}
+
+.vote-calendar-day.heat-3 {
+  background: #bcebd2;
+}
+
+.vote-calendar-day.heat-4 {
+  color: #0f6240;
+  background: #91dfb8;
+}
+
 .vote-calendar-day.is-outside {
   color: #bcc7d5;
   background: #fbfcfe;
 }
 
-.vote-calendar-day.is-selected {
-  border-radius: 9px;
-  color: #156a47;
-  background: #e5f8ee;
-  box-shadow: inset 0 0 0 2px #fff;
+.vote-calendar-day.is-focused {
+  z-index: 1;
+  border-radius: 8px;
+  outline: 2px solid #1677ff;
+  outline-offset: -2px;
 }
 
-.vote-calendar-day.is-selected.is-maybe {
-  color: #966800;
-  background: #fff3cc;
+.vote-calendar-day.has-own-vote {
+  box-shadow: inset 0 -3px #21ad70;
 }
 
-.vote-calendar-day.is-selected.is-unavailable {
-  color: #c34f59;
-  background: #fde7e9;
+.vote-calendar-day.has-own-vote.own-maybe {
+  box-shadow: inset 0 -3px #e9ae27;
+}
+
+.vote-calendar-day.has-own-vote.own-unavailable {
+  box-shadow: inset 0 -3px #df6972;
 }
 
 .vote-calendar-day > span {
@@ -672,6 +691,18 @@
   background: #1677ff;
 }
 
+.vote-calendar-day.own-available > i {
+  background: #20ae70;
+}
+
+.vote-calendar-day.own-maybe > i {
+  background: #e9ae27;
+}
+
+.vote-calendar-day.own-unavailable > i {
+  background: #df6972;
+}
+
 .vote-calendar-legend {
   display: flex;
   flex-wrap: wrap;
@@ -694,16 +725,275 @@
   background: #b8c5d5;
 }
 
-.vote-calendar-legend i.is-available {
+.vote-calendar-legend i.heat-4 {
+  background: #70d5a2;
+}
+
+.vote-calendar-legend i.heat-2 {
+  background: #ccefdc;
+}
+
+.vote-calendar-legend i.heat-0 {
+  background: #e8edf4;
+}
+
+.vote-calendar-legend-note {
+  margin-left: auto;
+}
+
+.vote-date-detail-card {
+  display: grid;
+  gap: 14px;
+}
+
+.vote-date-detail-card > h2 {
+  margin: 0;
+  color: #102650;
+  font-size: 20px;
+  letter-spacing: -.04em;
+}
+
+.vote-date-detail-card > strong {
+  color: #263f63;
+  font-size: 12px;
+}
+
+.vote-date-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vote-date-progress > div {
+  overflow: hidden;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e8eef5;
+}
+
+.vote-date-progress > div > i {
+  display: block;
+  height: 8px;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #25b977;
+}
+
+.vote-date-progress > span {
+  min-width: 34px;
+  color: #59708f;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.vote-date-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.vote-date-counts > span {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 9px 3px;
+  border-radius: 8px;
+  color: #71849d;
+  background: #f8fafc;
+  font-size: 8px;
+}
+
+.vote-date-counts > span > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.vote-date-counts > span.is-available {
+  color: #1c9d66;
+  background: #effaf5;
+}
+
+.vote-date-counts > span.is-maybe {
+  color: #d19513;
+  background: #fff9e9;
+}
+
+.vote-date-counts > span.is-unavailable {
+  color: #d6626b;
+  background: #fff3f4;
+}
+
+.vote-date-counts b {
+  color: #263f63;
+  font-size: 10px;
+}
+
+.vote-date-participants {
+  display: grid;
+  max-height: 250px;
+  gap: 2px;
+  overflow-y: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e6edf5;
+}
+
+.vote-date-participants > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  color: #2a4569;
+  font-size: 11px;
+}
+
+.vote-date-participants > div:first-child span {
+  color: #1677ff;
+}
+
+.vote-date-participant {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.vote-date-participant .participant-avatar {
+  width: 27px;
+  height: 27px;
+  flex-basis: 27px;
+  font-size: 9px;
+}
+
+.vote-date-participant > strong {
+  overflow: hidden;
+  color: #324d70;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote-date-participant > small {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.vote-date-participant > small.is-available {
+  color: #168a57;
+  background: #e4f7ed;
+}
+
+.vote-date-participant > small.is-maybe {
+  color: #a97300;
+  background: #fff2ca;
+}
+
+.vote-date-participant > small.is-unavailable {
+  color: #d35d66;
+  background: #fde9eb;
+}
+
+.vote-date-participants > p,
+.vote-date-empty,
+.vote-recommendations-card > p {
+  margin: 4px 0;
+  color: #8192a9;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.vote-date-choose-button {
+  width: 100%;
+  padding: 11px 8px;
+  font-size: 10px;
+}
+
+.vote-recommendations-card {
+  display: grid;
+  gap: 8px;
+}
+
+.vote-recommendations-card header h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 4px;
+  color: #263f63;
+  font-size: 13px;
+}
+
+.vote-recommendations-card header svg {
+  color: #f3b61e;
+}
+
+.vote-recommendations-card > button {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  padding: 7px 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vote-recommendations-card > button > span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  color: #1677ff;
+  background: #edf4ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.vote-recommendations-card button strong,
+.vote-recommendations-card button small,
+.vote-recommendations-card button div > i {
+  display: block;
+}
+
+.vote-recommendations-card button strong {
+  color: #314c70;
+  font-size: 10px;
+}
+
+.vote-recommendations-card button small {
+  margin-top: 3px;
+  color: #31a36e;
+  font-size: 8px;
+}
+
+.vote-recommendations-card button div > i {
+  overflow: hidden;
+  height: 4px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #e8eef5;
+}
+
+.vote-recommendations-card button div > i > em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
   background: #28b879;
 }
 
-.vote-calendar-legend i.is-maybe {
-  background: #efb936;
-}
-
-.vote-calendar-legend i.is-unavailable {
-  background: #e26d75;
+.vote-recommendations-card button > b {
+  color: #7588a2;
+  font-size: 8px;
 }
 
 @media (max-width: 800px) {

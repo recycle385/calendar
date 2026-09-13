@@ -23,6 +23,11 @@ interface CalendarRealtimeState {
   onlineUsers: OnlineCalendarUser[] | null
   isClosed: boolean
   isDeleted: boolean
+  recentVoterNickname: string | null
+}
+
+interface VoteUpdatedEvent {
+  participantNickname: string
 }
 
 function isOnlineUser(value: unknown): value is OnlineCalendarUser {
@@ -30,6 +35,14 @@ function isOnlineUser(value: unknown): value is OnlineCalendarUser {
   const user = value as Partial<OnlineCalendarUser>
   return typeof user.sub === 'string' && typeof user.nickname === 'string'
     && (user.role === 'host' || user.role === 'guest')
+}
+
+export function parseVoteUpdatedEvent(value: unknown): VoteUpdatedEvent | null {
+  if (!value || typeof value !== 'object') return null
+  const participantNickname = (value as { participantNickname?: unknown }).participantNickname
+  return typeof participantNickname === 'string' && participantNickname.trim()
+    ? { participantNickname }
+    : null
 }
 
 export function useCalendarRealtime(
@@ -42,11 +55,13 @@ export function useCalendarRealtime(
   const [onlineUsers, setOnlineUsers] = useState<OnlineCalendarUser[] | null>(null)
   const [isClosed, setIsClosed] = useState(false)
   const [isDeleted, setIsDeleted] = useState(false)
+  const [recentVoterNickname, setRecentVoterNickname] = useState<string | null>(null)
 
   useEffect(() => {
     setIsClosed(false)
     setIsDeleted(false)
     setOnlineUsers(null)
+    setRecentVoterNickname(null)
 
     if (!slug || !participantToken || !participantUuid) {
       setConnectionState('disconnected')
@@ -69,7 +84,9 @@ export function useCalendarRealtime(
       setConnectionState('disconnected')
       setOnlineUsers(null)
     }
-    const handleVoteUpdated = () => {
+    const handleVoteUpdated = (payload: unknown) => {
+      const event = parseVoteUpdatedEvent(payload)
+      if (event) setRecentVoterNickname(event.participantNickname)
       void refreshVoteData(queryClient, slug, participantUuid)
     }
     const handleCalendarUpdated = () => {
@@ -131,5 +148,5 @@ export function useCalendarRealtime(
     }
   }, [participantToken, participantUuid, queryClient, slug])
 
-  return { connectionState, onlineUsers, isClosed, isDeleted }
+  return { connectionState, onlineUsers, isClosed, isDeleted, recentVoterNickname }
 }

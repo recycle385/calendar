@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { useMemo, useState, type Dispatch } from 'react'
 
 import type { VoteDraft, VoteEditorAction } from '../model/editor'
+import { getAvailabilityHeatLevel } from '../model/heatmap'
 import type { DateVoteStatus, VoteType } from '../model/types'
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토']
@@ -36,11 +37,14 @@ interface VoteCalendarProps {
   disabled: boolean
   draft: VoteDraft
   enabledDates: DateVoteStatus[]
+  participantsCount: number
+  selectedDate: string
   tool: VoteType
   dispatch: Dispatch<VoteEditorAction>
+  onSelectDate: (date: string) => void
 }
 
-export function VoteCalendar({ disabled, draft, enabledDates, tool, dispatch }: VoteCalendarProps) {
+export function VoteCalendar({ disabled, draft, enabledDates, participantsCount, selectedDate, tool, dispatch, onSelectDate }: VoteCalendarProps) {
   const months = useMemo(
     () => [...new Set(enabledDates.map((item) => item.date_value.slice(0, 7)))].sort(),
     [enabledDates],
@@ -85,6 +89,7 @@ export function VoteCalendar({ disabled, draft, enabledDates, tool, dispatch }: 
           const selected = draft[cell.date]
           const availableCount = status?.votes.filter((vote) => vote.vote_type === 'available').length ?? 0
           const enabled = Boolean(cell.inMonth && status)
+          const heatLevel = getAvailabilityHeatLevel(availableCount, participantsCount)
 
           return (
             <button
@@ -93,8 +98,11 @@ export function VoteCalendar({ disabled, draft, enabledDates, tool, dispatch }: 
               disabled={disabled || !enabled}
               aria-label={`${cell.date}${selected ? ` ${voteTypeLabel[selected]}` : ''}`}
               aria-pressed={Boolean(selected)}
-              className={`vote-calendar-day${cell.inMonth ? '' : ' is-outside'}${enabled ? ' is-enabled' : ''}${selected ? ` is-selected is-${selected}` : ''}`}
-              onClick={() => dispatch({ type: 'SELECT', date: cell.date, voteType: tool })}
+              className={`vote-calendar-day heat-${heatLevel}${cell.inMonth ? '' : ' is-outside'}${enabled ? ' is-enabled' : ''}${selectedDate === cell.date ? ' is-focused' : ''}${selected ? ` has-own-vote own-${selected}` : ''}`}
+              onClick={() => {
+                onSelectDate(cell.date)
+                dispatch({ type: 'SELECT', date: cell.date, voteType: tool })
+              }}
             >
               <span>{cell.day}</span>
               {selected && <i><Check size={10} /></i>}
@@ -104,9 +112,10 @@ export function VoteCalendar({ disabled, draft, enabledDates, tool, dispatch }: 
         })}
       </div>
       <div className="vote-calendar-legend" aria-hidden="true">
-        <span><i className="is-available" /> 가능</span>
-        <span><i className="is-maybe" /> 애매함</span>
-        <span><i className="is-unavailable" /> 불가</span>
+        <span><i className="heat-4" /> 많이 가능</span>
+        <span><i className="heat-2" /> 일부 가능</span>
+        <span><i className="heat-0" /> 의견 없음</span>
+        <span className="vote-calendar-legend-note">숫자는 ‘가능’으로 선택한 인원입니다.</span>
       </div>
     </div>
   )

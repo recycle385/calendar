@@ -6,7 +6,9 @@ import { calendarDetailQuery } from '../../../../domains/calendar'
 import { participantsQuery } from '../../../../domains/participant'
 import {
   participantVotesQuery,
+  useVoteDateSelection,
   useVoteEditor,
+  VoteDetailAside,
   VotePanel,
   VoteStatusPanel,
   voteStatusQuery,
@@ -61,6 +63,7 @@ export function CalendarDetailPage() {
     voteStatus: voteStatus.data?.voteStatus,
     ownVotes: ownVotes.data?.votes,
   })
+  const voteDateSelection = useVoteDateSelection(voteEditor.enabledDates)
 
   useUnsavedVoteNavigationWarning(voteEditor.state.isDirty)
 
@@ -93,7 +96,20 @@ export function CalendarDetailPage() {
 
   return (
     <WorkspaceLayout
-      sideContent={(
+      sideContent={tab === 'vote' ? (
+        <VoteDetailAside
+          draft={voteEditor.state.draft}
+          participantsCount={participants.data?.count ?? 0}
+          selectedDate={voteDateSelection.selectedDate}
+          voteStatus={voteEditor.enabledDates}
+          onChooseAvailable={(date) => {
+            if (voteEditor.state.draft[date] !== 'available') {
+              voteEditor.dispatch({ type: 'SELECT', date, voteType: 'available' })
+            }
+          }}
+          onSelectDate={voteDateSelection.setSelectedDate}
+        />
+      ) : (
         <DetailAside
           calendar={liveCalendar}
           participants={participants.data?.participants ?? []}
@@ -127,12 +143,16 @@ export function CalendarDetailPage() {
                   enabledDates={voteEditor.enabledDates}
                   enabledDateSet={voteEditor.enabledDateSet}
                   sourceDataReady={voteEditor.sourceDataReady}
+                  participantsCount={participants.data?.count ?? 0}
+                  recentVoterNickname={realtime.recentVoterNickname}
+                  selectedDate={voteDateSelection.selectedDate}
                   loading={(!voteStatus.data && voteStatus.isPending) || (!ownVotes.data && ownVotes.isPending)}
                   loadError={Boolean((voteStatus.isError && !voteStatus.data) || (ownVotes.isError && !ownVotes.data))}
                   refetchError={Boolean((voteStatus.isRefetchError && voteStatus.data) || (ownVotes.isRefetchError && ownVotes.data))}
                   state={voteEditor.state}
                   dispatch={voteEditor.dispatch}
                   onRetry={() => { void Promise.all([voteStatus.refetch(), ownVotes.refetch()]) }}
+                  onSelectDate={voteDateSelection.setSelectedDate}
                   onSubmit={submitParticipantVotes}
                 />
               )}

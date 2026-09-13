@@ -14,6 +14,9 @@ interface VotePanelProps {
   isClosed: boolean
   enabledDates: DateVoteStatus[]
   enabledDateSet: Set<string>
+  participantsCount: number
+  recentVoterNickname: string | null
+  selectedDate: string
   sourceDataReady: boolean
   loading: boolean
   loadError: boolean
@@ -21,10 +24,11 @@ interface VotePanelProps {
   state: VoteEditorState
   dispatch: Dispatch<VoteEditorAction>
   onRetry: () => void
+  onSelectDate: (date: string) => void
   onSubmit: (votes: VoteInput[]) => Promise<unknown>
 }
 
-export function VotePanel({ isClosed, enabledDates, enabledDateSet, sourceDataReady, loading, loadError, refetchError, state, dispatch, onRetry, onSubmit }: VotePanelProps) {
+export function VotePanel({ isClosed, enabledDates, enabledDateSet, participantsCount, recentVoterNickname, selectedDate, sourceDataReady, loading, loadError, refetchError, state, dispatch, onRetry, onSelectDate, onSubmit }: VotePanelProps) {
   const [tool, setTool] = useState<VoteType>('available')
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -61,8 +65,8 @@ export function VotePanel({ isClosed, enabledDates, enabledDateSet, sourceDataRe
           <p>각자 가능한 날짜를 선택하면<br />모두의 응답이 실시간으로 반영돼요.</p>
         </div>
         <div className="vote-live-notice">
-          <strong><i /> 실시간 현황</strong>
-          <span>{selectedCount > 0 ? `${selectedCount}개 날짜를 선택했어요.` : '가능한 날짜를 선택해주세요.'}</span>
+          <strong><i /> 실시간 반영 중</strong>
+          <span>{recentVoterNickname ? `${recentVoterNickname}님이 투표했어요.` : selectedCount > 0 ? `${selectedCount}개 날짜를 선택했어요.` : '가능한 날짜를 선택해주세요.'}</span>
         </div>
       </header>
 
@@ -71,7 +75,7 @@ export function VotePanel({ isClosed, enabledDates, enabledDateSet, sourceDataRe
       {state.removedDateCount > 0 && <p className="vote-option-notice">투표 기간이 바뀌어 선택할 수 없게 된 {state.removedDateCount}개 날짜를 편집본에서 제외했어요.</p>}
 
       <VoteToolSelector disabled={state.isSaving} value={tool} onChange={setTool} />
-      <VoteCalendar disabled={state.isSaving} draft={state.draft} enabledDates={enabledDates} tool={tool} dispatch={dispatch} />
+      <VoteCalendar disabled={state.isSaving} draft={state.draft} enabledDates={enabledDates} participantsCount={participantsCount} selectedDate={selectedDate} tool={tool} dispatch={dispatch} onSelectDate={onSelectDate} />
 
       {saveError && <p className="form-error workspace-request-error">{saveError}</p>}
       <div className="vote-submit-row">

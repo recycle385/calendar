@@ -1,6 +1,9 @@
 export { getParticipantVotes, getVoteStatus, submitVotes } from './api/voteApi'
 export { participantVotesQuery, voteKeys, voteStatusQuery } from './model/queries'
+export { getAvailabilityHeatLevel } from './model/heatmap'
+export type { VoteHeatLevel } from './model/heatmap'
 export { useVoteEditor } from './hooks/useVoteEditor'
+export { useVoteDateSelection } from './hooks/useVoteDateSelection'
 export {
   areVoteDraftsEqual,
   createVoteDraft,
@@ -14,6 +17,7 @@ export type { VoteDraft, VoteEditorAction, VoteEditorState } from './model/edito
 export { rankVoteDates } from './model/ranking'
 export type { RankedVoteDate } from './model/ranking'
 export { VotePanel } from './ui/VotePanel'
+export { VoteDetailAside } from './ui/VoteDetailAside'
 export { VoteRecommendations } from './ui/VoteRecommendations'
 export { VoteStatusPanel } from './ui/VoteStatusPanel'
 export type {
