@@ -57,7 +57,7 @@ export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
             </span>
           </p>
           <div className="hero-actions">
-            <a className="button button-primary" href={isAuthenticated ? '#my-calendars' : '/login'}>
+            <a className="button button-primary hero-start-action" href={isAuthenticated ? '#my-calendars' : '/login'}>
               {isAuthenticated ? (
                 <span>내 캘린더 보기</span>
               ) : (

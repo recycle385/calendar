@@ -3218,3 +3218,37 @@ body {
     font-size: 13px;
   }
 }
+
+@media (min-width: 769px) {
+  .hero-start-action,
+  .hero-copy > small {
+    display: none;
+  }
+
+  .hero-actions {
+    gap: 0;
+  }
+
+  .hero-join-form {
+    width: min(100%, 430px);
+    min-width: 0;
+    height: 44px;
+  }
+
+  .hero-join-form input,
+  .hero-join-form .button {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .hero-join-form input {
+    padding-inline: 14px;
+    font-size: 14px;
+  }
+
+  .hero-join-form .button {
+    padding: 0 18px;
+    border-radius: 11px;
+    font-size: 14px;
+  }
+}
