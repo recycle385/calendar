@@ -23,7 +23,10 @@ interface CalendarRealtimeState {
   onlineUsers: OnlineCalendarUser[] | null
   isClosed: boolean
   isDeleted: boolean
-  recentVoterNickname: string | null
+  voteNotification: {
+    id: number
+    nickname: string
+  } | null
 }
 
 interface VoteUpdatedEvent {
@@ -55,13 +58,13 @@ export function useCalendarRealtime(
   const [onlineUsers, setOnlineUsers] = useState<OnlineCalendarUser[] | null>(null)
   const [isClosed, setIsClosed] = useState(false)
   const [isDeleted, setIsDeleted] = useState(false)
-  const [recentVoterNickname, setRecentVoterNickname] = useState<string | null>(null)
+  const [voteNotification, setVoteNotification] = useState<CalendarRealtimeState['voteNotification']>(null)
 
   useEffect(() => {
     setIsClosed(false)
     setIsDeleted(false)
     setOnlineUsers(null)
-    setRecentVoterNickname(null)
+    setVoteNotification(null)
 
     if (!slug || !participantToken || !participantUuid) {
       setConnectionState('disconnected')
@@ -70,6 +73,8 @@ export function useCalendarRealtime(
 
     setConnectionState('connecting')
     const socket = createCalendarSocket(participantToken)
+    let notificationSequence = 0
+    let notificationTimer: ReturnType<typeof setTimeout> | undefined
 
     const handleConnect = () => {
       setConnectionState('connected')
@@ -86,7 +91,12 @@ export function useCalendarRealtime(
     }
     const handleVoteUpdated = (payload: unknown) => {
       const event = parseVoteUpdatedEvent(payload)
-      if (event) setRecentVoterNickname(event.participantNickname)
+      if (event) {
+        notificationSequence += 1
+        if (notificationTimer) clearTimeout(notificationTimer)
+        setVoteNotification({ id: notificationSequence, nickname: event.participantNickname })
+        notificationTimer = setTimeout(() => setVoteNotification(null), 4400)
+      }
       void refreshVoteData(queryClient, slug, participantUuid)
     }
     const handleCalendarUpdated = () => {
@@ -133,6 +143,7 @@ export function useCalendarRealtime(
     socket.connect()
 
     return () => {
+      if (notificationTimer) clearTimeout(notificationTimer)
       if (socket.connected) socket.emit('leaveCalendarRoom')
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
@@ -148,5 +159,5 @@ export function useCalendarRealtime(
     }
   }, [participantToken, participantUuid, queryClient, slug])
 
-  return { connectionState, onlineUsers, isClosed, isDeleted, recentVoterNickname }
+  return { connectionState, onlineUsers, isClosed, isDeleted, voteNotification }
 }

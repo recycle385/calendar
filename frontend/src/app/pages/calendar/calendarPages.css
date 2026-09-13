@@ -409,29 +409,52 @@
 .vote-live-notice {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-width: 250px;
-  padding: 10px 13px;
+  gap: 8px;
+  min-width: 220px;
+  padding: 11px 14px;
+  border: 1px solid #cdeedf;
   border-radius: 10px;
-  color: #7286a1;
+  color: #287153;
   background: #f0faf6;
   font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(27, 133, 87, .12);
+  animation: vote-notice-lifecycle 4.4s ease both;
 }
 
-.vote-live-notice strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #168b58;
-  white-space: nowrap;
-}
-
-.vote-live-notice strong i {
+.vote-live-notice > i {
+  flex: 0 0 8px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: #25bd79;
   box-shadow: 0 0 0 3px rgba(37, 189, 121, .12);
+}
+
+@keyframes vote-notice-lifecycle {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  12%, 84% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vote-live-notice {
+    animation-name: vote-notice-fade;
+  }
+}
+
+@keyframes vote-notice-fade {
+  0%, 100% { opacity: 0; }
+  12%, 84% { opacity: 1; }
 }
 
 .vote-tools {

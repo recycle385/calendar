@@ -140,7 +140,7 @@ export function CalendarDetailPage() {
                   enabledDateSet={voteEditor.enabledDateSet}
                   sourceDataReady={voteEditor.sourceDataReady}
                   participantsCount={participants.data?.count ?? 0}
-                  recentVoterNickname={realtime.recentVoterNickname}
+                  voteNotification={realtime.voteNotification}
                   selectedDate={voteDateSelection.selectedDate}
                   loading={(!voteStatus.data && voteStatus.isPending) || (!ownVotes.data && ownVotes.isPending)}
                   loadError={Boolean((voteStatus.isError && !voteStatus.data) || (ownVotes.isError && !ownVotes.data))}

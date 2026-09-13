@@ -15,7 +15,10 @@ interface VotePanelProps {
   enabledDates: DateVoteStatus[]
   enabledDateSet: Set<string>
   participantsCount: number
-  recentVoterNickname: string | null
+  voteNotification: {
+    id: number
+    nickname: string
+  } | null
   selectedDate: string
   sourceDataReady: boolean
   loading: boolean
@@ -28,7 +31,7 @@ interface VotePanelProps {
   onSubmit: (votes: VoteInput[]) => Promise<unknown>
 }
 
-export function VotePanel({ isClosed, enabledDates, enabledDateSet, participantsCount, recentVoterNickname, selectedDate, sourceDataReady, loading, loadError, refetchError, state, dispatch, onRetry, onSelectDate, onSubmit }: VotePanelProps) {
+export function VotePanel({ isClosed, enabledDates, enabledDateSet, participantsCount, voteNotification, selectedDate, sourceDataReady, loading, loadError, refetchError, state, dispatch, onRetry, onSelectDate, onSubmit }: VotePanelProps) {
   const [tool, setTool] = useState<VoteType>('available')
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -54,8 +57,6 @@ export function VotePanel({ isClosed, enabledDates, enabledDateSet, participants
   if (isClosed) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>투표가 마감되었어요.</h2><p>{state.isDirty ? '다른 화면에서 투표가 마감되어 편집 중이던 변경은 저장되지 않았어요.' : '투표 현황에서 함께 고른 날짜를 확인할 수 있어요.'}</p></section>
   if (enabledDates.length === 0) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>선택 가능한 날짜가 없어요.</h2><p>방장이 투표 기간을 조정하면 이곳에 표시돼요.</p></section>
 
-  const selectedCount = Object.keys(state.draft).length
-
   return (
     <section className="workspace-panel vote-panel">
       <header className="vote-panel-heading">
@@ -64,10 +65,12 @@ export function VotePanel({ isClosed, enabledDates, enabledDateSet, participants
           <h2>우리, 언제 만날까요?</h2>
           <p>각자 가능한 날짜를 선택하면<br />모두의 응답이 실시간으로 반영돼요.</p>
         </div>
-        <div className="vote-live-notice">
-          <strong><i /> 실시간 반영 중</strong>
-          <span>{recentVoterNickname ? `${recentVoterNickname}님이 투표했어요.` : selectedCount > 0 ? `${selectedCount}개 날짜를 선택했어요.` : '가능한 날짜를 선택해주세요.'}</span>
-        </div>
+        {voteNotification ? (
+          <div className="vote-live-notice" key={voteNotification.id} role="status" aria-live="polite">
+            <i aria-hidden="true" />
+            <span>{voteNotification.nickname}님이 투표했어요.</span>
+          </div>
+        ) : null}
       </header>
 
       {refetchError && <div className="vote-conflict-notice"><p>최신 투표를 다시 확인하지 못했어요. 불러온 내용과 편집본은 그대로 유지했습니다.</p><button type="button" onClick={onRetry}><RotateCcw size={14} /> 다시 확인</button></div>}
