@@ -866,8 +866,8 @@
   transition: transform .18s ease;
 }
 
-.vote-date-participants:not([open]) > summary svg {
-  transform: rotate(-90deg);
+.vote-date-participants[open] > summary svg {
+  transform: rotate(180deg);
 }
 
 .vote-date-participant-list {
@@ -936,6 +936,100 @@
 .vote-recommendations-card {
   display: grid;
   gap: 8px;
+}
+
+.vote-sticky-aside {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  max-height: calc(100vh - 104px);
+  gap: 14px;
+  overflow-y: auto;
+  padding: 0 4px 8px 0;
+  scrollbar-width: thin;
+}
+
+.vote-calendar-participants-card {
+  display: grid;
+  gap: 12px;
+}
+
+.vote-calendar-participants-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vote-calendar-participants-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #263f63;
+  font-size: 15px;
+}
+
+.vote-calendar-participants-card h2 svg {
+  color: #1677ff;
+}
+
+.vote-calendar-participants-card h2 span {
+  color: #1677ff;
+}
+
+.vote-calendar-participants-card > header button {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  border: 0;
+  padding: 3px 0;
+  color: #4f83c7;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vote-calendar-participant-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vote-calendar-participant-list > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.vote-calendar-participant-list .participant-avatar {
+  width: 31px;
+  height: 31px;
+  flex-basis: 31px;
+  font-size: 12px;
+}
+
+.vote-calendar-participant-list strong {
+  overflow: hidden;
+  color: #324d70;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote-calendar-participant-list > p,
+.vote-calendar-participant-more {
+  margin: 0;
+  color: #8192a9;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.vote-calendar-participant-more {
+  padding-top: 8px;
+  border-top: 1px solid #edf1f6;
 }
 
 .vote-recommendations-card header h2 {
@@ -1014,7 +1108,21 @@
   font-size: 12px;
 }
 
+@media (max-width: 1180px) {
+  .vote-sticky-aside {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+  }
+}
+
 @media (max-width: 800px) {
+  .vote-sticky-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .vote-panel-heading {
     align-items: flex-start;
     flex-direction: column;

@@ -98,10 +98,12 @@ export function CalendarDetailPage() {
     <WorkspaceLayout
       sideContent={tab === 'vote' ? (
         <VoteDetailAside
+          participants={participants.data?.participants ?? []}
           participantsCount={participants.data?.count ?? 0}
           selectedDate={voteDateSelection.selectedDate}
           voteStatus={voteEditor.enabledDates}
           onSelectDate={voteDateSelection.setSelectedDate}
+          onViewParticipants={() => changeTab('participants')}
         />
       ) : (
         <DetailAside

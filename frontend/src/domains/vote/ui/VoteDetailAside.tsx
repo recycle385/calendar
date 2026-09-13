@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronRight, Sparkles, Users } from 'lucide-react'
 
 import { rankVoteDates } from '../model/ranking'
 import type { DateVoteStatus, VoteType } from '../model/types'
@@ -18,13 +18,26 @@ function formatKoreanDate(value: string) {
 }
 
 interface VoteDetailAsideProps {
+  participants: Array<{
+    uuid: string
+    nickname: string
+    color_code: string
+  }>
   participantsCount: number
   selectedDate: string
   voteStatus: DateVoteStatus[]
   onSelectDate: (date: string) => void
+  onViewParticipants: () => void
 }
 
-export function VoteDetailAside({ participantsCount, selectedDate, voteStatus, onSelectDate }: VoteDetailAsideProps) {
+export function VoteDetailAside({
+  participants,
+  participantsCount,
+  selectedDate,
+  voteStatus,
+  onSelectDate,
+  onViewParticipants,
+}: VoteDetailAsideProps) {
   const selectedStatus = voteStatus.find((item) => item.date_value.slice(0, 10) === selectedDate)
   const counts = selectedStatus?.votes.reduce<Record<VoteType, number>>((result, vote) => {
     result[vote.vote_type] += 1
@@ -32,9 +45,10 @@ export function VoteDetailAside({ participantsCount, selectedDate, voteStatus, o
   }, { available: 0, maybe: 0, unavailable: 0 }) ?? { available: 0, maybe: 0, unavailable: 0 }
   const availablePercent = participantsCount > 0 ? Math.round((counts.available / participantsCount) * 100) : 0
   const recommendations = rankVoteDates(voteStatus).slice(0, 3)
+  const visibleParticipants = participants.slice(0, 5)
 
   return (
-    <>
+    <div className="vote-sticky-aside">
       <section className="workspace-aside-card vote-date-detail-card">
         {selectedStatus ? (
           <>
@@ -67,6 +81,28 @@ export function VoteDetailAside({ participantsCount, selectedDate, voteStatus, o
         ) : <p className="vote-date-empty">달력에서 날짜를 선택해주세요.</p>}
       </section>
 
+      <section className="workspace-aside-card vote-calendar-participants-card">
+        <header>
+          <h2><Users aria-hidden="true" size={18} /> 캘린더 참여자 <span>{participantsCount}</span></h2>
+          <button type="button" onClick={onViewParticipants}>
+            전체보기 <ChevronRight aria-hidden="true" size={15} />
+          </button>
+        </header>
+        <div className="vote-calendar-participant-list">
+          {visibleParticipants.length > 0 ? visibleParticipants.map((participant) => (
+            <div key={participant.uuid}>
+              <span className="participant-avatar" style={{ backgroundColor: participant.color_code }}>
+                {participant.nickname.slice(0, 1)}
+              </span>
+              <strong>{participant.nickname}</strong>
+            </div>
+          )) : <p>아직 참여자가 없어요.</p>}
+        </div>
+        {participants.length > visibleParticipants.length && (
+          <p className="vote-calendar-participant-more">외 {participants.length - visibleParticipants.length}명이 함께하고 있어요.</p>
+        )}
+      </section>
+
       <section className="workspace-aside-card vote-recommendations-card">
         <header><h2><Sparkles size={16} /> 추천 날짜</h2></header>
         {recommendations.length > 0 ? recommendations.map(({ item, available }, index) => {
@@ -85,6 +121,6 @@ export function VoteDetailAside({ participantsCount, selectedDate, voteStatus, o
           )
         }) : <p>투표가 모이면 추천 날짜가 표시돼요.</p>}
       </section>
-    </>
+    </div>
   )
 }
