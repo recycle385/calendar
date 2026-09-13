@@ -1,12 +1,12 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { LoginPage } from '../pages/auth/LoginPage';
-import { OAuthCallbackPage } from '../pages/auth/OAuthCallbackPage';
-import { SignupPage } from '../pages/auth/SignupPage';
+import { OAuthCallbackPage } from '../pages/auth/callback/OAuthCallbackPage';
+import { LoginPage } from '../pages/auth/login/LoginPage';
+import { SignupPage } from '../pages/auth/signup/SignupPage';
 import { HomePage } from '../pages/home/HomePage';
-import { CalendarCreatePage } from '../pages/calendar/CalendarCreatePage';
-import { CalendarDetailPage } from '../pages/calendar/CalendarDetailPage';
-import { CalendarJoinPage } from '../pages/calendar/CalendarJoinPage';
-import { CalendarListPage } from '../pages/calendar/CalendarListPage';
+import { CalendarCreatePage } from '../pages/calendar/create/CalendarCreatePage';
+import { CalendarDetailPage } from '../pages/calendar/detail/CalendarDetailPage';
+import { CalendarJoinPage } from '../pages/calendar/join/CalendarJoinPage';
+import { CalendarListPage } from '../pages/calendar/list/CalendarListPage';
 
 export const LEGACY_CALENDAR_SHARE_ROUTE = '/calendar/:slug';
 

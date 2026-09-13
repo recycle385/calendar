@@ -1,14 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
-import { removeParticipantToken } from '../../../domains/participant'
-import { createCalendarSocket } from '../../../shared/socket/socketClient'
+import { removeParticipantToken } from '../../../../../domains/participant'
+import { createCalendarSocket } from '../../../../../shared/socket/socketClient'
 import {
   clearDeletedCalendarData,
   refreshCalendarData,
   refreshParticipantData,
   refreshVoteData,
-} from '../../cache/calendarCache'
+} from '../../../../cache/calendarCache'
 
 export interface OnlineCalendarUser {
   sub: string

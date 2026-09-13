@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
-import { getGoogleLoginUrl } from '../../../domains/auth'
-import { Brand } from '../../../shared/ui/Brand'
+import { getGoogleLoginUrl } from '../../../../domains/auth'
+import { Brand } from '../../../../shared/ui/Brand'
 
 export function LoginPage() {
   return (

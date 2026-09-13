@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
-import { signupWithGoogle } from '../../../domains/auth'
-import { useAuth } from '../../providers/AuthProvider'
+import { signupWithGoogle } from '../../../../domains/auth'
+import { useAuth } from '../../../providers/AuthProvider'
 
 const signupSchema = z.object({
   isTermsAgreed: z.boolean().refine((value) => value, '이용약관과 개인정보 처리방침에 동의해주세요.'),

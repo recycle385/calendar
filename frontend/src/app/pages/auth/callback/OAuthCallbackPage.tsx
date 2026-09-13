@@ -5,8 +5,8 @@ import {
   handleGoogleCallback,
   type GoogleCallbackLoginResponse,
   type GoogleCallbackPendingSignupResponse,
-} from '../../../domains/auth'
-import { useAuth } from '../../providers/AuthProvider'
+} from '../../../../domains/auth'
+import { useAuth } from '../../../providers/AuthProvider'
 
 type CallbackResult = GoogleCallbackLoginResponse | GoogleCallbackPendingSignupResponse
 
