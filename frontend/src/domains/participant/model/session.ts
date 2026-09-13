@@ -1,5 +1,6 @@
 const PARTICIPANT_TOKEN_PREFIX = 'participantToken_'
 const PARTICIPANT_SESSION_PREFIX = 'participantSession_'
+const sessionListeners = new Map<string, Set<() => void>>()
 
 export interface ParticipantSession {
   participantToken: string
@@ -11,6 +12,21 @@ function getStorage() {
   return typeof window === 'undefined' ? null : window.sessionStorage
 }
 
+function notifyParticipantSessionChanged(slug: string) {
+  sessionListeners.get(slug)?.forEach((listener) => listener())
+}
+
+export function subscribeParticipantSession(slug: string, listener: () => void) {
+  const listeners = sessionListeners.get(slug) ?? new Set<() => void>()
+  listeners.add(listener)
+  sessionListeners.set(slug, listeners)
+
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0) sessionListeners.delete(slug)
+  }
+}
+
 export function getParticipantToken(slug: string) {
   const session = getParticipantSession(slug)
   return session?.participantToken ?? getStorage()?.getItem(`${PARTICIPANT_TOKEN_PREFIX}${slug}`) ?? null
@@ -18,6 +34,7 @@ export function getParticipantToken(slug: string) {
 
 export function setParticipantToken(slug: string, token: string) {
   getStorage()?.setItem(`${PARTICIPANT_TOKEN_PREFIX}${slug}`, token)
+  notifyParticipantSessionChanged(slug)
 }
 
 export function getParticipantSession(slug: string): ParticipantSession | null {
@@ -36,12 +53,14 @@ export function setParticipantSession(slug: string, session: ParticipantSession)
   const storage = getStorage()
   storage?.setItem(`${PARTICIPANT_SESSION_PREFIX}${slug}`, JSON.stringify(session))
   storage?.setItem(`${PARTICIPANT_TOKEN_PREFIX}${slug}`, session.participantToken)
+  notifyParticipantSessionChanged(slug)
 }
 
 export function removeParticipantToken(slug: string) {
   const storage = getStorage()
   storage?.removeItem(`${PARTICIPANT_TOKEN_PREFIX}${slug}`)
   storage?.removeItem(`${PARTICIPANT_SESSION_PREFIX}${slug}`)
+  notifyParticipantSessionChanged(slug)
 }
 
 export function isParticipantSessionUsable(

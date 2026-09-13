@@ -4,8 +4,10 @@ import {
   getParticipantSession,
   isLinkedMemberParticipantSession,
   isParticipantSessionUsable,
+  removeParticipantToken,
   removeParticipantSessionsExceptUser,
   setParticipantSession,
+  subscribeParticipantSession,
 } from './session'
 
 class MemoryStorage implements Storage {
@@ -62,5 +64,17 @@ describe('Participant 세션 회원 격리', () => {
     expect(isLinkedMemberParticipantSession({ participantToken: 'legacy', participantUuid: 'p-legacy' })).toBe(false)
     expect(isLinkedMemberParticipantSession({ participantToken: 'guest', participantUuid: 'p-guest', linkedUserUuid: null })).toBe(false)
     expect(isLinkedMemberParticipantSession({ participantToken: 'member', participantUuid: 'p-member', linkedUserUuid: 'user-1' })).toBe(true)
+  })
+
+  it('세션 저장과 제거를 구독자에게 알린다', () => {
+    const changes: string[] = []
+    const unsubscribe = subscribeParticipantSession('calendar', () => changes.push('changed'))
+
+    setParticipantSession('calendar', { participantToken: 'token', participantUuid: 'participant', linkedUserUuid: null })
+    removeParticipantToken('calendar')
+    unsubscribe()
+    setParticipantSession('calendar', { participantToken: 'next', participantUuid: 'next-participant', linkedUserUuid: null })
+
+    expect(changes).toEqual(['changed', 'changed'])
   })
 })

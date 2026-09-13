@@ -5,8 +5,9 @@ import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 
 import { calendarDetailQuery } from '../../../../domains/calendar'
-import { getParticipantSession, isLinkedMemberParticipantSession, isParticipantSessionUsable, loginParticipant, registerParticipant, removeParticipantToken, setParticipantSession } from '../../../../domains/participant'
+import { loginParticipant, registerParticipant, setParticipantSession } from '../../../../domains/participant'
 import { isApiError } from '../../../../shared/api/httpClient'
+import { useCalendarParticipantAccess } from '../../../guards/useCalendarParticipantAccess'
 import { useAuth } from '../../../providers/AuthProvider'
 import { WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { JoinCalendarSummary } from './components/JoinCalendarSummary'
@@ -18,14 +19,13 @@ export function CalendarJoinPage() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
   const { accessToken, status, user, userUuid } = useAuth()
+  const {
+    memberIdentityUnavailable,
+    participantSession: usableExistingSession,
+  } = useCalendarParticipantAccess(slug)
   const [mode, setMode] = useState<JoinMode>(status === 'authenticated' ? 'member-existing' : 'guest-new')
   const form = useForm<JoinForm>({ resolver: zodResolver(joinSchema), defaultValues: { nickname: user?.nickname ?? '', password: '' } })
   const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug) })
-  const existingSession = getParticipantSession(slug)
-  const memberIdentityUnavailable = isLinkedMemberParticipantSession(existingSession)
-    && (status === 'restoring' || status === 'restore-failed')
-  const usableExistingSession = !memberIdentityUnavailable
-    && isParticipantSessionUsable(existingSession, status === 'authenticated' ? userUuid : null)
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -33,11 +33,6 @@ export function CalendarJoinPage() {
       form.setValue('nickname', user?.nickname ?? '')
     }
   }, [form, status, user?.nickname])
-
-  useEffect(() => {
-    if (status === 'restoring' || status === 'restore-failed' || !existingSession || usableExistingSession) return
-    removeParticipantToken(slug)
-  }, [existingSession, slug, status, usableExistingSession])
 
   const isExisting = mode.endsWith('existing')
   const isMember = mode.startsWith('member')

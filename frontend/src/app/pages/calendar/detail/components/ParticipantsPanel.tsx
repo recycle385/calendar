@@ -27,7 +27,6 @@ interface ParticipantsPanelProps {
   accessToken: string | null
   onlineUsers: OnlineCalendarUser[] | null
   connectionState: RealtimeConnectionState
-  onSessionChanged: (session: ParticipantSession | null) => void
 }
 
 export function ParticipantsPanel({
@@ -40,7 +39,6 @@ export function ParticipantsPanel({
   accessToken,
   onlineUsers,
   connectionState,
-  onSessionChanged,
 }: ParticipantsPanelProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -50,7 +48,6 @@ export function ParticipantsPanel({
       session,
       currentUserUuid,
       mainAccessToken: accessToken,
-      onSessionChanged,
       request: (token) => deleteParticipantSelf(slug, token),
     }),
     onSuccess: () => {

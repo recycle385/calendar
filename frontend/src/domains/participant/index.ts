@@ -10,6 +10,7 @@ export {
   ParticipantReentryRequiredError,
   runParticipantRequest,
 } from './model/authenticatedRequest'
+export { useParticipantSession } from './hooks/useParticipantSession'
 export {
   getParticipantSession,
   getParticipantToken,

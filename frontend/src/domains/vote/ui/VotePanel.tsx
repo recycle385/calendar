@@ -28,10 +28,9 @@ interface VotePanelProps {
   dispatch: Dispatch<VoteEditorAction>
   onRetry: () => void
   onSubmit: (votes: VoteInput[]) => Promise<unknown>
-  onReentryRequired: () => void
 }
 
-export function VotePanel({ isClosed, voteStatus, ownVotes, loading, loadError, refetchError, state, dispatch, onRetry, onSubmit, onReentryRequired }: VotePanelProps) {
+export function VotePanel({ isClosed, voteStatus, ownVotes, loading, loadError, refetchError, state, dispatch, onRetry, onSubmit }: VotePanelProps) {
   const [tool, setTool] = useState<VoteType>('available')
   const [saveError, setSaveError] = useState<string | null>(null)
   const enabledDates = useMemo(() => voteStatus?.filter((item) => item.is_enabled) ?? [], [voteStatus])
@@ -66,7 +65,6 @@ export function VotePanel({ isClosed, voteStatus, ownVotes, loading, loadError, 
     } catch (error) {
       dispatch({ type: 'SAVE_FAILED' })
       if (error instanceof Error && error.name === 'ParticipantReentryRequiredError') {
-        onReentryRequired()
         return
       }
       setSaveError('투표를 저장하지 못했어요. 편집 내용은 유지했으니 다시 시도해주세요.')

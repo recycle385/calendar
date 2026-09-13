@@ -20,7 +20,6 @@ interface ParticipantRequestOptions<T> {
   currentUserUuid: string | null
   mainAccessToken: string | null
   request: (participantToken: string) => Promise<T>
-  onSessionChanged?: (session: ParticipantSession | null) => void
 }
 
 export async function runParticipantRequest<T>({
@@ -29,11 +28,9 @@ export async function runParticipantRequest<T>({
   currentUserUuid,
   mainAccessToken,
   request,
-  onSessionChanged,
 }: ParticipantRequestOptions<T>) {
   if (!isParticipantSessionUsable(session, currentUserUuid)) {
     removeParticipantToken(slug)
-    onSessionChanged?.(null)
     throw new ParticipantReentryRequiredError()
   }
 
@@ -45,7 +42,6 @@ export async function runParticipantRequest<T>({
 
   if (!session.linkedUserUuid || session.linkedUserUuid !== currentUserUuid || !mainAccessToken) {
     removeParticipantToken(slug)
-    onSessionChanged?.(null)
     throw new ParticipantReentryRequiredError()
   }
 
@@ -57,12 +53,10 @@ export async function runParticipantRequest<T>({
       linkedUserUuid: currentUserUuid,
     }
     setParticipantSession(slug, refreshedSession)
-    onSessionChanged?.(refreshedSession)
     return await request(refreshedSession.participantToken)
   } catch (error) {
     if (isApiError(error) && error.status === 401) {
       removeParticipantToken(slug)
-      onSessionChanged?.(null)
       throw new ParticipantReentryRequiredError()
     }
     throw error

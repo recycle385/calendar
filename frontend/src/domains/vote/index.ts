@@ -1,5 +1,6 @@
 export { getParticipantVotes, getVoteStatus, submitVotes } from './api/voteApi'
 export { participantVotesQuery, voteKeys, voteStatusQuery } from './model/queries'
+export { useVoteEditor } from './hooks/useVoteEditor'
 export {
   areVoteDraftsEqual,
   createVoteDraft,
