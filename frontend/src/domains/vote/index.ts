@@ -4,6 +4,7 @@ export { useVoteEditor } from './hooks/useVoteEditor'
 export {
   areVoteDraftsEqual,
   createVoteDraft,
+  createVoteEditorState,
   hasVoteEditorSourceData,
   initialVoteEditorState,
   serializeVoteDraft,

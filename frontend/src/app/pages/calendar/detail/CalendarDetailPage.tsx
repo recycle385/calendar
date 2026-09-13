@@ -56,9 +56,13 @@ export function CalendarDetailPage() {
     mainAccessToken: accessToken,
   })
   const editorSessionKey = `${slug}:${participantSession?.participantUuid ?? ''}`
-  const { state: voteEditorState, dispatch: voteEditorDispatch } = useVoteEditor(editorSessionKey)
+  const voteEditor = useVoteEditor({
+    sourceKey: editorSessionKey,
+    voteStatus: voteStatus.data?.voteStatus,
+    ownVotes: ownVotes.data?.votes,
+  })
 
-  useUnsavedVoteNavigationWarning(voteEditorState.isDirty)
+  useUnsavedVoteNavigationWarning(voteEditor.state.isDirty)
 
   if (!slug) return <Navigate to="/" replace />
   if (memberIdentityUnavailable) {
@@ -120,13 +124,14 @@ export function CalendarDetailPage() {
               {tab === 'vote' && (
                 <VotePanel
                   isClosed={liveCalendar.is_closed}
-                  voteStatus={voteStatus.data?.voteStatus}
-                  ownVotes={ownVotes.data?.votes}
+                  enabledDates={voteEditor.enabledDates}
+                  enabledDateSet={voteEditor.enabledDateSet}
+                  sourceDataReady={voteEditor.sourceDataReady}
                   loading={(!voteStatus.data && voteStatus.isPending) || (!ownVotes.data && ownVotes.isPending)}
                   loadError={Boolean((voteStatus.isError && !voteStatus.data) || (ownVotes.isError && !ownVotes.data))}
                   refetchError={Boolean((voteStatus.isRefetchError && voteStatus.data) || (ownVotes.isRefetchError && ownVotes.data))}
-                  state={voteEditorState}
-                  dispatch={voteEditorDispatch}
+                  state={voteEditor.state}
+                  dispatch={voteEditor.dispatch}
                   onRetry={() => { void Promise.all([voteStatus.refetch(), ownVotes.refetch()]) }}
                   onSubmit={submitParticipantVotes}
                 />

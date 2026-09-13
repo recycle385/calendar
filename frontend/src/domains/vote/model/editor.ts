@@ -3,6 +3,7 @@ import type { DateVoteStatus, ParticipantVoteRecord, VoteInput, VoteType } from 
 export type VoteDraft = Record<string, VoteType>
 
 export interface VoteEditorState {
+  sourceKey: string | null
   baseline: VoteDraft
   draft: VoteDraft
   remoteDraft: VoteDraft | null
@@ -15,6 +16,7 @@ export interface VoteEditorState {
 
 export type VoteEditorAction =
   | { type: 'RESET' }
+  | { type: 'SYNC_SOURCE'; sourceKey: string; remoteDraft: VoteDraft | null; enabledDates: Set<string> | null }
   | { type: 'REMOTE_SYNC'; draft: VoteDraft }
   | { type: 'RELOAD_REMOTE' }
   | { type: 'SELECT'; date: string; voteType: VoteType }
@@ -25,6 +27,7 @@ export type VoteEditorAction =
   | { type: 'SAVE_FAILED' }
 
 export const initialVoteEditorState: VoteEditorState = {
+  sourceKey: null,
   baseline: {},
   draft: {},
   remoteDraft: null,
@@ -33,6 +36,16 @@ export const initialVoteEditorState: VoteEditorState = {
   hasConflict: false,
   removedDateCount: 0,
   submittedDraft: null,
+}
+
+export function createVoteEditorState(sourceKey: string, remoteDraft: VoteDraft | null): VoteEditorState {
+  if (!remoteDraft) return { ...initialVoteEditorState, sourceKey }
+  return {
+    ...initialVoteEditorState,
+    sourceKey,
+    baseline: remoteDraft,
+    draft: remoteDraft,
+  }
 }
 
 export function createVoteDraft(
@@ -72,6 +85,18 @@ export function voteEditorReducer(state: VoteEditorState, action: VoteEditorActi
   switch (action.type) {
     case 'RESET':
       return initialVoteEditorState
+    case 'SYNC_SOURCE': {
+      if (state.sourceKey !== action.sourceKey) {
+        return createVoteEditorState(action.sourceKey, action.remoteDraft)
+      }
+
+      const remotelySynced = action.remoteDraft
+        ? voteEditorReducer(state, { type: 'REMOTE_SYNC', draft: action.remoteDraft })
+        : state
+      return action.enabledDates
+        ? voteEditorReducer(remotelySynced, { type: 'OPTIONS_CHANGED', enabledDates: action.enabledDates })
+        : remotelySynced
+    }
     case 'REMOTE_SYNC':
       if (state.isDirty || state.isSaving || state.hasConflict) {
         return areVoteDraftsEqual(state.baseline, action.draft)

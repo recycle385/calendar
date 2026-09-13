@@ -1,15 +1,13 @@
 import { CalendarDays, Check, RotateCcw } from 'lucide-react'
-import { useEffect, useMemo, useState, type Dispatch } from 'react'
+import { useState, type Dispatch } from 'react'
 
 import { formatDate } from '../../../shared/utils/format'
 import {
   canSaveVoteEditor,
-  createVoteDraft,
-  hasVoteEditorSourceData,
   serializeVoteDraft,
 } from '../model/editor'
 import type { VoteEditorAction, VoteEditorState } from '../model/editor'
-import type { DateVoteStatus, ParticipantVoteRecord, VoteInput, VoteType } from '../model/types'
+import type { DateVoteStatus, VoteInput, VoteType } from '../model/types'
 
 const VOTE_TOOL: Array<{ value: VoteType; label: string; className: string }> = [
   { value: 'available', label: '가능', className: 'is-available' },
@@ -19,8 +17,9 @@ const VOTE_TOOL: Array<{ value: VoteType; label: string; className: string }> = 
 
 interface VotePanelProps {
   isClosed: boolean
-  voteStatus?: DateVoteStatus[]
-  ownVotes?: ParticipantVoteRecord[]
+  enabledDates: DateVoteStatus[]
+  enabledDateSet: Set<string>
+  sourceDataReady: boolean
   loading: boolean
   loadError: boolean
   refetchError: boolean
@@ -30,32 +29,12 @@ interface VotePanelProps {
   onSubmit: (votes: VoteInput[]) => Promise<unknown>
 }
 
-export function VotePanel({ isClosed, voteStatus, ownVotes, loading, loadError, refetchError, state, dispatch, onRetry, onSubmit }: VotePanelProps) {
+export function VotePanel({ isClosed, enabledDates, enabledDateSet, sourceDataReady, loading, loadError, refetchError, state, dispatch, onRetry, onSubmit }: VotePanelProps) {
   const [tool, setTool] = useState<VoteType>('available')
   const [saveError, setSaveError] = useState<string | null>(null)
-  const enabledDates = useMemo(() => voteStatus?.filter((item) => item.is_enabled) ?? [], [voteStatus])
-  const enabledDateSet = useMemo(() => new Set(enabledDates.map((item) => item.date_value.slice(0, 10))), [enabledDates])
-  const enabledSignature = [...enabledDateSet].sort().join('|')
-  const remoteDraft = useMemo(
-    () => ownVotes && voteStatus ? createVoteDraft(ownVotes, enabledDateSet) : null,
-    [enabledDateSet, ownVotes, voteStatus],
-  )
-  const remoteSignature = remoteDraft
-    ? JSON.stringify(Object.entries(remoteDraft).sort(([a], [b]) => a.localeCompare(b)))
-    : null
-
-  useEffect(() => {
-    if (!remoteDraft) return
-    dispatch({ type: 'REMOTE_SYNC', draft: remoteDraft })
-  }, [remoteSignature])
-
-  useEffect(() => {
-    if (!voteStatus) return
-    dispatch({ type: 'OPTIONS_CHANGED', enabledDates: enabledDateSet })
-  }, [enabledSignature])
 
   async function saveVotes() {
-    if (state.isSaving || !hasVoteEditorSourceData(voteStatus, ownVotes)) return
+    if (state.isSaving || !sourceDataReady) return
     setSaveError(null)
     const submittedDraft = Object.fromEntries(serializeVoteDraft(state.draft, enabledDateSet).map((vote) => [vote.date, vote.voteType]))
     dispatch({ type: 'SAVE_STARTED', draft: submittedDraft })
@@ -72,7 +51,7 @@ export function VotePanel({ isClosed, voteStatus, ownVotes, loading, loadError, 
   }
 
   if (loading) return <section className="workspace-panel calendar-feedback">내 투표 정보를 불러오는 중이에요.</section>
-  if (loadError || !hasVoteEditorSourceData(voteStatus, ownVotes)) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>내 투표 정보를 불러오지 못했어요.</h2><p>기존 투표를 보호하기 위해 편집과 저장을 잠시 막았어요.</p><button className="button button-secondary" type="button" onClick={onRetry}>다시 시도</button></section>
+  if (loadError || !sourceDataReady) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>내 투표 정보를 불러오지 못했어요.</h2><p>기존 투표를 보호하기 위해 편집과 저장을 잠시 막았어요.</p><button className="button button-secondary" type="button" onClick={onRetry}>다시 시도</button></section>
   if (isClosed) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>투표가 마감되었어요.</h2><p>{state.isDirty ? '다른 화면에서 투표가 마감되어 편집 중이던 변경은 저장되지 않았어요.' : '투표 현황에서 함께 고른 날짜를 확인할 수 있어요.'}</p></section>
   if (enabledDates.length === 0) return <section className="workspace-panel calendar-feedback"><CalendarDays size={32} /><h2>선택 가능한 날짜가 없어요.</h2><p>방장이 투표 기간을 조정하면 이곳에 표시돼요.</p></section>
 

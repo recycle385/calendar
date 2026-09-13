@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { canSaveVoteEditor, hasVoteEditorSourceData, initialVoteEditorState, voteEditorReducer } from './editor'
+import { canSaveVoteEditor, createVoteEditorState, hasVoteEditorSourceData, initialVoteEditorState, serializeVoteDraft, voteEditorReducer } from './editor'
 
 describe('voteEditorReducer', () => {
   it('조회 실패의 undefined와 정상적인 미투표 빈 배열을 구분한다', () => {
@@ -87,5 +87,34 @@ describe('voteEditorReducer', () => {
     state = voteEditorReducer(state, { type: 'RESET' })
 
     expect(state).toEqual(initialVoteEditorState)
+  })
+
+  it('캐시된 기존 투표를 최초 편집본에 포함해 새 선택과 함께 저장한다', () => {
+    const enabledDates = new Set(['2026-09-15', '2026-09-16'])
+    let state = createVoteEditorState('calendar:participant', { '2026-09-15': 'available' })
+
+    state = voteEditorReducer(state, { type: 'SELECT', date: '2026-09-16', voteType: 'maybe' })
+
+    expect(serializeVoteDraft(state.draft, enabledDates)).toEqual([
+      { date: '2026-09-15', voteType: 'available' },
+      { date: '2026-09-16', voteType: 'maybe' },
+    ])
+  })
+
+  it('출처가 바뀔 때 초기화와 새 서버 투표 반영을 한 번에 처리한다', () => {
+    let state = createVoteEditorState('old:participant', { '2026-09-15': 'available' })
+    state = voteEditorReducer(state, { type: 'SELECT', date: '2026-09-16', voteType: 'maybe' })
+
+    state = voteEditorReducer(state, {
+      type: 'SYNC_SOURCE',
+      sourceKey: 'new:participant',
+      remoteDraft: { '2026-09-20': 'unavailable' },
+      enabledDates: new Set(['2026-09-20']),
+    })
+
+    expect(state.draft).toEqual({ '2026-09-20': 'unavailable' })
+    expect(state.baseline).toEqual({ '2026-09-20': 'unavailable' })
+    expect(state.isDirty).toBe(false)
+    expect(state.hasConflict).toBe(false)
   })
 })
