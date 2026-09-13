@@ -1,23 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
+import { CalendarDays } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { myCalendarsQuery, type Calendar } from '../../../../domains/calendar'
+import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl'
 import { formatDate } from '../../../../shared/utils/format'
 import { useAuth } from '../../../providers/AuthProvider'
 
+const calendarImageUrl = assetUrl('edit/calendar-3d.webp')
+
 function CalendarCard({ calendar }: { calendar: Calendar }) {
   return (
-    <article className="home-calendar-card">
-      <div>
-        <span className={calendar.is_closed ? 'calendar-status is-closed' : 'calendar-status'}>
-          {calendar.is_closed ? '마감' : '진행 중'}
-        </span>
-        <h3>{calendar.title}</h3>
-        <p>{calendar.description || '설명 없이 만든 캘린더예요.'}</p>
+    <Link className="home-calendar-card" to={`/c/${calendar.slug}`} aria-label={`${calendar.title} 캘린더 열기`}>
+      <div className="home-calendar-card-image">
+        <CalendarDays aria-hidden="true" size={34} />
+        <img src={calendarImageUrl} alt="" aria-hidden="true" onError={hideUnavailableAsset} />
       </div>
-      <span className="calendar-period">
-        {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}
-      </span>
-    </article>
+      <div className="home-calendar-card-body">
+        <div>
+          <span className={calendar.is_closed ? 'calendar-status is-closed' : 'calendar-status'}>
+            {calendar.is_closed ? '마감' : '진행 중'}
+          </span>
+          <h3>{calendar.title}</h3>
+          <p>{calendar.description || '설명 없이 만든 캘린더예요.'}</p>
+        </div>
+        <span className="calendar-period">
+          {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}
+        </span>
+      </div>
+    </Link>
   )
 }
 
