@@ -914,7 +914,7 @@ input {
   align-items: center;
 }
 .footer-inner > div:first-child p {
-  font-size: 11px;
+  font-size: 14px;
   color: #8d99aa;
   margin: 6px 0 0 43px;
 }
@@ -922,7 +922,7 @@ input {
   display: flex;
   justify-content: center;
   gap: 28px;
-  font-size: 11px;
+  font-size: 14px;
   color: #728198;
 }
 .footer-links > span {
@@ -931,7 +931,7 @@ input {
 }
 .footer-meta {
   text-align: right;
-  font-size: 11px;
+  font-size: 13px;
   color: #8e9aab;
 }
 .socials {
