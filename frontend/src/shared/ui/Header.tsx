@@ -8,12 +8,29 @@ interface HeaderProps {
   isAuthenticated?: boolean;
   displayName?: string | null;
   workspace?: boolean;
+  onLogout?: () => Promise<void>;
 }
 
-export function Header({ isAuthenticated = false, displayName, workspace = false }: HeaderProps) {
+export function Header({ isAuthenticated = false, displayName, workspace = false, onLogout }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  async function handleLogout() {
+    if (!onLogout || loggingOut) return;
+    setLoggingOut(true);
+    setLogoutError(false);
+    try {
+      await onLogout();
+      closeMobileMenu();
+    } catch {
+      setLogoutError(true);
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <header className="site-header">
@@ -41,7 +58,11 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
           {isAuthenticated ? (
             <>
               <Link className="login-link" to="/calendars">{displayName ?? '회원'}님</Link>
+              <button className="header-logout-button" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
+                {loggingOut ? '로그아웃 중…' : '로그아웃'}
+              </button>
               <Link className="button button-primary button-small" to="/calendars">내 캘린더</Link>
+              {logoutError && <span className="header-logout-error" role="alert">로그아웃 실패</span>}
             </>
           ) : (
             <>
@@ -87,6 +108,10 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
           <>
             <Link to="/calendars" onClick={closeMobileMenu}>{displayName ?? '회원'}님</Link>
             <Link className="mobile-nav-primary" to="/calendars" onClick={closeMobileMenu}>내 캘린더</Link>
+            <button className="mobile-nav-logout" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
+              {loggingOut ? '로그아웃 중…' : '로그아웃'}
+            </button>
+            {logoutError && <p className="mobile-nav-error" role="alert">로그아웃하지 못했어요. 다시 시도해주세요.</p>}
           </>
         ) : (
           <>

@@ -11,11 +11,11 @@ import { UseCasesSection } from './components/UseCasesSection';
 import { ValueSection } from './components/ValueSection';
 
 export function HomePage() {
-  const { status, user } = useAuth();
+  const { logout, status, user } = useAuth();
 
   return (
     <>
-      <Header isAuthenticated={status === 'authenticated'} displayName={user?.nickname} />
+      <Header isAuthenticated={status === 'authenticated'} displayName={user?.nickname} onLogout={logout} />
       <main>
         <HeroSection isAuthenticated={status === 'authenticated'} />
         <MyCalendarsSection />

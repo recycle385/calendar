@@ -7,6 +7,7 @@ import {
   getAccessToken,
   getAccessTokenSubject,
   getStoredAuthProfile,
+  logout as requestLogout,
   refreshAccessToken,
   setAccessToken,
   setStoredAuthProfile,
@@ -28,6 +29,7 @@ interface AuthContextValue {
   user: AuthUser | null
   userUuid: string | null
   completeLogin: (accessToken: string, user: AuthUser) => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -157,9 +159,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     applyAuthenticatedToken(token, nextUser, true)
   }, [applyAuthenticatedToken])
 
+  const logout = useCallback(async () => {
+    try {
+      await requestLogout()
+    } catch (error) {
+      if (!isApiError(error) || error.status !== 401) throw error
+    }
+    expireAuthentication()
+  }, [expireAuthentication])
+
   const value = useMemo(
-    () => ({ accessToken, status, user, userUuid, completeLogin }),
-    [accessToken, completeLogin, status, user, userUuid],
+    () => ({ accessToken, status, user, userUuid, completeLogin, logout }),
+    [accessToken, completeLogin, logout, status, user, userUuid],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

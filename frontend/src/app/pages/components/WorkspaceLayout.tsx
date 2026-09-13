@@ -24,7 +24,7 @@ export function WorkspaceLayout({
   sideContent,
   hideRail = false,
 }: WorkspaceLayoutProps) {
-  const { status, user } = useAuth();
+  const { logout, status, user } = useAuth();
 
   return (
     <div className="workspace-app">
@@ -32,6 +32,7 @@ export function WorkspaceLayout({
         workspace
         isAuthenticated={status === "authenticated"}
         displayName={user?.nickname}
+        onLogout={logout}
       />
       <main className={`workspace-main${hideRail ? " is-public" : ""}`}>
         {!hideRail && (

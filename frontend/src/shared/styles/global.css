@@ -100,6 +100,27 @@ input {
 .login-link {
   font-weight: 700;
 }
+.header-logout-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #587195;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.header-logout-button:hover {
+  color: #1677ff;
+}
+.header-logout-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.header-logout-error {
+  color: #d14343;
+  font-size: 12px;
+  font-weight: 700;
+}
 .button {
   display: inline-flex;
   align-items: center;
@@ -2030,7 +2051,8 @@ body {
     transform: translateY(0);
   }
 
-  .mobile-nav a {
+  .mobile-nav a,
+  .mobile-nav button {
     min-height: 44px;
     display: flex;
     align-items: center;
@@ -2039,6 +2061,18 @@ body {
     font-size: 14px;
     font-weight: 700;
     color: #40516c;
+  }
+
+  .mobile-nav button {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .mobile-nav button:disabled {
+    cursor: wait;
+    opacity: 0.6;
   }
 
   .mobile-nav a:active {
@@ -2050,6 +2084,17 @@ body {
     margin-top: 4px;
     background: #1677ff;
     color: #fff !important;
+  }
+
+  .mobile-nav-logout {
+    color: #d14343 !important;
+  }
+
+  .mobile-nav-error {
+    margin: 2px 13px 0;
+    color: #d14343;
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .hero {
