@@ -83,7 +83,7 @@ export function VotePanel({ isClosed, enabledDates, enabledDateSet, participants
       {saveError && <p className="form-error workspace-request-error">{saveError}</p>}
       <div className="vote-submit-row">
         <button className="vote-reset-button" type="button" disabled={state.isSaving} onClick={() => dispatch({ type: 'CLEAR_ALL' })}><RotateCcw size={14} /> 선택 초기화</button>
-        <button className="button button-primary" type="button" disabled={!canSaveVoteEditor(state)} onClick={() => void saveVotes()}>{state.isSaving ? '저장 중…' : <><Check size={18} /> {state.hasConflict ? '현재 편집본으로 저장' : '투표 저장하기'}</>}</button>
+        <button className="button button-primary vote-submit-button" type="button" aria-busy={state.isSaving} disabled={!canSaveVoteEditor(state)} onClick={() => void saveVotes()}>{state.isSaving ? '투표 중…' : <><Check size={18} /> {state.hasConflict ? '현재 편집본으로 투표하기' : '투표하기'}</>}</button>
       </div>
     </section>
   )
