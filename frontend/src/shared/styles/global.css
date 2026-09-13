@@ -55,24 +55,11 @@ input {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 19px;
-  color: #102650;
+  flex: 0 0 auto;
 }
-.brand-mark {
-  width: 32px;
+.brand-logo {
+  width: auto;
   height: 32px;
-  border-radius: 9px;
-  background: #1677ff;
-  color: #fff;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.brand-mark img {
-  width: 100%;
-  height: 100%;
   object-fit: contain;
 }
 .desktop-nav {
@@ -1014,12 +1001,7 @@ input {
   .header-inner {
     gap: 24px;
   }
-  .brand {
-    font-size: 16px;
-    flex: 0 0 auto;
-  }
-  .brand-mark {
-    width: 28px;
+  .brand-logo {
     height: 28px;
   }
 
@@ -1371,13 +1353,8 @@ input {
     justify-content: space-between;
     gap: 12px;
   }
-  .brand {
-    font-size: 16px;
-  }
-  .brand-mark {
-    width: 28px;
+  .brand-logo {
     height: 28px;
-    border-radius: 8px;
   }
   .desktop-nav,
   .header-actions {

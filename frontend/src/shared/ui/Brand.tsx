@@ -1,10 +1,11 @@
-import { CalendarCheck2 } from 'lucide-react';
+import { assetUrl, hideUnavailableAsset } from '../assets/assetUrl';
+
+const moimLogoUrl = assetUrl('main/icons/moim-logo.webp');
 
 export function Brand() {
   return (
     <a className="brand" href="/" aria-label="moim 홈">
-      <span className="brand-mark" aria-hidden="true"><CalendarCheck2 size={20} /></span>
-      <span>moim</span>
+      <img className="brand-logo" src={moimLogoUrl} alt="moim" onError={hideUnavailableAsset} />
     </a>
   );
 }
