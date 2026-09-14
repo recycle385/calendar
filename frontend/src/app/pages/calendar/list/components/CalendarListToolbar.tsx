@@ -1,6 +1,7 @@
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 import type { CalendarFilter, SortOrder } from '../hooks/useCalendarListFilters'
+import { CalendarSortDropdown } from './CalendarSortDropdown'
 
 interface CalendarListToolbarProps {
   filter: CalendarFilter
@@ -45,19 +46,7 @@ export function CalendarListToolbar({
           placeholder="제목 또는 설명 검색"
         />
       </label>
-      <label className="flex items-center gap-[5px] text-[#6681a5] max-[520px]:ml-auto">
-        <SlidersHorizontal size={16} />
-        <select className="rounded-[10px] border border-[#dce6f3] bg-white px-2 py-2.5 font-bold text-[#435e83]"
-          value={sort}
-          onChange={(event) => onSortChange(event.target.value as SortOrder)}
-          aria-label="정렬 기준"
-        >
-          <option value="name">이름순</option>
-          <option value="newest">최신순</option>
-          <option value="oldest">오래된순</option>
-          <option value="updated">최근 수정순</option>
-        </select>
-      </label>
+      <CalendarSortDropdown value={sort} onChange={onSortChange} />
     </div>
   )
 }
