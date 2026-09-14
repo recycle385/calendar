@@ -1,40 +1,151 @@
-import { CalendarClock, CalendarDays, ChevronRight, Clock3, Users } from 'lucide-react'
+import { CalendarDays, Clock3, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import type { Calendar } from '../../../../../domains/calendar'
 import { assetUrl, hideUnavailableAsset } from '../../../../../shared/assets/assetUrl'
-import { formatDate, formatDateTime } from '../../../../../shared/utils/format'
 import {
-  calendarStateLabel,
   getCalendarImageAlt,
   PLACEHOLDER_IMAGE_PATH,
 } from '../../calendarHelpers'
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000
+const KOREAN_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
+  month: 'long',
+  day: 'numeric',
+  weekday: 'short',
+  timeZone: 'UTC',
+})
+
+function parseDateOnly(value: string) {
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  return Date.UTC(year, month - 1, day)
+}
+
+function formatShortDate(value: string) {
+  const [, month, day] = value.slice(0, 10).split('-')
+  return `${month}.${day}`
+}
+
+function formatKoreanDate(value: string) {
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  return KOREAN_DATE_FORMATTER.format(new Date(Date.UTC(year, month - 1, day)))
+}
+
+export function formatVoteEndDate(value: string, daysLeft: number) {
+  const [, month, day] = value.slice(0, 10).split('-').map(Number)
+  const dateLabel = `${month}월 ${day}일`
+
+  if (daysLeft === 0) return `오늘 (${dateLabel})`
+  if (daysLeft === 1) return `내일 (${dateLabel})`
+  if (daysLeft === -1) return `어제 (${dateLabel})`
+  return formatKoreanDate(value)
+}
+
+function getCandidateDayCount(startDate: string, endDate: string) {
+  return Math.floor((parseDateOnly(endDate) - parseDateOnly(startDate)) / DAY_IN_MS) + 1
+}
+
+function getDaysUntilVoteEnd(voteEndDate: string) {
+  const now = new Date()
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  return Math.ceil((parseDateOnly(voteEndDate) - today) / DAY_IN_MS)
+}
+
+export function getVoteState(isClosed: boolean, daysLeft: number) {
+  if (isClosed || daysLeft < 0) {
+    return {
+      label: '마감',
+      className: 'bg-[#edf1f6] text-[#667993]',
+      accentClassName: 'text-[#7488a4]',
+    }
+  }
+  if (daysLeft === 0) {
+    return {
+      label: '오늘 마감',
+      className: 'bg-[#ffe4e4] text-[#d83d3d]',
+      accentClassName: 'text-[#d83d3d]',
+    }
+  }
+  if (daysLeft === 1) {
+    return {
+      label: '내일 마감',
+      className: 'bg-[#ffead5] text-[#d96b13]',
+      accentClassName: 'text-[#d96b13]',
+    }
+  }
+  if (daysLeft <= 3) {
+    return {
+      label: '마감 임박',
+      className: 'bg-[#fff2cf] text-[#bd7410]',
+      accentClassName: 'text-[#bd7410]',
+    }
+  }
+  return {
+    label: '진행 중',
+    className: 'bg-[#ddf7e8] text-[#178753]',
+    accentClassName: 'text-[#0f9b67]',
+  }
+}
+
 export function CalendarCard({ calendar }: { calendar: Calendar }) {
+  const candidateDayCount = getCandidateDayCount(calendar.start_date, calendar.end_date)
+  const daysUntilVoteEnd = getDaysUntilVoteEnd(calendar.vote_end_date)
+  const voteState = getVoteState(calendar.is_closed, daysUntilVoteEnd)
+  const isVotingOpen = !calendar.is_closed && daysUntilVoteEnd >= 0
+  const voteDeadlineLabel = isVotingOpen ? `투표 마감 D-${daysUntilVoteEnd}` : '투표 종료'
+
   return (
-    <Link className="relative grid min-h-[230px] grid-cols-[140px_minmax(0,1fr)] overflow-hidden rounded-[14px] border border-[#e1eaf5] bg-white transition duration-200 hover:-translate-y-0.5 hover:border-[#bcd8ff] hover:shadow-[0_12px_24px_rgba(30,100,192,0.1)] max-[520px]:grid-cols-[105px_minmax(0,1fr)]" to={`/c/${calendar.slug}`}>
-      <div className="relative overflow-hidden bg-[#edf5ff]">
+    <Link
+      className="group grid min-h-[190px] cursor-pointer gap-3.5 rounded-2xl border border-[#dfe8f3] bg-white p-3.5 text-inherit shadow-[0_4px_14px_rgba(33,75,125,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-[#b8d5fb] hover:shadow-[0_12px_25px_rgba(30,100,192,0.1)]"
+      to={`/c/${calendar.slug}`}
+    >
+      <div className="grid min-w-0 grid-cols-[78px_minmax(0,1fr)_auto] gap-3">
         <img
-          className="size-full bg-[#eaf4ff] object-contain"
+          className="size-[78px] rounded-xl bg-[#edf5ff] object-contain"
           src={assetUrl(PLACEHOLDER_IMAGE_PATH)}
           alt={getCalendarImageAlt(calendar.title)}
           onError={hideUnavailableAsset}
         />
-        <span className={`absolute top-2.5 right-2 inline-flex w-fit rounded-full px-[9px] py-[5px] text-xs font-black ${calendar.is_closed ? 'bg-[#edf1f6] text-[#667993]' : 'bg-[#ddf7e8] text-[#178753]'}`}>
-          {calendarStateLabel(calendar)}
+
+        <div className="min-w-0 self-center">
+          <h2 className="m-0 truncate text-lg font-black tracking-[-0.035em] text-[#102d55]">
+            {calendar.title}
+          </h2>
+          <p className="mt-1 mb-0 line-clamp-2 text-sm leading-[1.45] text-[#6b809e]">
+            {calendar.description || '설명 없이 만든 캘린더예요.'}
+          </p>
+        </div>
+
+        <span className={`mt-1 inline-flex h-fit rounded-full px-2.5 py-1 text-xs font-black ${voteState.className}`}>
+          {voteState.label}
         </span>
       </div>
-      <div className="min-w-0 px-4 pt-[18px] pr-7 pb-3.5 max-[520px]:px-[13px] max-[520px]:pt-3.5 max-[520px]:pr-6 max-[520px]:pb-3">
-        <h2 className="my-1 mb-[7px] truncate text-lg font-black tracking-[-0.04em] text-[#122c52] max-[520px]:text-base">{calendar.title}</h2>
-        <p className="m-0 line-clamp-2 text-[13px] leading-[1.55] text-[#6f829e]">{calendar.description || '설명 없이 만든 캘린더예요. 참여자와 가능한 시간을 모아보세요.'}</p>
-        <div className="mt-[13px] grid gap-2 text-[13px] font-bold text-[#6981a1] [&>span]:flex [&>span]:items-start [&>span]:gap-[6px] [&_svg]:mt-0.5 [&_svg]:shrink-0">
-          <span><Clock3 size={16} /> 투표 기간 {formatDate(calendar.vote_start_date)} — {formatDate(calendar.vote_end_date)}</span>
-          <span><CalendarDays size={16} /> 후보 날짜 {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}</span>
-          <span><Users size={16} /> 현재 참여 인원 {calendar.participant_count ?? 0}명</span>
-          <span><CalendarClock size={16} /> 생성일 {formatDateTime(calendar.created_at)}</span>
+
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 text-[13px] font-bold text-[#647d9f] max-[480px]:grid-cols-1">
+        <div className="grid min-w-0 gap-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <CalendarDays className="shrink-0 text-[#55779f]" size={16} />
+            <span className="shrink-0">후보 일정</span>
+            <span className="truncate text-[#365476]">{formatShortDate(calendar.start_date)} ~ {formatShortDate(calendar.end_date)}</span>
+            <span className="shrink-0 rounded-full bg-[#edf3fa] px-2 py-1 text-xs text-[#6680a1]">{candidateDayCount}일</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#edf4fd] text-[#55779f]">
+              <UserRound size={16} />
+            </span>
+            <span>현재 {calendar.participant_count ?? 0}명 참여</span>
+          </div>
+        </div>
+
+        <div className="grid justify-items-end gap-1 max-[480px]:justify-items-start max-[480px]:pl-0.5">
+          <div className={`flex items-center gap-1.5 ${voteState.accentClassName}`}>
+            <Clock3 className="shrink-0" size={18} />
+            <strong>{voteDeadlineLabel}</strong>
+          </div>
+          <span className="pr-0.5 text-xs font-bold text-[#7186a3]">{formatVoteEndDate(calendar.vote_end_date, daysUntilVoteEnd)}</span>
         </div>
       </div>
-      <ChevronRight className="absolute top-[17px] right-3 text-[#98a9c0]" size={19} />
     </Link>
   )
 }

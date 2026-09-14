@@ -60,9 +60,9 @@ export function CalendarListPage() {
         ) : filteredCalendars.length === 0 ? (
           <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><CalendarDays size={32} /><h2 className="m-0 text-[22px] font-black text-[#19345d]">표시할 캘린더가 없어요.</h2><p className="m-0 max-w-[430px] leading-[1.65]">새로운 모임을 만들고 사람들과 가능한 날짜를 모아보세요.</p><Link className={`${buttonClass} ${primaryButtonClass}`} to="/calendars/new">첫 캘린더 만들기</Link></div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 max-[1180px]:grid-cols-1">
+          <div className="grid grid-cols-2 gap-3.5 max-[1180px]:grid-cols-1">
             {filteredCalendars.map((calendar) => <CalendarCard calendar={calendar} key={calendar.slug} />)}
-            <Link className="grid min-h-[175px] place-content-center justify-items-center gap-[7px] rounded-[14px] border border-dashed border-[#a9c9f6] bg-[linear-gradient(140deg,#fbfdff,#f1f7ff)] text-brand-500 [&>svg]:box-content [&>svg]:rounded-full [&>svg]:bg-[#e5f0ff] [&>svg]:p-2" to="/calendars/new"><Plus size={26} /><strong>새 캘린더 만들기</strong><span className="text-xs text-[#7489a6]">새로운 일정을 시작해보세요.</span></Link>
+            <Link className="grid min-h-[190px] place-content-center justify-items-center gap-[7px] rounded-2xl border border-dashed border-[#a9c9f6] bg-[linear-gradient(140deg,#fbfdff,#f1f7ff)] text-brand-500 [&>svg]:box-content [&>svg]:rounded-full [&>svg]:bg-[#e5f0ff] [&>svg]:p-2" to="/calendars/new"><Plus size={26} /><strong>새 캘린더 만들기</strong><span className="text-[13px] text-[#7489a6]">새로운 일정을 시작해보세요.</span></Link>
           </div>
         )}
       </section>
