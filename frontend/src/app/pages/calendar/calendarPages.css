@@ -1251,3 +1251,29 @@
     height: 13px;
   }
 }
+
+/* Keep supporting interface text readable across calendar pages. */
+.workspace-status,
+.calendar-workspace-card-meta,
+.calendar-form small,
+.workflow-card p,
+.join-member-choice small,
+.join-summary-card dt,
+.vote-date-cell strong,
+.vote-date-cell small,
+.status-list p,
+.status-counts span,
+.participants-list p,
+.settings-danger-zone p,
+.participant-summary-card .participant-avatar,
+.recommendation-card > div span,
+.recommendation-card > div small,
+.vote-conflict-notice,
+.vote-conflict-notice button,
+.vote-option-notice {
+  font-size: 12px;
+}
+
+.vote-reset-button {
+  font-size: 13px;
+}
