@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 
 import { calendarDetailQuery, myCalendarsQuery } from '../../../../domains/calendar'
-import { loginParticipant, registerParticipant, setParticipantSession } from '../../../../domains/participant'
+import { setParticipantSession } from '../../../../domains/participant'
 import { isApiError } from '../../../../shared/api/httpClient'
 import { buttonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { useCalendarParticipantAccess } from '../../../guards/useCalendarParticipantAccess'
@@ -14,6 +14,7 @@ import { WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { JoinCalendarSummary } from './components/JoinCalendarSummary'
 import { JoinFormPanel } from './components/JoinFormPanel'
 import { JoinPageIntro } from './components/JoinPageIntro'
+import { joinGuestParticipant } from './model/joinGuestParticipant'
 import { joinMemberParticipant } from './model/joinMemberParticipant'
 import { joinSchema, type JoinForm, type JoinMode } from './model/joinForm'
 
@@ -25,7 +26,7 @@ export function CalendarJoinPage() {
     memberIdentityUnavailable,
     participantSession: usableExistingSession,
   } = useCalendarParticipantAccess(slug)
-  const [mode, setMode] = useState<JoinMode>(status === 'authenticated' ? 'member-existing' : 'guest-new')
+  const [mode, setMode] = useState<JoinMode>(status === 'authenticated' ? 'member' : 'guest')
   const ownerEntryStarted = useRef(false)
   const form = useForm<JoinForm>({ resolver: zodResolver(joinSchema), defaultValues: { nickname: user?.nickname ?? '', password: '' } })
   const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug) })
@@ -36,7 +37,7 @@ export function CalendarJoinPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      setMode((current) => current.startsWith('guest') ? 'member-existing' : current)
+      setMode('member')
       form.setValue('nickname', user?.nickname ?? '')
     }
   }, [form, status, user?.nickname])
@@ -45,16 +46,14 @@ export function CalendarJoinPage() {
     ownerEntryStarted.current = false
   }, [slug, userUuid])
 
-  const isExisting = mode.endsWith('existing')
-  const isMember = mode.startsWith('member')
+  const isMember = mode === 'member'
   const joinMutation = useMutation({
     mutationFn: async (values: JoinForm) => {
       if (isMember) {
         return joinMemberParticipant(slug, values.nickname || user?.nickname || '', accessToken)
       }
 
-      const payload = { nickname: values.nickname.trim(), password: values.password }
-      return isExisting ? loginParticipant(slug, payload) : registerParticipant(slug, payload)
+      return joinGuestParticipant(slug, values.nickname.trim(), values.password ?? '')
     },
     onSuccess: (result) => {
       setParticipantSession(slug, {
@@ -69,7 +68,7 @@ export function CalendarJoinPage() {
   const joinError = useMemo(() => {
     if (!joinMutation.error) return null
     if (isApiError(joinMutation.error) && joinMutation.error.status === 401) return '참여 정보를 확인하지 못했어요. 닉네임과 비밀번호를 다시 확인해주세요.'
-    if (isApiError(joinMutation.error) && joinMutation.error.status === 409) return '이미 같은 닉네임으로 참여 중일 수 있어요. 재참여를 선택해보세요.'
+    if (isApiError(joinMutation.error) && joinMutation.error.status === 409) return '이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해주세요.'
     return '참여 처리에 실패했어요. 네트워크를 확인한 뒤 다시 시도해주세요.'
   }, [joinMutation.error])
 
@@ -93,7 +92,6 @@ export function CalendarJoinPage() {
   if (isOwner) return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center justify-items-center gap-3 text-center text-[#69809f]"><p>{joinMutation.isError ? joinError : '내 캘린더로 이동하고 있어요.'}</p>{joinMutation.isError && <button className={`${buttonClass} ${secondaryButtonClass}`} type="button" onClick={() => joinMutation.mutate({ nickname: user?.nickname ?? '', password: '' })}>다시 시도</button>}</section></WorkspaceLayout>
 
   const calendar = calendarQuery.data.calendar
-  const newEntryBlocked = calendar.is_closed && !isExisting
 
   function onSubmit(values: JoinForm) {
     if (!isMember && (!values.password || values.password.length < 4)) {
@@ -119,7 +117,7 @@ export function CalendarJoinPage() {
           mode={mode}
           form={form}
           isPending={joinMutation.isPending}
-          newEntryBlocked={newEntryBlocked}
+          isClosed={calendar.is_closed}
           joinError={joinError}
           onModeChange={changeMode}
           onSubmit={onSubmit}

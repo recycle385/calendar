@@ -2,7 +2,7 @@ import { LogIn, UserRound } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 
 import { FieldError } from '../../components/FieldError'
-import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
+import { buttonClass, panelClass, primaryButtonClass } from '../../../../../shared/ui/styles'
 import type { JoinForm, JoinMode } from '../model/joinForm'
 
 const choiceClass = 'flex items-center gap-2.5 rounded-[11px] border p-3.5 text-left [&_strong]:block [&_strong]:text-[13px] [&_strong]:text-[#29486f] [&_small]:mt-[3px] [&_small]:block [&_small]:text-xs [&_small]:text-[#8798b0]'
@@ -15,7 +15,7 @@ interface JoinFormPanelProps {
   mode: JoinMode
   form: UseFormReturn<JoinForm>
   isPending: boolean
-  newEntryBlocked: boolean
+  isClosed: boolean
   joinError: string | null
   onModeChange: (mode: JoinMode) => void
   onSubmit: (values: JoinForm) => void
@@ -27,13 +27,12 @@ export function JoinFormPanel({
   mode,
   form,
   isPending,
-  newEntryBlocked,
+  isClosed,
   joinError,
   onModeChange,
   onSubmit,
 }: JoinFormPanelProps) {
-  const isExisting = mode.endsWith('existing')
-  const isMember = mode.startsWith('member')
+  const isMember = mode === 'member'
 
   return (
     <section className={`${panelClass} p-[30px] max-[800px]:p-5`}>
@@ -43,11 +42,11 @@ export function JoinFormPanel({
       </div>
       {authStatus === 'authenticated' ? (
         <div className="mb-5 grid grid-cols-2 gap-2.5 max-[800px]:grid-cols-1">
-          <button type="button" className={`${choiceClass} ${isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('member-existing')}>
+          <button type="button" disabled={isPending} className={`${choiceClass} ${isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('member')}>
             <LogIn size={21} />
             <span><strong>{userNickname ?? '현재'} 계정으로 참여</strong><small>로그인한 계정에 캘린더를 저장해요.</small></span>
           </button>
-          <button type="button" className={`${choiceClass} ${!isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('guest-new')}>
+          <button type="button" disabled={isPending} className={`${choiceClass} ${!isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('guest')}>
             <UserRound size={21} />
             <span><strong>게스트로 참여</strong><small>계정과 분리해서 새로 참여해요.</small></span>
           </button>
@@ -59,7 +58,7 @@ export function JoinFormPanel({
         </div>
       )}
 
-      {isMember && isExisting ? (
+      {isMember ? (
         <div className="flex items-center gap-[13px] rounded-xl bg-[#eff6ff] px-4 py-[22px] text-[#3774d1] [&_strong]:text-[#214a80] [&_p]:mt-1 [&_p]:mb-0 [&_p]:text-xs [&_p]:text-[#7286a4]">
           <UserRound size={24} />
           <div>
@@ -80,7 +79,7 @@ export function JoinFormPanel({
               <input className={inputClass}
                 {...form.register('password')}
                 type="password"
-                placeholder={isExisting ? '참여할 때 사용한 비밀번호' : '다시 참여할 때 사용할 비밀번호'}
+                placeholder="참여 또는 재참여에 사용할 비밀번호"
                 autoComplete="new-password"
               />
               <small>비밀번호는 저장하지 않아요. 재참여 시 직접 입력해야 해요.</small>
@@ -90,32 +89,23 @@ export function JoinFormPanel({
         </form>
       )}
 
-      {newEntryBlocked && (
+      {isClosed && (
         <p className="mt-[18px] mb-0 rounded-[9px] bg-[#fff7e9] p-3 text-xs leading-[1.55] text-[#b16524]" role="status">
-          이 캘린더는 마감되어 새로 참여할 수 없어요. 이전에 참여했다면 재참여를 선택해주세요.
+          이 캘린더는 마감되어 기존 참가자만 다시 참여할 수 있어요.
         </p>
       )}
       {joinError && <p className="mt-3 mb-0 text-[13px] font-bold text-[#df4d4d]" role="alert">{joinError}</p>}
-      <div className="mt-[22px] flex justify-end gap-2.5 max-[520px]:flex-col max-[520px]:items-stretch">
-        {isExisting ? (
-          <button type="button" className={`${buttonClass} ${secondaryButtonClass}`} onClick={() => onModeChange(isMember ? 'member-new' : 'guest-new')}>
-            새로 참여하기
-          </button>
-        ) : (
-          <button type="button" className={`${buttonClass} ${secondaryButtonClass}`} onClick={() => onModeChange(isMember ? 'member-existing' : 'guest-existing')}>
-            다시 참여하기
-          </button>
-        )}
+      <div className="mt-[22px] flex justify-end max-[520px]:items-stretch">
         <button
           className={`${buttonClass} ${primaryButtonClass}`}
           type="button"
-          disabled={isPending || newEntryBlocked}
+          disabled={isPending}
           onClick={() => {
-            if (isMember && isExisting) onSubmit({ nickname: '', password: '' })
+            if (isMember) onSubmit({ nickname: '', password: '' })
             else void form.handleSubmit(onSubmit)()
           }}
         >
-          {isPending ? '참여 중…' : isExisting ? '캘린더 다시 참여하기' : '캘린더 참여하기'} <LogIn size={18} />
+          {isPending ? '참여 중…' : '캘린더 참여하기'} <LogIn size={18} />
         </button>
       </div>
     </section>
