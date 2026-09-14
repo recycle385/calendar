@@ -50,7 +50,7 @@ export function Header({
         <Brand />
 
         <nav
-          className="flex gap-[34px] text-sm text-[#6f7f98] max-[1535px]:ml-auto max-[1535px]:items-center max-[1535px]:justify-center max-[1535px]:gap-7 max-[1535px]:text-xs max-md:hidden [&>a]:px-1 [&>a]:py-2.5 [&>a:hover]:text-brand-500"
+          className="flex gap-[34px] text-[15px] text-[#6f7f98] max-[1535px]:ml-auto max-[1535px]:items-center max-[1535px]:justify-center max-[1535px]:gap-7 max-md:hidden [&>a]:px-1 [&>a]:py-2.5 [&>a:hover]:text-brand-500"
           aria-label="주 메뉴"
         >
           {workspace ? (
@@ -71,7 +71,7 @@ export function Header({
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-6 text-sm max-[1535px]:ml-1.5 max-[1535px]:shrink-0 max-[1535px]:gap-4 max-[1535px]:text-xs max-md:hidden">
+        <div className="ml-auto flex items-center gap-6 text-[15px] max-[1535px]:ml-1.5 max-[1535px]:shrink-0 max-[1535px]:gap-4 max-md:hidden">
           {isAuthenticated ? (
             <>
               <Link className="font-bold hover:text-brand-500" to="/calendars">
@@ -92,7 +92,7 @@ export function Header({
                 내 캘린더
               </Link>
               {logoutError && (
-                <span className="text-xs font-bold text-[#d14343]" role="alert">
+                <span className="text-sm font-bold text-[#d14343]" role="alert">
                   로그아웃 실패
                 </span>
               )}
@@ -122,7 +122,7 @@ export function Header({
       </div>
 
       <nav
-        className={`absolute top-[60px] right-3.5 left-3.5 z-[70] hidden gap-0.5 rounded-2xl border border-[#e4ebf5] bg-white/98 p-2.5 shadow-[0_18px_42px_rgba(30,65,112,0.16)] transition duration-150 max-md:grid max-[420px]:top-[57px] max-[420px]:right-2.5 max-[420px]:left-2.5 [&>a]:flex [&>a]:min-h-11 [&>a]:items-center [&>a]:rounded-[10px] [&>a]:px-[13px] [&>a]:text-sm [&>a]:font-bold [&>a]:text-[#40516c] [&>a:active]:bg-brand-50 [&>button]:flex [&>button]:min-h-11 [&>button]:w-full [&>button]:items-center [&>button]:rounded-[10px] [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-[13px] [&>button]:text-sm [&>button]:font-bold${mobileMenuOpen ? " visible translate-y-0 opacity-100" : " invisible -translate-y-2 opacity-0"}`}
+        className={`absolute top-[60px] right-3.5 left-3.5 z-[70] hidden gap-0.5 rounded-2xl border border-[#e4ebf5] bg-white/98 p-2.5 shadow-[0_18px_42px_rgba(30,65,112,0.16)] transition duration-150 max-md:grid max-[420px]:top-[57px] max-[420px]:right-2.5 max-[420px]:left-2.5 [&>a]:flex [&>a]:min-h-11 [&>a]:items-center [&>a]:rounded-[10px] [&>a]:px-[13px] [&>a]:text-[15px] [&>a]:font-bold [&>a]:text-[#40516c] [&>a:active]:bg-brand-50 [&>button]:flex [&>button]:min-h-11 [&>button]:w-full [&>button]:items-center [&>button]:rounded-[10px] [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-[13px] [&>button]:text-[15px] [&>button]:font-bold${mobileMenuOpen ? " visible translate-y-0 opacity-100" : " invisible -translate-y-2 opacity-0"}`}
         aria-label="모바일 주 메뉴"
       >
         {workspace ? (
@@ -172,7 +172,7 @@ export function Header({
             </button>
             {logoutError && (
               <p
-                className="mx-[13px] mt-0.5 mb-0 text-xs leading-[1.45] text-[#d14343]"
+                className="mx-[13px] mt-0.5 mb-0 text-sm leading-[1.45] text-[#d14343]"
                 role="alert"
               >
                 로그아웃하지 못했어요. 다시 시도해주세요.
