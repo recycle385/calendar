@@ -14,6 +14,7 @@ import { WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { JoinCalendarSummary } from './components/JoinCalendarSummary'
 import { JoinFormPanel } from './components/JoinFormPanel'
 import { JoinPageIntro } from './components/JoinPageIntro'
+import { joinMemberParticipant } from './model/joinMemberParticipant'
 import { joinSchema, type JoinForm, type JoinMode } from './model/joinForm'
 
 export function CalendarJoinPage() {
@@ -39,8 +40,9 @@ export function CalendarJoinPage() {
   const isMember = mode.startsWith('member')
   const joinMutation = useMutation({
     mutationFn: async (values: JoinForm) => {
-      if (isMember && isExisting) return loginParticipant(slug, {}, accessToken)
-      if (isMember) return registerParticipant(slug, { nickname: values.nickname.trim() }, accessToken)
+      if (isMember) {
+        return joinMemberParticipant(slug, values.nickname || user?.nickname || '', accessToken)
+      }
 
       const payload = { nickname: values.nickname.trim(), password: values.password }
       return isExisting ? loginParticipant(slug, payload) : registerParticipant(slug, payload)
