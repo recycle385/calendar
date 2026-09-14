@@ -24,6 +24,7 @@ export function refreshCalendarData(queryClient: QueryClient, slug: string, part
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: calendarKeys.detail(slug) }),
     queryClient.invalidateQueries({ queryKey: calendarKeys.myRoot() }),
+    queryClient.invalidateQueries({ queryKey: calendarKeys.joinedRoot() }),
     queryClient.invalidateQueries({ queryKey: participantKeys.list(slug) }),
     queryClient.invalidateQueries({ queryKey: voteKeys.status(slug) }),
     queryClient.invalidateQueries({ queryKey: voteKeys.participant(slug, participantUuid) }),
@@ -43,5 +44,8 @@ export function clearDeletedCalendarData(queryClient: QueryClient, slug: string)
   queryClient.removeQueries({ queryKey: calendarKeys.detail(slug), exact: true })
   queryClient.removeQueries({ queryKey: participantKeys.calendar(slug) })
   queryClient.removeQueries({ queryKey: voteKeys.calendar(slug) })
-  return queryClient.invalidateQueries({ queryKey: calendarKeys.myRoot() })
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: calendarKeys.myRoot() }),
+    queryClient.invalidateQueries({ queryKey: calendarKeys.joinedRoot() }),
+  ])
 }

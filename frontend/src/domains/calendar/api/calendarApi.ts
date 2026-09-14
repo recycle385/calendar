@@ -5,6 +5,7 @@ import type {
   CreateCalendarRequest,
   CreateCalendarResponse,
   GetMyCalendarsResponse,
+  GetJoinedCalendarsResponse,
   UpdateCalendarRequest,
 } from '../model/types'
 
@@ -19,6 +20,13 @@ export function createCalendar(payload: CreateCalendarRequest, accessToken: stri
 
 export function getMyCalendars(accessToken: string) {
   return apiRequest<GetMyCalendarsResponse>('/calendars/my', {
+    token: accessToken,
+    auth: 'main',
+  })
+}
+
+export function getJoinedCalendars(accessToken: string) {
+  return apiRequest<GetJoinedCalendarsResponse>('/calendars/joined', {
     token: accessToken,
     auth: 'main',
   })

@@ -60,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearMemberData = useCallback((identity?: string) => {
     const removedSessions = removeLinkedParticipantSessions(identity)
     clearParticipantPrivateData(queryClient, removedSessions)
-    if (identity) queryClient.removeQueries({ queryKey: calendarKeys.my(identity), exact: true })
+    if (identity) {
+      queryClient.removeQueries({ queryKey: calendarKeys.my(identity), exact: true })
+      queryClient.removeQueries({ queryKey: calendarKeys.joined(identity), exact: true })
+    }
   }, [queryClient])
 
   const applyAuthenticatedToken = useCallback((token: string, nextUser?: AuthUser | null, sessionChangeAlreadyMarked = false) => {

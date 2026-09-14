@@ -30,7 +30,7 @@ export function compareCalendars(left: Calendar, right: Calendar, sort: SortOrde
   return compared || left.slug.localeCompare(right.slug)
 }
 
-export function useCalendarListFilters(calendars: Calendar[]) {
+export function useCalendarListFilters<T extends Calendar>(calendars: T[]) {
   const [filter, setFilter] = useState<CalendarFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOrder>('newest')

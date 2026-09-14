@@ -16,6 +16,13 @@ export interface Calendar {
   participant_count?: number
 }
 
+export interface JoinedCalendar extends Calendar {
+  participantRole: 'host' | 'guest'
+  profileType: 'account' | 'alias'
+  participantUuid: string
+  participantNickname: string
+}
+
 export interface CreateCalendarRequest {
   title: string
   start_date: string
@@ -43,6 +50,11 @@ export interface CreateCalendarResponse extends DefaultResponse {
 
 export interface GetMyCalendarsResponse {
   calendars: Calendar[]
+  count: number
+}
+
+export interface GetJoinedCalendarsResponse {
+  calendars: JoinedCalendar[]
   count: number
 }
 

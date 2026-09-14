@@ -39,6 +39,7 @@ export function CalendarCreatePage() {
         linkedUserUuid: userUuid,
       })
       void queryClient.invalidateQueries({ queryKey: calendarKeys.myRoot() })
+      void queryClient.invalidateQueries({ queryKey: calendarKeys.joinedRoot() })
       navigate(`/c/${result.calendar.slug}`, { state: { shareUrl: result.shareUrl }, replace: true })
     },
   })

@@ -3,6 +3,7 @@ import {
   registerParticipant,
   type LoginParticipantResponse,
   type RegisterParticipantResponse,
+  type ParticipantProfileType,
 } from '../../../../../domains/participant'
 import { isApiError } from '../../../../../shared/api/httpClient'
 
@@ -12,6 +13,7 @@ export async function joinMemberParticipant(
   slug: string,
   nickname: string,
   accessToken: string | null,
+  profileType: ParticipantProfileType = 'account',
 ): Promise<MemberParticipantResponse> {
   try {
     return await loginParticipant(slug, {}, accessToken)
@@ -19,5 +21,5 @@ export async function joinMemberParticipant(
     if (!isApiError(error) || error.status !== 404) throw error
   }
 
-  return registerParticipant(slug, { nickname: nickname.trim() }, accessToken)
+  return registerParticipant(slug, { nickname: nickname.trim(), profileType }, accessToken)
 }

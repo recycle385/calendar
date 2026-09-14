@@ -1,7 +1,7 @@
 import { CalendarDays, Clock3, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import type { Calendar } from '../../../../../domains/calendar'
+import type { JoinedCalendar } from '../../../../../domains/calendar'
 import { assetUrl, hideUnavailableAsset } from '../../../../../shared/assets/assetUrl'
 import {
   getCalendarImageAlt,
@@ -87,7 +87,7 @@ export function getVoteState(isClosed: boolean, daysLeft: number) {
   }
 }
 
-export function CalendarCard({ calendar }: { calendar: Calendar }) {
+export function CalendarCard({ calendar }: { calendar: JoinedCalendar }) {
   const candidateDayCount = getCandidateDayCount(calendar.start_date, calendar.end_date)
   const daysUntilVoteEnd = getDaysUntilVoteEnd(calendar.vote_end_date)
   const voteState = getVoteState(calendar.is_closed, daysUntilVoteEnd)
@@ -135,6 +135,9 @@ export function CalendarCard({ calendar }: { calendar: Calendar }) {
               <UserRound size={16} />
             </span>
             <span>현재 {calendar.participant_count ?? 0}명 참여</span>
+            <span className="rounded-full bg-[#edf4fd] px-2 py-1 text-xs font-black text-[#426b9e]">
+              {calendar.participantRole === 'host' ? '방장' : '게스트'} · {calendar.profileType === 'alias' ? '별명' : '내 계정'}
+            </span>
           </div>
         </div>
 

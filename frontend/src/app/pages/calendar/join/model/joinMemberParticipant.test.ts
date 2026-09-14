@@ -50,10 +50,30 @@ describe('현재 계정으로 캘린더 참여', () => {
 
     expect(registerParticipant).toHaveBeenCalledWith(
       'calendar',
-      { nickname: '회원' },
+      { nickname: '회원', profileType: 'account' },
       'main-token',
     )
     expect(result.participantToken).toBe('new-token')
+  })
+
+  it('별명 참여를 선택하면 계정 연결을 유지한 별명 프로필로 등록한다', async () => {
+    vi.mocked(loginParticipant).mockRejectedValue(new ApiError(404, {
+      success: false,
+      code: 'USER_NOT_FOUND',
+    }))
+    vi.mocked(registerParticipant).mockResolvedValue({
+      message: '참가자 등록이 완료되었습니다',
+      participant: { ...participant, nickname: '별명', role: 'guest' },
+      participantToken: 'alias-token',
+    })
+
+    await joinMemberParticipant('calendar', '별명', 'main-token', 'alias')
+
+    expect(registerParticipant).toHaveBeenCalledWith(
+      'calendar',
+      { nickname: '별명', profileType: 'alias' },
+      'main-token',
+    )
   })
 
   it('참가자 없음이 아닌 오류는 신규 등록으로 숨기지 않는다', async () => {

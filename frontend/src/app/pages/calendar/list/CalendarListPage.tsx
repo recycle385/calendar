@@ -3,7 +3,7 @@ import { CalendarDays, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { myCalendarsQuery } from '../../../../domains/calendar'
+import { joinedCalendarsQuery } from '../../../../domains/calendar'
 import { useAuth } from '../../../providers/AuthProvider'
 import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { LoginRequired, WorkspaceLayout } from '../../components/WorkspaceLayout'
@@ -18,7 +18,7 @@ export function CalendarListPage() {
   const [requestedPage, setRequestedPage] = useState(1)
   const { accessToken, status, user, userUuid } = useAuth()
   const calendarsQuery = useQuery({
-    ...myCalendarsQuery(userUuid ?? '', accessToken ?? ''),
+    ...joinedCalendarsQuery(userUuid ?? '', accessToken ?? ''),
     enabled: status === 'authenticated' && Boolean(accessToken && userUuid),
   })
 
@@ -52,7 +52,7 @@ export function CalendarListPage() {
   return (
     <WorkspaceLayout
       title="내 캘린더"
-      description="내가 만든 일정의 진행 상태를 확인하고, 참여자와 시간을 맞춰보세요."
+      description="내가 만들거나 참여한 일정의 진행 상태를 한곳에서 확인해보세요."
       action={<Link className={`${buttonClass} ${primaryButtonClass} max-[520px]:w-full`} to="/calendars/new"><Plus size={18} /> 캘린더 만들기</Link>}
       sideContent={<CalendarListAside />}
     >
@@ -80,7 +80,7 @@ export function CalendarListPage() {
         ) : calendarsQuery.isError ? (
           <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><p>내 캘린더를 불러오지 못했어요.</p><button className={`${buttonClass} ${secondaryButtonClass}`} type="button" onClick={() => void calendarsQuery.refetch()}>다시 시도</button></div>
         ) : filteredCalendars.length === 0 ? (
-          <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><CalendarDays size={32} /><h2 className="m-0 text-[22px] font-black text-[#19345d]">표시할 캘린더가 없어요.</h2><p className="m-0 max-w-[430px] leading-[1.65]">새로운 모임을 만들고 사람들과 가능한 날짜를 모아보세요.</p><Link className={`${buttonClass} ${primaryButtonClass}`} to="/calendars/new">첫 캘린더 만들기</Link></div>
+          <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><CalendarDays size={32} /><h2 className="m-0 text-[22px] font-black text-[#19345d]">표시할 캘린더가 없어요.</h2><p className="m-0 max-w-[430px] leading-[1.65]">새로운 모임을 만들거나 초대 링크로 참여해보세요.</p><Link className={`${buttonClass} ${primaryButtonClass}`} to="/calendars/new">첫 캘린더 만들기</Link></div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3.5 max-[1180px]:grid-cols-1">

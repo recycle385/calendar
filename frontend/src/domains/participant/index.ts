@@ -30,6 +30,7 @@ export type {
   LoginParticipantResponse,
   Participant,
   ParticipantRole,
+  ParticipantProfileType,
   ParticipantSummary,
   ParticipantWithRole,
   RegisterParticipantRequest,

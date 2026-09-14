@@ -3,6 +3,7 @@ export {
   createCalendar,
   deleteCalendar,
   getCalendarBySlug,
+  getJoinedCalendars,
   getMyCalendars,
   updateCalendar,
 } from './api/calendarApi'
@@ -12,7 +13,9 @@ export type {
   CreateCalendarRequest,
   CreateCalendarResponse,
   GetMyCalendarsResponse,
+  GetJoinedCalendarsResponse,
+  JoinedCalendar,
   UpdateCalendarRequest,
 } from './model/types'
-export { calendarDetailQuery, calendarKeys, myCalendarsQuery } from './model/queries'
+export { calendarDetailQuery, calendarKeys, joinedCalendarsQuery, myCalendarsQuery } from './model/queries'
 export { parseCalendarJoinPath } from './model/shareLink'

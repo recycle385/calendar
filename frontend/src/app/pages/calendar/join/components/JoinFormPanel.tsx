@@ -32,7 +32,8 @@ export function JoinFormPanel({
   onModeChange,
   onSubmit,
 }: JoinFormPanelProps) {
-  const isMember = mode === 'member'
+  const isAccount = mode === 'account'
+  const isAlias = mode === 'alias'
 
   return (
     <section className={`${panelClass} p-[30px] max-[800px]:p-5`}>
@@ -42,13 +43,13 @@ export function JoinFormPanel({
       </div>
       {authStatus === 'authenticated' ? (
         <div className="mb-5 grid grid-cols-2 gap-2.5 max-[800px]:grid-cols-1">
-          <button type="button" disabled={isPending} className={`${choiceClass} ${isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('member')}>
+          <button type="button" aria-pressed={isAccount} disabled={isPending} className={`${choiceClass} ${isAccount ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('account')}>
             <LogIn size={21} />
             <span><strong>{userNickname ?? '현재'} 계정으로 참여</strong><small>로그인한 계정에 캘린더를 저장해요.</small></span>
           </button>
-          <button type="button" disabled={isPending} className={`${choiceClass} ${!isMember ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('guest')}>
+          <button type="button" aria-pressed={isAlias} disabled={isPending} className={`${choiceClass} ${isAlias ? 'border-[#5c9eff] bg-[#f5f9ff] text-brand-500' : 'border-[#dae5f2] bg-white text-[#7183a1]'}`} onClick={() => onModeChange('alias')}>
             <UserRound size={21} />
-            <span><strong>게스트로 참여</strong><small>계정과 분리해서 새로 참여해요.</small></span>
+            <span><strong>별명으로 참여</strong><small>계정 프로필 대신 다른 이름을 사용해요.</small></span>
           </button>
         </div>
       ) : (
@@ -58,7 +59,7 @@ export function JoinFormPanel({
         </div>
       )}
 
-      {isMember ? (
+      {isAccount ? (
         <div className="flex items-center gap-[13px] rounded-xl bg-[#eff6ff] px-4 py-[22px] text-[#3774d1] [&_strong]:text-[#214a80] [&_p]:mt-1 [&_p]:mb-0 [&_p]:text-xs [&_p]:text-[#7286a4]">
           <UserRound size={24} />
           <div>
@@ -73,7 +74,7 @@ export function JoinFormPanel({
             <input className={inputClass} {...form.register('nickname')} placeholder="캘린더에서 사용할 이름" maxLength={20} />
             <FieldError message={form.formState.errors.nickname?.message} />
           </label>
-          {!isMember && (
+          {mode === 'guest' && (
             <label className={labelClass}>
               <span>참여 비밀번호 <em>*</em></span>
               <input className={inputClass}
@@ -101,7 +102,7 @@ export function JoinFormPanel({
           type="button"
           disabled={isPending}
           onClick={() => {
-            if (isMember) onSubmit({ nickname: '', password: '' })
+            if (isAccount) onSubmit({ nickname: '', password: '' })
             else void form.handleSubmit(onSubmit)()
           }}
         >

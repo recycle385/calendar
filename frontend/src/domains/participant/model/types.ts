@@ -1,6 +1,7 @@
 import type { DefaultResponse } from '../../../shared/types/api'
 
 export type ParticipantRole = 'host' | 'guest'
+export type ParticipantProfileType = 'account' | 'alias'
 
 export interface Participant {
   uuid: string
@@ -26,6 +27,7 @@ export interface ParticipantWithRole extends ParticipantSummary {
 export interface RegisterParticipantRequest {
   nickname: string
   password?: string
+  profileType?: ParticipantProfileType
 }
 
 export interface LoginParticipantRequest {
