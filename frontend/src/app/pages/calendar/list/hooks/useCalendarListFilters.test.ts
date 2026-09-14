@@ -50,4 +50,16 @@ describe('내 캘린더 정렬', () => {
     const first = calendar({ slug: 'a' })
     expect([second, first].sort((left, right) => compareCalendars(left, right, 'newest')).map(({ slug }) => slug)).toEqual(['a', 'b'])
   })
+
+  it('마감 임박순은 진행 중인 캘린더의 투표 종료일이 가까운 순서로 정렬한다', () => {
+    const later = calendar({ slug: 'later', vote_end_date: '2026-09-20' })
+    const sooner = calendar({ slug: 'sooner', vote_end_date: '2026-09-16' })
+    const closed = calendar({ slug: 'closed', vote_end_date: '2026-09-15', is_closed: true })
+
+    expect(
+      [closed, later, sooner]
+        .sort((left, right) => compareCalendars(left, right, 'deadline'))
+        .map(({ slug }) => slug),
+    ).toEqual(['sooner', 'later', 'closed'])
+  })
 })

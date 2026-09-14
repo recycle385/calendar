@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import type { Calendar } from '../../../../../domains/calendar'
 
 export type CalendarFilter = 'all' | 'ongoing' | 'closed'
-export type SortOrder = 'name' | 'newest' | 'oldest' | 'updated'
+export type SortOrder = 'name' | 'newest' | 'oldest' | 'updated' | 'deadline'
 
 export function compareCalendars(left: Calendar, right: Calendar, sort: SortOrder) {
   let compared = 0
@@ -17,6 +17,10 @@ export function compareCalendars(left: Calendar, right: Calendar, sort: SortOrde
       break
     case 'updated':
       compared = right.updated_at.localeCompare(left.updated_at)
+      break
+    case 'deadline':
+      compared = Number(left.is_closed) - Number(right.is_closed)
+        || left.vote_end_date.localeCompare(right.vote_end_date)
       break
     case 'newest':
       compared = right.created_at.localeCompare(left.created_at)

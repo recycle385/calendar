@@ -1,6 +1,6 @@
 import {
+  AlarmClock,
   ArrowDownAZ,
-  ArrowUpDown,
   Check,
   ChevronDown,
   Clock3,
@@ -25,6 +25,12 @@ const SORT_OPTIONS: SortOption[] = [
     label: '최신순',
     description: '가장 최근에 생성한 캘린더부터',
     icon: Clock3,
+  },
+  {
+    value: 'deadline',
+    label: '마감 임박순',
+    description: '투표 마감일이 가까운 캘린더부터',
+    icon: AlarmClock,
   },
   {
     value: 'oldest',
