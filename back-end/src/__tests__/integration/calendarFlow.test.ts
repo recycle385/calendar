@@ -44,6 +44,7 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
 
   let calendarSlug: string;
 
+  const VOTE_START_DATE = getDate(0);
   const START_DATE = getDate(1);
   const END_DATE = getDate(5);
   const INVALID_END_DATE = getDate(-1); // 시작일보다 과거
@@ -90,6 +91,8 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
         title: '망한 캘린더',
         start_date: START_DATE,
         end_date: INVALID_END_DATE, // Validation Error 유발
+        vote_start_date: VOTE_START_DATE,
+        vote_end_date: END_DATE,
         hostNickname: '방장',
       })
       .expect(400);
@@ -103,6 +106,8 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
         title: '통합 테스트용 캘린더',
         start_date: START_DATE,
         end_date: END_DATE,
+        vote_start_date: VOTE_START_DATE,
+        vote_end_date: END_DATE,
         hostNickname: '나방장',
       });
 
@@ -110,6 +115,13 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
     calendarSlug = createRes.body.calendar.slug;
     hostParticipantToken = createRes.body.participantToken;
     expect(createRes.body.shareUrl).toBeDefined();
+    expect(createRes.body.calendar).toEqual(
+      expect.objectContaining({
+        vote_start_date: VOTE_START_DATE,
+        vote_end_date: END_DATE,
+      })
+    );
+    expect(createRes.body.calendar.updated_at).toBeDefined();
   });
 
   it('3. [Verification] 생성된 캘린더 조회 확인', async () => {
@@ -128,6 +140,15 @@ describe('Calendar Flow Integration Test (Full Scenarios)', () => {
 
     expect(joinRes.status).toBe(201);
     guestParticipantToken = joinRes.body.participantToken;
+
+    const myCalendarsRes = await request(app)
+      .get('/api/v1/calendars/my')
+      .set('Authorization', `Bearer ${hostAccessToken}`)
+      .expect(200);
+    const calendar = myCalendarsRes.body.calendars.find(
+      (item: { slug: string }) => item.slug === calendarSlug
+    );
+    expect(calendar.participant_count).toBe(2);
   });
 
   it('5. [Duplicate] 동일 닉네임으로 참가 시도 시 실패해야 한다 (409 Conflict)', async () => {

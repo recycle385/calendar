@@ -28,17 +28,21 @@ CREATE TABLE calendars (
     slug VARCHAR(16) NOT NULL UNIQUE COMMENT '공유 링크용 난수',
     title VARCHAR(100) NOT NULL COMMENT '모임 제목',
     description TEXT COMMENT '모임 설명',
-    start_date DATE NOT NULL COMMENT '투표 가능 시작일',
-    end_date DATE NOT NULL COMMENT '투표 가능 종료일',
+    start_date DATE NOT NULL COMMENT '후보 날짜 시작일',
+    end_date DATE NOT NULL COMMENT '후보 날짜 종료일',
+    vote_start_date DATE NOT NULL COMMENT '투표 접수 시작일',
+    vote_end_date DATE NOT NULL COMMENT '투표 접수 종료일',
     is_closed BOOLEAN DEFAULT FALSE COMMENT '투표 마감 여부',
     owner_id BIGINT NOT NULL COMMENT '방장 (users.id)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expired_at TIMESTAMP NULL COMMENT '캘린더 만료일',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    expired_at TIMESTAMP NULL COMMENT '투표 마감 후 영구 삭제 시각',
 
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_slug (slug),
     INDEX idx_owner_id (owner_id),
     INDEX idx_date_range (start_date, end_date),
+    INDEX idx_vote_period (vote_start_date, vote_end_date),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

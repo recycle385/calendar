@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CalendarRepository } from '../../../repositories/calendar.repository';
 
 describe('CalendarRepository UTC 기준 조회', () => {
-  let mockPool: { execute: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>> };
+  let mockPool: {
+    execute: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+    query: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+  };
   let repository: CalendarRepository;
 
   beforeEach(() => {
     mockPool = {
       execute: jest.fn(async () => [[]]),
+      query: jest.fn(async () => [[]]),
     };
     repository = new CalendarRepository(mockPool as any);
   });
@@ -17,7 +21,7 @@ describe('CalendarRepository UTC 기준 조회', () => {
     await repository.findEndedAndOpen(undefined, new Date('2026-06-08T23:30:00.000Z'));
 
     expect(mockPool.execute).toHaveBeenCalledWith(
-      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ?',
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND vote_end_date < ?',
       ['2026-06-08']
     );
   });
@@ -49,7 +53,7 @@ describe('CalendarRepository UTC 기준 조회', () => {
     );
 
     expect(connection.execute).toHaveBeenCalledWith(
-      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ? FOR UPDATE',
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND vote_end_date < ? FOR UPDATE',
       ['2026-06-08']
     );
     expect(mockPool.execute).not.toHaveBeenCalled();
@@ -65,9 +69,12 @@ describe('CalendarRepository UTC 기준 조회', () => {
           description: null,
           start_date: '2026-06-08',
           end_date: '2026-06-10',
+          vote_start_date: '2026-06-01',
+          vote_end_date: '2026-06-07',
           is_closed: 0,
           owner_id: 1,
           created_at: '2026-06-01 00:00:00',
+          updated_at: '2026-06-02 00:00:00',
           expired_at: '2026-07-10 00:00:00',
         },
       ],
@@ -77,5 +84,37 @@ describe('CalendarRepository UTC 기준 조회', () => {
 
     expect(calendar?.start_date).toBe('2026-06-08');
     expect(calendar?.end_date).toBe('2026-06-10');
+    expect(calendar?.vote_start_date).toBe('2026-06-01');
+    expect(calendar?.vote_end_date).toBe('2026-06-07');
+    expect(calendar?.updated_at).toEqual(new Date('2026-06-02 00:00:00'));
+  });
+
+  it('내 캘린더 목록은 현재 참가자 수를 함께 집계한다', async () => {
+    mockPool.query.mockImplementationOnce(async () => [
+      [
+        {
+          id: 1,
+          slug: 'slug',
+          title: 'title',
+          description: null,
+          start_date: '2026-06-08',
+          end_date: '2026-06-10',
+          vote_start_date: '2026-06-01',
+          vote_end_date: '2026-06-07',
+          is_closed: 0,
+          owner_id: 1,
+          created_at: '2026-06-01 00:00:00',
+          updated_at: '2026-06-02 00:00:00',
+          expired_at: '2026-07-07 00:00:00',
+          hostParticipantUuid: 'host-uuid',
+          participant_count: '4',
+        },
+      ],
+    ]);
+
+    const calendars = await repository.getCalAndPUuidDatasByUserIds(1);
+
+    expect(String(mockPool.query.mock.calls[0][0])).toContain('SELECT COUNT(*) FROM participants');
+    expect(calendars[0].participant_count).toBe(4);
   });
 });

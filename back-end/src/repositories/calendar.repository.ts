@@ -42,17 +42,30 @@ export class CalendarRepository implements ICalendarRepository {
   async create(input: CreateCalendarInput, connection?: PoolConnection): Promise<Calendar> {
     const poolToUse = connection || this.pool;
 
-    const { slug, title, description, start_date, end_date, owner_id, expired_at } = input;
+    const {
+      slug,
+      title,
+      description,
+      start_date,
+      end_date,
+      vote_start_date,
+      vote_end_date,
+      owner_id,
+      expired_at,
+    } = input;
 
     const [result] = await poolToUse.execute<ResultSetHeader>(
-      `INSERT INTO calendars (slug, title, description, start_date, end_date, owner_id, expired_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO calendars
+        (slug, title, description, start_date, end_date, vote_start_date, vote_end_date, owner_id, expired_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         slug,
         title,
         description || null,
         formatDateOnly(start_date),
         formatDateOnly(end_date),
+        formatDateOnly(vote_start_date),
+        formatDateOnly(vote_end_date),
         owner_id,
         expired_at,
       ]
@@ -167,6 +180,16 @@ export class CalendarRepository implements ICalendarRepository {
       values.push(formatDateOnly(input.end_date));
     }
 
+    if (input.vote_start_date !== undefined) {
+      updates.push('vote_start_date = ?');
+      values.push(formatDateOnly(input.vote_start_date));
+    }
+
+    if (input.vote_end_date !== undefined) {
+      updates.push('vote_end_date = ?');
+      values.push(formatDateOnly(input.vote_end_date));
+    }
+
     if (input.is_closed !== undefined) {
       updates.push('is_closed = ?');
       values.push(input.is_closed);
@@ -262,7 +285,7 @@ export class CalendarRepository implements ICalendarRepository {
     const poolToUse = connection || this.pool;
 
     const [rows] = await poolToUse.execute<RowDataPacket[]>(
-      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ?',
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND vote_end_date < ?',
       [formatDateOnly(referenceDate)]
     );
 
@@ -274,7 +297,7 @@ export class CalendarRepository implements ICalendarRepository {
     referenceDate: DateOnlyInput = todayDateOnlyUtc()
   ): Promise<Calendar[]> {
     const [rows] = await connection.execute<RowDataPacket[]>(
-      'SELECT * FROM calendars WHERE is_closed = FALSE AND end_date < ? FOR UPDATE',
+      'SELECT * FROM calendars WHERE is_closed = FALSE AND vote_end_date < ? FOR UPDATE',
       [formatDateOnly(referenceDate)]
     );
 
@@ -299,7 +322,9 @@ export class CalendarRepository implements ICalendarRepository {
     const poolToUse = connection || this.pool;
 
     const [rows] = await poolToUse.query<RowDataPacket[]>(
-      ` SELECT c.*, p.participant_uuid AS hostParticipantUuid 
+      ` SELECT c.*, p.participant_uuid AS hostParticipantUuid,
+          (SELECT COUNT(*) FROM participants AS participant_count
+           WHERE participant_count.calendar_id = c.id) AS participant_count
         FROM calendars AS c 
         JOIN participants AS p ON c.id = p.calendar_id 
         WHERE p.role = 'host' AND p.user_id = ?`,
@@ -324,9 +349,12 @@ export class CalendarRepository implements ICalendarRepository {
       description: row.description,
       start_date: formatDateOnly(row.start_date),
       end_date: formatDateOnly(row.end_date),
+      vote_start_date: formatDateOnly(row.vote_start_date),
+      vote_end_date: formatDateOnly(row.vote_end_date),
       is_closed: Boolean(row.is_closed),
       owner_id: row.owner_id,
       created_at: new Date(row.created_at),
+      updated_at: new Date(row.updated_at),
       expired_at: new Date(row.expired_at),
     };
   }
@@ -335,6 +363,7 @@ export class CalendarRepository implements ICalendarRepository {
     return {
       ...this.mapToCalendar(row),
       hostParticipantUuid: row.hostParticipantUuid,
+      participant_count: Number(row.participant_count),
     };
   }
 }

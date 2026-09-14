@@ -12,9 +12,12 @@ import { DefaultResponseDto } from './common.dto';
  *           title,
  *           start_date,
  *           end_date,
+ *           vote_start_date,
+ *           vote_end_date,
  *           is_closed,
  *           hostParticipantUuid,
  *           created_at,
+ *           updated_at,
  *           expired_at,
  *         ]
  *       properties:
@@ -38,6 +41,14 @@ import { DefaultResponseDto } from './common.dto';
  *           type: string
  *           format: date
  *           example: "2026-09-20"
+ *         vote_start_date:
+ *           type: string
+ *           format: date
+ *           example: "2026-09-01"
+ *         vote_end_date:
+ *           type: string
+ *           format: date
+ *           example: "2026-09-08"
  *         is_closed:
  *           type: boolean
  *           example: false
@@ -48,10 +59,18 @@ import { DefaultResponseDto } from './common.dto';
  *           type: string
  *           format: date-time
  *           example: "2026-02-01T12:00:00Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2026-02-02T09:00:00Z"
  *         expired_at:
  *           type: string
  *           format: date-time
  *           example: "2026-03-01T12:00:00Z"
+ *         participant_count:
+ *           type: integer
+ *           description: 내 캘린더 목록 응답에 포함되는 현재 참가자 수
+ *           example: 5
  */
 export interface SafeCalendarDto {
   slug: string; // 랜덤 16자리 hexadecimal 토큰
@@ -59,10 +78,14 @@ export interface SafeCalendarDto {
   description: string | null;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
+  vote_start_date: string; // YYYY-MM-DD
+  vote_end_date: string; // YYYY-MM-DD
   is_closed: boolean; // 투표 마감 여부
   hostParticipantUuid: string; // useruuid가 아니라 participantuuid 넣어야함 (safe 응답용)
   created_at: Date;
+  updated_at: Date;
   expired_at: Date;
+  participant_count?: number;
 }
 
 /**
@@ -71,7 +94,7 @@ export interface SafeCalendarDto {
  *   schemas:
  *     CreateCalendarRequest:
  *       type: object
- *       required: [title, start_date, end_date, hostNickname]
+ *       required: [title, start_date, end_date, vote_start_date, vote_end_date, hostNickname]
  *       properties:
  *         title:
  *           type: string
@@ -86,6 +109,14 @@ export interface SafeCalendarDto {
  *           type: string
  *           format: date
  *           example: "2026-02-28"
+ *         vote_start_date:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-01"
+ *         vote_end_date:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-10"
  *         description:
  *           type: string
  *           example: "팀 프로젝트 회의 입니다."
@@ -100,6 +131,8 @@ export interface CreateCalendarRequest {
   title: string;
   start_date: string; //YYYY-MM-DD
   end_date: string; //YYYY-MM-DD
+  vote_start_date: string; //YYYY-MM-DD
+  vote_end_date: string; //YYYY-MM-DD
   description?: string | null;
   hostNickname: string;
 }
@@ -128,12 +161,20 @@ export interface CreateCalendarRequest {
  *           type: string
  *           format: date
  *           example: "2026-02-28"
+ *         vote_start_date:
+ *           type: string
+ *           format: date
+ *         vote_end_date:
+ *           type: string
+ *           format: date
  */
 export interface UpdateCalendarRequest {
   title?: string;
   description?: string | null;
   start_date?: string;
   end_date?: string;
+  vote_start_date?: string;
+  vote_end_date?: string;
 }
 
 /**

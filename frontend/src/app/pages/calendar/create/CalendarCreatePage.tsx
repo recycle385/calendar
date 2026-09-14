@@ -21,6 +21,8 @@ export function CalendarCreatePage() {
       title: '',
       description: '',
       hostNickname: user?.nickname ?? '',
+      vote_start_date: '',
+      vote_end_date: '',
       start_date: '',
       end_date: '',
     },

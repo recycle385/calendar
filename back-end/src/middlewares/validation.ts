@@ -154,6 +154,15 @@ export const calendarSchemas = {
     title: Joi.string().trim().min(1).max(100).required(),
     description: Joi.string().trim().allow('', null).optional(),
     hostNickname: Joi.string().trim().min(1).max(20).required(),
+    vote_start_date: Joi.string()
+      .trim()
+      .required()
+      .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
+    vote_end_date: Joi.string()
+      .trim()
+      .required()
+      .custom(voteEndDateVerifier)
+      .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
   }).concat(commonSchemas.dateRange),
 
   updateRequest: Joi.object({
@@ -167,6 +176,15 @@ export const calendarSchemas = {
       .trim()
       .optional()
       .custom(endDateVerifier)
+      .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
+    vote_start_date: Joi.string()
+      .trim()
+      .optional()
+      .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
+    vote_end_date: Joi.string()
+      .trim()
+      .optional()
+      .custom(voteEndDateVerifier)
       .custom(normalizeDateOnlyForJoi, 'Normalize date-only string'),
   }),
 };
@@ -330,6 +348,34 @@ function endDateVerifier(value: string, helpers: Joi.CustomHelpers) {
 
   if (compareDateOnly(normalizedStart, normalizedEnd) > 0) {
     return helpers.message({ custom: '종료일은 시작일보다 이전일 수 없습니다' } as any);
+  }
+
+  const diffDays = daysBetweenDateOnly(normalizedStart, normalizedEnd);
+  if (diffDays > 365) {
+    return helpers.message({ custom: '투표 기간은 최대 1년까지 가능합니다' } as any);
+  }
+
+  return value;
+}
+
+function voteEndDateVerifier(value: string, helpers: Joi.CustomHelpers) {
+  const voteStartDate = helpers.state.ancestors[0].vote_start_date;
+  if (!voteStartDate) return value;
+
+  let normalizedStart: string;
+  let normalizedEnd: string;
+
+  try {
+    normalizedStart = normalizeDateOnly(voteStartDate);
+    normalizedEnd = normalizeDateOnly(value);
+  } catch (err) {
+    return helpers.message({
+      custom: err instanceof Error ? err.message : '날짜 형식이 올바르지 않습니다',
+    } as any);
+  }
+
+  if (compareDateOnly(normalizedStart, normalizedEnd) > 0) {
+    return helpers.message({ custom: '투표 종료일은 투표 시작일보다 이전일 수 없습니다' } as any);
   }
 
   const diffDays = daysBetweenDateOnly(normalizedStart, normalizedEnd);

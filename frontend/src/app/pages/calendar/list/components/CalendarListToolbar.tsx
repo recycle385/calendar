@@ -52,8 +52,10 @@ export function CalendarListToolbar({
           onChange={(event) => onSortChange(event.target.value as SortOrder)}
           aria-label="정렬 기준"
         >
-          <option value="newest">최신 생성순</option>
-          <option value="startDate">시작일순</option>
+          <option value="name">이름순</option>
+          <option value="newest">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="updated">최근 수정순</option>
         </select>
       </label>
     </div>

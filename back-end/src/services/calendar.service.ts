@@ -27,6 +27,8 @@ export interface ICalendarService {
     title: string,
     startDate: string,
     endDate: string,
+    voteStartDate: string,
+    voteEndDate: string,
     hostNickname: string,
     description?: string
   ): Promise<{ calendar: Calendar; shareUrl: string; participantUuid: string }>;
@@ -77,7 +79,8 @@ export class CalendarService implements ICalendarService {
    */
   private validateDateRange(
     startDate: string,
-    endDate: string
+    endDate: string,
+    rangeName: '후보 날짜' | '투표' = '후보 날짜'
   ): { startDate: string; endDate: string } {
     let normalizedStart: string;
     let normalizedEnd: string;
@@ -91,7 +94,7 @@ export class CalendarService implements ICalendarService {
 
     // 시작일이 종료일보다 이후인 경우
     if (compareDateOnly(normalizedStart, normalizedEnd) > 0) {
-      throw Errors.BadRequest('시작일은 종료일보다 이전이어야 합니다');
+      throw Errors.BadRequest(`${rangeName} 시작일은 종료일보다 이전이어야 합니다`);
     }
 
     // 과거 날짜 체크 (선택사항 - 필요시 주석 해제)
@@ -102,7 +105,7 @@ export class CalendarService implements ICalendarService {
     // 기간이 너무 긴 경우 (1년 이상)
     const diffDays = daysBetweenDateOnly(normalizedStart, normalizedEnd);
     if (diffDays > 365) {
-      throw Errors.BadRequest('투표 기간은 최대 1년까지 가능합니다');
+      throw Errors.BadRequest(`${rangeName} 기간은 최대 1년까지 가능합니다`);
     }
 
     return { startDate: normalizedStart, endDate: normalizedEnd };
@@ -116,6 +119,8 @@ export class CalendarService implements ICalendarService {
     title: string,
     startDate: string,
     endDate: string,
+    voteStartDate: string,
+    voteEndDate: string,
     hostNickname: string,
     description?: string
   ): Promise<{ calendar: Calendar; shareUrl: string; participantUuid: string }> {
@@ -129,8 +134,9 @@ export class CalendarService implements ICalendarService {
     }
 
     const dateRange = this.validateDateRange(startDate, endDate);
+    const votePeriod = this.validateDateRange(voteStartDate, voteEndDate, '투표');
 
-    const expired_at = addDateOnlyDays(dateRange.endDate, CALENDAR_GRACE_PERIOD);
+    const expired_at = addDateOnlyDays(votePeriod.endDate, CALENDAR_GRACE_PERIOD);
 
     // 고유한 slug 생성
     const slug = await this.generateUniqueSlug();
@@ -141,6 +147,8 @@ export class CalendarService implements ICalendarService {
         description: description?.trim(),
         start_date: dateRange.startDate,
         end_date: dateRange.endDate,
+        vote_start_date: votePeriod.startDate,
+        vote_end_date: votePeriod.endDate,
         owner_id: ownerId,
         expired_at: expired_at,
       };
@@ -235,6 +243,8 @@ export class CalendarService implements ICalendarService {
 
       const hasStartDate = input.start_date !== undefined;
       const hasEndDate = input.end_date !== undefined;
+      const hasVoteStartDate = input.vote_start_date !== undefined;
+      const hasVoteEndDate = input.vote_end_date !== undefined;
       const updateInput: UpdateCalendarInput = { ...input };
       let effectiveStartDate = calendar.start_date.toString();
       let effectiveEndDate = calendar.end_date.toString();
@@ -251,9 +261,22 @@ export class CalendarService implements ICalendarService {
           updateInput.start_date = dateRange.startDate;
         }
 
-        if (hasEndDate) {
-          updateInput.end_date = dateRange.endDate;
-          updateInput.expired_at = addDateOnlyDays(dateRange.endDate, CALENDAR_GRACE_PERIOD);
+        if (hasEndDate) updateInput.end_date = dateRange.endDate;
+      }
+
+      if (hasVoteStartDate || hasVoteEndDate) {
+        const voteStartDate = input.vote_start_date || calendar.vote_start_date;
+        const voteEndDate = input.vote_end_date || calendar.vote_end_date;
+        const votePeriod = this.validateDateRange(
+          voteStartDate.toString(),
+          voteEndDate.toString(),
+          '투표'
+        );
+
+        if (hasVoteStartDate) updateInput.vote_start_date = votePeriod.startDate;
+        if (hasVoteEndDate) {
+          updateInput.vote_end_date = votePeriod.endDate;
+          updateInput.expired_at = addDateOnlyDays(votePeriod.endDate, CALENDAR_GRACE_PERIOD);
         }
       }
 

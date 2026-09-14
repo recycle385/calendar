@@ -3,7 +3,28 @@ import { useMemo, useState } from 'react'
 import type { Calendar } from '../../../../../domains/calendar'
 
 export type CalendarFilter = 'all' | 'ongoing' | 'closed'
-export type SortOrder = 'newest' | 'startDate'
+export type SortOrder = 'name' | 'newest' | 'oldest' | 'updated'
+
+export function compareCalendars(left: Calendar, right: Calendar, sort: SortOrder) {
+  let compared = 0
+
+  switch (sort) {
+    case 'name':
+      compared = left.title.localeCompare(right.title, 'ko-KR', { sensitivity: 'base' })
+      break
+    case 'oldest':
+      compared = left.created_at.localeCompare(right.created_at)
+      break
+    case 'updated':
+      compared = right.updated_at.localeCompare(left.updated_at)
+      break
+    case 'newest':
+      compared = right.created_at.localeCompare(left.created_at)
+      break
+  }
+
+  return compared || left.slug.localeCompare(right.slug)
+}
 
 export function useCalendarListFilters(calendars: Calendar[]) {
   const [filter, setFilter] = useState<CalendarFilter>('all')
@@ -16,12 +37,7 @@ export function useCalendarListFilters(calendars: Calendar[]) {
       .filter((calendar) => filter === 'all' || (filter === 'ongoing' ? !calendar.is_closed : calendar.is_closed))
       .filter((calendar) => !query || `${calendar.title} ${calendar.description ?? ''}`.toLocaleLowerCase('ko-KR').includes(query))
       .slice()
-      .sort((left, right) => {
-        const compared = sort === 'newest'
-          ? right.created_at.localeCompare(left.created_at)
-          : left.start_date.localeCompare(right.start_date)
-        return compared || left.slug.localeCompare(right.slug)
-      })
+      .sort((left, right) => compareCalendars(left, right, sort))
   }, [calendars, filter, search, sort])
 
   return {

@@ -362,6 +362,8 @@ describe('Auth Integration Test', () => {
             title: 'User Guest Test Room',
             start_date: '2025-01-01',
             end_date: '2025-01-31',
+            vote_start_date: '2025-01-01',
+            vote_end_date: '2025-01-31',
             hostNickname: 'HostNick', // [필드명 확인완료]
           });
 
@@ -439,6 +441,8 @@ describe('Auth Integration Test', () => {
             title: 'Guest Login Test',
             start_date: '2025-01-01',
             end_date: '2025-01-05',
+            vote_start_date: '2025-01-01',
+            vote_end_date: '2025-01-05',
             hostNickname: 'HostForGuest',
           });
 

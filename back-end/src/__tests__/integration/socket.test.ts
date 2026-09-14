@@ -102,6 +102,8 @@ describe('Socket.IO Integration Test', () => {
         title: '소켓 테스트 캘린더',
         start_date: voteDate,
         end_date: addDateOnlyDays(voteDate, 4),
+        vote_start_date: todayDateOnlyUtc(),
+        vote_end_date: addDateOnlyDays(voteDate, 4),
         hostNickname: '방장',
       });
 

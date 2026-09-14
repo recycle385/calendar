@@ -54,16 +54,35 @@ export function CreateCalendarForm({
         <div className={sectionClass}>
           <div className={headingClass}>
             <span>2</span>
-            <div><h2>참여와 투표 기간</h2><p>참여자가 고를 수 있는 날짜 범위를 설정해주세요.</p></div>
+            <div><h2>투표 기간</h2><p>참여자가 투표할 수 있는 기간을 설정해주세요.</p></div>
           </div>
           <div className="grid grid-cols-2 gap-3.5 max-[520px]:grid-cols-1">
             <label className={labelClass}>
-              <span>시작일 <em>*</em></span>
+              <span>투표 시작일 <em>*</em></span>
+              <input className={inputClass} type="date" {...form.register('vote_start_date')} />
+              <FieldError message={form.formState.errors.vote_start_date?.message} />
+            </label>
+            <label className={labelClass}>
+              <span>투표 종료일 <em>*</em></span>
+              <input className={inputClass} type="date" {...form.register('vote_end_date')} />
+              <FieldError message={form.formState.errors.vote_end_date?.message} />
+            </label>
+          </div>
+        </div>
+
+        <div className={sectionClass}>
+          <div className={headingClass}>
+            <span>3</span>
+            <div><h2>투표할 날짜</h2><p>참여자가 선택할 수 있는 후보 날짜 범위를 설정해주세요.</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3.5 max-[520px]:grid-cols-1">
+            <label className={labelClass}>
+              <span>후보 시작일 <em>*</em></span>
               <input className={inputClass} type="date" {...form.register('start_date')} />
               <FieldError message={form.formState.errors.start_date?.message} />
             </label>
             <label className={labelClass}>
-              <span>종료일 <em>*</em></span>
+              <span>후보 종료일 <em>*</em></span>
               <input className={inputClass} type="date" {...form.register('end_date')} />
               <FieldError message={form.formState.errors.end_date?.message} />
             </label>
@@ -72,7 +91,7 @@ export function CreateCalendarForm({
 
         <div className={sectionClass}>
           <div className={headingClass}>
-            <span>3</span>
+            <span>4</span>
             <div><h2>방장 정보</h2><p>참여자 목록에 표시될 이름입니다.</p></div>
           </div>
           <label className={labelClass}>

@@ -97,12 +97,16 @@ export class VoteRepository implements IVoteRepository {
     // 캘린더 → 참가자 → 날짜 옵션 → 투표 순서로 잠근다.
     // 공유 잠금은 다른 참가자의 투표를 허용하면서 마감/기간 수정/삭제와의 경합을 막는다.
     const [calendars] = await connection.execute<RowDataPacket[]>(
-      'SELECT is_closed, end_date FROM calendars WHERE id = ? FOR SHARE',
+      'SELECT is_closed, vote_start_date, vote_end_date FROM calendars WHERE id = ? FOR SHARE',
       [calendarId]
     );
     if (!calendars.length) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
     if (calendars[0].is_closed) throw Errors.BadRequest('마감된 캘린더에는 투표할 수 없습니다');
-    if (compareDateOnly(todayDateOnlyUtc(), formatDateOnly(calendars[0].end_date)) > 0) {
+    const today = todayDateOnlyUtc();
+    if (compareDateOnly(today, formatDateOnly(calendars[0].vote_start_date)) < 0) {
+      throw Errors.BadRequest('투표 기간이 시작되지 않았습니다');
+    }
+    if (compareDateOnly(today, formatDateOnly(calendars[0].vote_end_date)) > 0) {
       throw Errors.BadRequest('투표 기간이 종료되었습니다');
     }
     const [participants] = await connection.execute<RowDataPacket[]>(

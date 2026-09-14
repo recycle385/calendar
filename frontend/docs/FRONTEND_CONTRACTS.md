@@ -15,8 +15,8 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 | POST `/auth/register`                                   | signupToken             | `{signupToken,isTermsAgreed:true}` → `{accessToken,user}`                                        |
 | POST `/auth/refresh`                                    | Refresh 쿠키            | `{accessToken}`. 사용자 프로필은 반환하지 않음                                                   |
 | POST `/auth/logout`                                     | Refresh 쿠키            | 회원 세션 종료                                                                                   |
-| POST `/calendars`                                       | Main                    | `{title,description?,hostNickname,start_date,end_date}` → `{calendar,shareUrl,participantToken}` |
-| GET `/calendars/my`                                     | Main                    | 내가 만든 목록 `{calendars,count}`. 참여 목록이 아님                                             |
+| POST `/calendars`                                       | Main                    | `{title,description?,hostNickname,start_date,end_date,vote_start_date,vote_end_date}` → `{calendar,shareUrl,participantToken}` |
+| GET `/calendars/my`                                     | Main                    | 내가 만든 목록 `{calendars,count}`. 각 항목에 `participant_count` 포함                            |
 | GET `/calendars/:slug`                                  | 없음                    | `{calendar}`                                                                                     |
 | PATCH `/calendars/:slug`                                | Main + DB owner         | 수정 후 `{calendar}`. 빈 수정 요청은 보내지 않음                                                 |
 | DELETE `/calendars/:slug`                               | Main + DB owner         | 삭제                                                                                             |
@@ -99,15 +99,15 @@ callback·refresh·logout·register 요청은 credentials를 포함한다. 프�
 
 | 값                                                             | 처리                                                |
 | -------------------------------------------------------------- | --------------------------------------------------- |
-| start_date, end_date, 투표 date/date_value                     | 유효한 `YYYY-MM-DD`. 시간대 변환 없이 날짜로 사용   |
+| start_date, end_date, vote_start_date, vote_end_date, 투표 date/date_value | 유효한 `YYYY-MM-DD`. 시간대 변환 없이 날짜로 사용   |
 | 공휴일 locationDate                                            | `YYYYMMDD`를 날짜 문자열로 정규화. 시간대 변환 없음 |
 | created_at, joined_at, expired_at, updatedAt, 이벤트 timestamp | UTC timestamp를 `Asia/Seoul`로 표시                 |
 
 브라우저 지역과 무관하게 표시 시간대는 KST다. 날짜 전용 값을 `new Date()`와 `toISOString()` 사이에서 왕복시켜 날짜를 결정하지 않는다.
 
-제목은 trim 후 1~100자, 방장·참가 닉네임은 1~20자, 비회원 비밀번호는 trim 후 4~50자다. 설명은 선택이다. 시작일 ≤ 종료일이고 양 끝을 포함해 최대 366일이다. 수정 시 기존 값과 합친 최종 범위를 검증한다. 백엔드가 허용하지 않는 추가 기간 제한을 임의로 넣지 않는다.
+제목은 trim 후 1~100자, 방장·참가 닉네임은 1~20자, 비회원 비밀번호는 trim 후 4~50자다. 설명은 선택이다. 후보 날짜와 투표 기간은 각각 시작일 ≤ 종료일이고 양 끝을 포함해 최대 366일이다. 수정 시 기존 값과 합친 최종 범위를 검증한다. `expired_at`은 서버가 `vote_end_date + 30일`로 계산한다. 백엔드가 허용하지 않는 추가 기간 제한을 임의로 넣지 않는다.
 
-투표는 실제 현황의 날짜 옵션 중 `is_enabled=true`만 가능하다. 날짜 중복과 유효하지 않은 날짜를 거부한다. `is_closed`뿐 아니라 서버의 기간 종료 응답도 처리한다. 현재 투표 API의 기간 검사는 UTC 날짜 기준이고 자동 마감은 KST 04:00 크론이다. 프론트가 이를 KST 자정으로 임의 변경하지 않는다. 타이머로 보조 표시를 하더라도 최신 서버 응답이 최종 기준이다.
+투표는 실제 현황의 날짜 옵션 중 `is_enabled=true`만 가능하다. 날짜 중복과 유효하지 않은 날짜를 거부한다. `is_closed`뿐 아니라 `vote_start_date` 이전과 `vote_end_date` 이후의 서버 응답도 처리한다. 현재 투표 API의 기간 검사는 UTC 날짜 기준이고 자동 마감은 KST 04:00 크론이다. 프론트가 이를 KST 자정으로 임의 변경하지 않는다. 타이머로 보조 표시를 하더라도 최신 서버 응답이 최종 기준이다.
 
 ## 4. 투표 편집과 저장
 

@@ -29,8 +29,10 @@ describe('실제 MySQL 날짜별 투표와 동시성', () => {
     ownerId = user.insertId;
     slug = uuid.slice(0, 16);
     const [calendar]: any = await pool.execute(
-      'INSERT INTO calendars (slug, title, owner_id, start_date, end_date) VALUES (?, ?, ?, ?, ?)',
-      [slug, '투표 테스트', ownerId, dates[0], dates[2]]
+      `INSERT INTO calendars
+        (slug, title, owner_id, start_date, end_date, vote_start_date, vote_end_date, expired_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [slug, '투표 테스트', ownerId, dates[0], dates[2], todayDateOnlyUtc(), dates[2], addDateOnlyDays(dates[2], 30)]
     );
     calendarId = calendar.insertId;
     const participantUuid = randomUUID();
@@ -103,8 +105,10 @@ describe('실제 MySQL 날짜별 투표와 동시성', () => {
 
   it('다른 캘린더 참가자와 이미 마감된 캘린더는 트랜잭션 안에서 거부한다', async () => {
     const [other]: any = await pool.execute(
-      'INSERT INTO calendars (slug, title, owner_id, start_date, end_date) VALUES (?, ?, ?, ?, ?)',
-      [randomUUID().slice(0, 16), '다른 캘린더', ownerId, dates[0], dates[2]]
+      `INSERT INTO calendars
+        (slug, title, owner_id, start_date, end_date, vote_start_date, vote_end_date, expired_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [randomUUID().slice(0, 16), '다른 캘린더', ownerId, dates[0], dates[2], todayDateOnlyUtc(), dates[2], addDateOnlyDays(dates[2], 30)]
     );
     await pool.execute('UPDATE participants SET calendar_id = ? WHERE id = ?', [
       other.insertId,
@@ -121,9 +125,18 @@ describe('실제 MySQL 날짜별 투표와 동시성', () => {
     await submit([{ date: dates[0], voteType: 'available' }]).expect(400);
   });
 
-  it('기간이 끝난 캘린더는 아직 자동 마감 전이어도 저장하지 않는다', async () => {
-    await pool.execute('UPDATE calendars SET end_date = ? WHERE id = ?', [
+  it('투표 기간이 끝난 캘린더는 아직 자동 마감 전이어도 저장하지 않는다', async () => {
+    await pool.execute('UPDATE calendars SET vote_end_date = ? WHERE id = ?', [
       addDateOnlyDays(todayDateOnlyUtc(), -1),
+      calendarId,
+    ]);
+    await submit([{ date: dates[0], voteType: 'available' }]).expect(400);
+    expect(await readVotes(participantId)).toEqual([]);
+  });
+
+  it('투표 시작일 전에는 투표를 저장하지 않는다', async () => {
+    await pool.execute('UPDATE calendars SET vote_start_date = ? WHERE id = ?', [
+      addDateOnlyDays(todayDateOnlyUtc(), 1),
       calendarId,
     ]);
     await submit([{ date: dates[0], voteType: 'available' }]).expect(400);

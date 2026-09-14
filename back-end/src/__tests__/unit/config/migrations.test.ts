@@ -14,8 +14,11 @@ describe('공휴일 출처별 유니크 키 마이그레이션', () => {
     '%s에서 기존 데이터 삭제 없이 제약을 한 번에 교체한다',
     async (oldKey) => {
       query.mockReset().mockImplementation(async (sql: string, params?: string[]) => {
-        if (sql.includes('information_schema'))
-          return [[{ count: params?.[1] === oldKey ? 1 : 0 }]];
+        if (sql.includes('information_schema.columns')) return [[{ count: 1 }]];
+        if (sql.includes('information_schema.statistics')) {
+          const name = params?.[1];
+          return [[{ count: name === oldKey || name === 'idx_vote_period' ? 1 : 0 }]];
+        }
         return [{}];
       });
       await runDatabaseMigrations();
@@ -31,9 +34,10 @@ describe('공휴일 출처별 유니크 키 마이그레이션', () => {
   it('출처별 키 적용 후 재시작하면 이전 키를 다시 생성하지 않는다', async () => {
     query
       .mockReset()
-      .mockImplementation(async (_sql: string, params: string[]) => [
-        [{ count: params[1] === 'unique_date_kind_seq_source' ? 1 : 0 }],
-      ]);
+      .mockImplementation(async (sql: string, params?: string[]) => {
+        if (sql.includes('information_schema.columns')) return [[{ count: 1 }]];
+        return [[{ count: ['idx_vote_period', 'unique_date_kind_seq_source'].includes(params?.[1] ?? '') ? 1 : 0 }]];
+      });
     await runDatabaseMigrations();
     expect(query.mock.calls.every(([sql]) => sql.includes('information_schema'))).toBe(true);
   });
@@ -47,5 +51,29 @@ describe('공휴일 출처별 유니크 키 마이그레이션', () => {
       'UNIQUE KEY unique_date_kind_seq_source (location_date, date_kind, seq, data_source)'
     );
     expect(schema).not.toMatch(/UNIQUE KEY unique_date_kind_seq\s*\(/);
+  });
+
+  it('기존 캘린더에 투표 기간과 수정 시각을 백필하고 NOT NULL로 전환한다', async () => {
+    query.mockReset().mockImplementation(async (sql: string, params?: string[]) => {
+      if (sql.includes('information_schema.columns')) return [[{ count: 0 }]];
+      if (sql.includes('information_schema.statistics')) {
+        return [[{ count: params?.[1] === 'unique_date_kind_seq_source' ? 1 : 0 }]];
+      }
+      return [{}];
+    });
+
+    await runDatabaseMigrations();
+
+    const statements = query.mock.calls.map(([sql]) => String(sql));
+    expect(statements).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('ADD COLUMN vote_start_date'),
+        expect.stringContaining('ADD COLUMN vote_end_date'),
+        expect.stringContaining('ADD COLUMN updated_at'),
+        expect.stringContaining('vote_start_date = COALESCE(vote_start_date, DATE(created_at))'),
+        expect.stringContaining('MODIFY COLUMN vote_start_date DATE NOT NULL'),
+        expect.stringContaining('ADD INDEX idx_vote_period'),
+      ])
+    );
   });
 });

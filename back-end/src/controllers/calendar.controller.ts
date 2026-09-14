@@ -23,7 +23,15 @@ export class CalendarController {
       throw Errors.Unauthorized('로그인이 필요합니다');
     }
 
-    const { title, start_date, end_date, description, hostNickname } = req.body;
+    const {
+      title,
+      start_date,
+      end_date,
+      vote_start_date,
+      vote_end_date,
+      description,
+      hostNickname,
+    } = req.body;
 
     const userId = await this.userService.getIdUsingUuid(userUuid);
 
@@ -32,6 +40,8 @@ export class CalendarController {
       title,
       start_date,
       end_date,
+      vote_start_date,
+      vote_end_date,
       hostNickname,
       description
     );
@@ -96,7 +106,7 @@ export class CalendarController {
     const userUuid = req.userUuid;
     if (!userUuid) throw Errors.Unauthorized();
 
-    const { title, description, start_date, end_date } = req.body;
+    const { title, description, start_date, end_date, vote_start_date, vote_end_date } = req.body;
 
     const userId = await this.userService.getIdUsingUuid(userUuid);
 
@@ -105,9 +115,15 @@ export class CalendarController {
       description,
       start_date,
       end_date,
+      vote_start_date,
+      vote_end_date,
     });
 
-    if ([title, description, start_date, end_date].every((value) => value === undefined)) {
+    if (
+      [title, description, start_date, end_date, vote_start_date, vote_end_date].every(
+        (value) => value === undefined
+      )
+    ) {
       return res.status(200).json({ message: '변경사항이 없습니다' });
     }
     const hostParticipantUuid =
@@ -184,10 +200,16 @@ export class CalendarController {
       description: calendar.description,
       start_date: calendar.start_date,
       end_date: calendar.end_date,
+      vote_start_date: calendar.vote_start_date,
+      vote_end_date: calendar.vote_end_date,
       is_closed: calendar.is_closed,
       hostParticipantUuid: hostParticipantUuid, // useruuid가 아니라 participantuuid 넣어야함 (safe 응답용)
       created_at: calendar.created_at,
+      updated_at: calendar.updated_at,
       expired_at: calendar.expired_at,
+      ...('participant_count' in calendar
+        ? { participant_count: Number(calendar.participant_count) }
+        : {}),
     };
   }
 }

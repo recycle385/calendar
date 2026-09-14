@@ -6,16 +6,22 @@ export interface Calendar {
   description: string | null
   start_date: string
   end_date: string
+  vote_start_date: string
+  vote_end_date: string
   is_closed: boolean
   hostParticipantUuid: string
   created_at: string
+  updated_at: string
   expired_at: string | null
+  participant_count?: number
 }
 
 export interface CreateCalendarRequest {
   title: string
   start_date: string
   end_date: string
+  vote_start_date: string
+  vote_end_date: string
   description?: string
   hostNickname: string
 }
@@ -25,6 +31,8 @@ export interface UpdateCalendarRequest {
   description?: string | null
   start_date?: string
   end_date?: string
+  vote_start_date?: string
+  vote_end_date?: string
 }
 
 export interface CreateCalendarResponse extends DefaultResponse {

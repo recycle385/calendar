@@ -9,9 +9,12 @@ export interface Calendar {
   description: string | null;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
+  vote_start_date: string; // YYYY-MM-DD
+  vote_end_date: string; // YYYY-MM-DD
   is_closed: boolean; // 투표 마감 여부
   owner_id: number; // 방장 user ID
   created_at: Date;
+  updated_at: Date;
   expired_at: Date;
 }
 
@@ -20,6 +23,7 @@ export interface Calendar {
  */
 export interface CalendarWithHostUuid extends Calendar {
   hostParticipantUuid: string;
+  participant_count: number;
 }
 
 // INSERT용
@@ -29,6 +33,8 @@ export interface CreateCalendarInput {
   description?: string;
   start_date: Date | string; // Date 또는 'YYYY-MM-DD' 문자열
   end_date: Date | string;
+  vote_start_date: Date | string;
+  vote_end_date: Date | string;
   owner_id: number;
   expired_at: Date | string;
 }
@@ -39,6 +45,8 @@ export interface UpdateCalendarInput {
   description?: string | null;
   start_date?: Date | string;
   end_date?: Date | string;
+  vote_start_date?: Date | string;
+  vote_end_date?: Date | string;
   is_closed?: boolean;
   expired_at?: Date | string;
 }
@@ -59,8 +67,12 @@ export interface SafeCalendar {
   description: string | null;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
+  vote_start_date: string; // YYYY-MM-DD
+  vote_end_date: string; // YYYY-MM-DD
   is_closed: boolean; // 투표 마감 여부
   hostParticipantUuid: string; // useruuid가 아니라 participantuuid 넣어야함 (safe 응답용)
   created_at: Date;
+  updated_at: Date;
   expired_at: Date;
+  participant_count?: number;
 }

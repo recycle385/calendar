@@ -10,7 +10,9 @@ describe('투표 트랜잭션 재시도', () => {
       ? jest.fn().mockRejectedValue(failure)
       : jest
           .fn()
-          .mockResolvedValueOnce([[{ is_closed: 0, end_date: '2099-12-31' }]])
+          .mockResolvedValueOnce([
+            [{ is_closed: 0, vote_start_date: '2000-01-01', vote_end_date: '2099-12-31' }],
+          ])
           .mockResolvedValueOnce([[{ calendar_id: 10 }]])
           .mockResolvedValueOnce([[]]),
     query: jest.fn(),

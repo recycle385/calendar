@@ -89,6 +89,8 @@ describe('CalendarService Unit Test', () => {
     const title = 'Test Calendar';
     const startDate = '2025-01-01';
     const endDate = '2025-01-03'; // 3일간
+    const voteStartDate = '2024-12-20';
+    const voteEndDate = '2024-12-31';
     const hostNickname = 'HostUser';
     const description = 'Description';
 
@@ -107,6 +109,8 @@ describe('CalendarService Unit Test', () => {
         title,
         startDate,
         endDate,
+        voteStartDate,
+        voteEndDate,
         hostNickname,
         description
       );
@@ -117,6 +121,9 @@ describe('CalendarService Unit Test', () => {
           title,
           start_date: startDate,
           end_date: endDate,
+          vote_start_date: voteStartDate,
+          vote_end_date: voteEndDate,
+          expired_at: '2025-01-30',
           owner_id: ownerId,
           description,
         }),
@@ -154,9 +161,11 @@ describe('CalendarService Unit Test', () => {
           title,
           '2025-01-05', // 시작일
           '2025-01-01', // 종료일
+          voteStartDate,
+          voteEndDate,
           hostNickname
         )
-      ).rejects.toThrow('시작일은 종료일보다 이전이어야 합니다');
+      ).rejects.toThrow('후보 날짜 시작일은 종료일보다 이전이어야 합니다');
     });
 
     it('[실패] 기간이 1년(365일)을 초과하는 경우 에러를 던져야 한다', async () => {
@@ -166,14 +175,24 @@ describe('CalendarService Unit Test', () => {
           title,
           '2025-01-01',
           '2026-02-01', // 1년 초과
+          voteStartDate,
+          voteEndDate,
           hostNickname
         )
-      ).rejects.toThrow('투표 기간은 최대 1년까지 가능합니다');
+      ).rejects.toThrow('후보 날짜 기간은 최대 1년까지 가능합니다');
     });
 
     it('[실패] 날짜 형식이 잘못된 경우 에러를 던져야 한다', async () => {
       await expect(
-        calendarService.createCalendar(ownerId, title, 'invalid-date', '2025-01-01', hostNickname)
+        calendarService.createCalendar(
+          ownerId,
+          title,
+          'invalid-date',
+          '2025-01-01',
+          voteStartDate,
+          voteEndDate,
+          hostNickname
+        )
       ).rejects.toThrow('유효하지 않은 날짜 형식입니다');
     });
 
@@ -184,10 +203,26 @@ describe('CalendarService Unit Test', () => {
           title,
           '2026-04-28T00:30:00+09:00',
           '2026-04-30T00:30:00+09:00',
+          voteStartDate,
+          voteEndDate,
           hostNickname,
           description
         )
       ).rejects.toThrow('유효하지 않은 날짜 형식입니다');
+    });
+
+    it('[실패] 투표 시작일이 투표 종료일보다 늦으면 거부해야 한다', async () => {
+      await expect(
+        calendarService.createCalendar(
+          ownerId,
+          title,
+          startDate,
+          endDate,
+          '2025-01-02',
+          '2025-01-01',
+          hostNickname
+        )
+      ).rejects.toThrow('투표 시작일은 종료일보다 이전이어야 합니다');
     });
 
     it('[실패] Slug 생성 충돌 시 재시도 로직이 동작해야 한다', async () => {
@@ -196,7 +231,15 @@ describe('CalendarService Unit Test', () => {
 
       mockCalendarRepository.create.mockResolvedValue({ id: 1 } as Calendar);
 
-      await calendarService.createCalendar(ownerId, title, startDate, endDate, hostNickname);
+      await calendarService.createCalendar(
+        ownerId,
+        title,
+        startDate,
+        endDate,
+        voteStartDate,
+        voteEndDate,
+        hostNickname
+      );
 
       // slugExists가 두 번 호출되었는지 확인
       expect(mockCalendarRepository.slugExists).toHaveBeenCalledTimes(2);
@@ -242,6 +285,8 @@ describe('CalendarService Unit Test', () => {
       title: 'Old Title',
       start_date: '2025-01-01',
       end_date: '2025-01-03',
+      vote_start_date: '2024-12-20',
+      vote_end_date: '2024-12-31',
       is_closed: false,
     } as Calendar;
 
@@ -281,7 +326,7 @@ describe('CalendarService Unit Test', () => {
       );
     });
 
-    it('[로직] 종료일 수정 시 expired_at (만료일)이 자동 연장되어야 한다', async () => {
+    it('[로직] 후보 종료일 수정은 expired_at을 변경하지 않아야 한다', async () => {
       mockCalendarRepository.findBySlug.mockResolvedValue(existingCalendar);
       mockCalendarRepository.update.mockResolvedValue(true);
       mockCalendarRepository.findById.mockResolvedValue(existingCalendar);
@@ -289,17 +334,9 @@ describe('CalendarService Unit Test', () => {
       const newEndDate = '2025-02-01';
       await calendarService.updateCalendar(slug, ownerId, { end_date: newEndDate });
 
-      // 예상 만료일 계산: 종료일 + GRACE_PERIOD
-      // 날짜 계산은 service 내부 로직(addDate)과 동일하게 추론
-      // service 내부: expired_at = this.addDate(input.end_date, CALENDAR_GRACE_PERIOD);
-      // 여기서는 update 메서드의 호출 인자 중 expired_at이 포함되어 있는지 검증
-
       expect(mockCalendarRepository.update).toHaveBeenCalledWith(
         existingCalendar.id,
-        expect.objectContaining({
-          end_date: newEndDate,
-          expired_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), // 날짜 형식 문자열 확인
-        }),
+        { end_date: newEndDate },
         expect.anything()
       );
       expect(mockDateOptionRepository.deleteOutsideRange).toHaveBeenCalledWith(
@@ -311,6 +348,20 @@ describe('CalendarService Unit Test', () => {
       expect(mockDateOptionRepository.createBatch).toHaveBeenCalledWith(
         existingCalendar.id,
         expect.arrayContaining(['2025-01-04', '2025-02-01']),
+        expect.anything()
+      );
+    });
+
+    it('[로직] 투표 종료일 수정 시 expired_at을 30일 뒤로 갱신해야 한다', async () => {
+      mockCalendarRepository.findBySlug.mockResolvedValue(existingCalendar);
+      mockCalendarRepository.update.mockResolvedValue(true);
+      mockCalendarRepository.findById.mockResolvedValue(existingCalendar);
+
+      await calendarService.updateCalendar(slug, ownerId, { vote_end_date: '2025-01-10' });
+
+      expect(mockCalendarRepository.update).toHaveBeenCalledWith(
+        existingCalendar.id,
+        { vote_end_date: '2025-01-10', expired_at: '2025-02-09' },
         expect.anything()
       );
     });
