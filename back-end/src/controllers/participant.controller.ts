@@ -20,7 +20,7 @@ export class ParticipantController {
 
   public registerParticipant: RequestHandler = async (req, res) => {
     const { slug } = req.params;
-    const { nickname, password } = req.body;
+    const { nickname, password, profileType } = req.body;
 
     const userUuid = req.userUuid;
 
@@ -40,8 +40,12 @@ export class ParticipantController {
         calendarId: calendar.id,
         nickname: nickname,
         userId: userId,
+        profileType: profileType === 'alias' ? 'alias' : 'account',
       };
     } else {
+      if (profileType) {
+        throw Errors.BadRequest('로그인하지 않은 게스트는 참여 프로필을 지정할 수 없습니다');
+      }
       if (!password) {
         throw Errors.BadRequest('게스트는 비번이 필수입니다');
       }

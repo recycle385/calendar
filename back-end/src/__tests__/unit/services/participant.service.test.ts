@@ -116,6 +116,7 @@ describe('ParticipantService Unit Test', () => {
       expect(mockParticipantRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           role: 'guest',
+          profile_type: 'password',
           nickname,
           password_hash: hashedPassword,
           participant_uuid: mockUuid,
@@ -127,7 +128,13 @@ describe('ParticipantService Unit Test', () => {
 
     it('[성공] 로그인한 User가 Guest로 참여 시 userId가 매핑되어야 한다', async () => {
       const userId = 100;
-      const input = { calendarId, nickname, userId, role: 'guest' as const };
+      const input = {
+        calendarId,
+        nickname,
+        userId,
+        role: 'guest' as const,
+        profileType: 'alias' as const,
+      };
 
       mockParticipantRepository.nicknameExists.mockResolvedValue(false);
       mockParticipantRepository.create.mockResolvedValue({
@@ -147,6 +154,7 @@ describe('ParticipantService Unit Test', () => {
       expect(mockParticipantRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           role: 'guest',
+          profile_type: 'alias',
           user_id: userId,
           nickname,
         }),

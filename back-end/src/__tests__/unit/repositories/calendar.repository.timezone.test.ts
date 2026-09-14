@@ -117,4 +117,46 @@ describe('CalendarRepository UTC 기준 조회', () => {
     expect(String(mockPool.query.mock.calls[0][0])).toContain('SELECT COUNT(*) FROM participants');
     expect(calendars[0].participant_count).toBe(4);
   });
+
+  it('참여한 캘린더 목록은 역할과 참여 프로필을 함께 반환한다', async () => {
+    mockPool.query.mockImplementationOnce(async () => [
+      [
+        {
+          id: 1,
+          slug: 'joined-calendar',
+          title: '참여 일정',
+          description: null,
+          start_date: '2026-09-15',
+          end_date: '2026-09-20',
+          vote_start_date: '2026-09-10',
+          vote_end_date: '2026-09-18',
+          is_closed: 0,
+          owner_id: 2,
+          created_at: '2026-09-01 00:00:00',
+          updated_at: '2026-09-02 00:00:00',
+          expired_at: '2026-10-18 00:00:00',
+          hostParticipantUuid: 'host-uuid',
+          participant_count: '3',
+          participantRole: 'guest',
+          profileType: 'alias',
+          participantUuid: 'alias-uuid',
+          participantNickname: '별명',
+        },
+      ],
+    ]);
+
+    const calendars = await repository.getJoinedCalendarsByUserId(7);
+
+    expect(String(mockPool.query.mock.calls[0][0])).toContain('WHERE me.user_id = ?');
+    expect(mockPool.query).toHaveBeenCalledWith(expect.any(String), [7]);
+    expect(calendars[0]).toEqual(
+      expect.objectContaining({
+        participantRole: 'guest',
+        profileType: 'alias',
+        participantUuid: 'alias-uuid',
+        participantNickname: '별명',
+        participant_count: 3,
+      })
+    );
+  });
 });

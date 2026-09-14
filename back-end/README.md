@@ -149,6 +149,7 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | --- | --- | --- | --- |
 | POST | `/api/v1/calendars` | UserAuth | 캘린더 생성 |
 | GET | `/api/v1/calendars/my` | UserAuth | 내 캘린더 목록 조회 |
+| GET | `/api/v1/calendars/joined` | UserAuth | 계정에 연결된 참여 캘린더 목록 조회 |
 | GET | `/api/v1/calendars/:slug` | 없음 | slug로 캘린더 조회 |
 | PATCH | `/api/v1/calendars/:slug` | UserAuth | 방장 캘린더 수정 |
 | DELETE | `/api/v1/calendars/:slug` | UserAuth | 방장 캘린더 삭제 |
@@ -163,6 +164,8 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | GET | `/api/v1/calendars/:slug/participants` | 없음 | 참가자 및 투표 현황 조회 |
 | DELETE | `/api/v1/calendars/:slug/participants/self` | ParticipantAuth | 본인 참가자 삭제 |
 | DELETE | `/api/v1/calendars/:slug/participants/:uuid` | UserAuth | 방장이 참가자 강퇴 |
+
+로그인 회원은 참가자 등록 시 `profileType`을 함께 보냅니다. `account`는 계정 프로필 이름을, `alias`는 별명을 사용하지만 둘 다 회원 계정에 연결되므로 Main Token만으로 다시 입장할 수 있습니다. 비회원 참여는 `nickname`과 개인 `password`를 사용하며 계정의 참여 목록에는 포함되지 않습니다.
 
 ### Votes
 

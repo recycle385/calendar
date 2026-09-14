@@ -78,6 +78,7 @@ export class ParticipantService implements IParticipantService {
       if (input.role === 'host') {
         createInput = {
           role: 'host',
+          profile_type: 'account',
           calendar_id: input.calendarId,
           participant_uuid: participantUuid,
           nickname: input.nickname.trim(),
@@ -87,6 +88,7 @@ export class ParticipantService implements IParticipantService {
       } else {
         createInput = {
           role: 'guest',
+          profile_type: input.profileType === 'alias' ? 'alias' : 'account',
           calendar_id: input.calendarId,
           participant_uuid: participantUuid,
           nickname: input.nickname.trim(),
@@ -107,6 +109,7 @@ export class ParticipantService implements IParticipantService {
 
       createInput = {
         role: 'guest',
+        profile_type: 'password',
         calendar_id: input.calendarId,
         participant_uuid: participantUuid,
         nickname: input.nickname.trim(),

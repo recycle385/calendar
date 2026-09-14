@@ -30,6 +30,7 @@ const mockCalendarRepository: jest.Mocked<ICalendarRepository> = {
   close: jest.fn(),
   closeByIds: jest.fn(),
   getCalAndPUuidDatasByUserIds: jest.fn(),
+  getJoinedCalendarsByUserId: jest.fn(),
   slugExists: jest.fn(),
   findEndedAndOpen: jest.fn(),
   findEndedAndOpenForUpdate: jest.fn(),

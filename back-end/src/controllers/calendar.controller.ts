@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 
-import { Calendar, SafeCalendar } from '../models';
+import { Calendar, CalendarWithParticipation, SafeCalendar, SafeJoinedCalendar } from '../models';
 import { ICalendarService } from '../services/calendar.service';
 import { IParticipantService } from '../services/participant.service';
 import { ITokenService } from '../services/token.service';
@@ -94,6 +94,20 @@ export class CalendarController {
     const safeCalendars = calendars.map((calendar) => {
       return this.changeToSafeCalendar(calendar, calendar.hostParticipantUuid);
     });
+
+    return res.status(200).json({
+      calendars: safeCalendars,
+      count: safeCalendars.length,
+    });
+  };
+
+  public getJoinedCalendars: RequestHandler = async (req, res) => {
+    const userUuid = req.userUuid;
+    if (!userUuid) throw Errors.Unauthorized('로그인이 필요합니다');
+
+    const userId = await this.userService.getIdUsingUuid(userUuid);
+    const calendars = await this.calendarService.getJoinedCalendars(userId);
+    const safeCalendars = calendars.map((calendar) => this.changeToSafeJoinedCalendar(calendar));
 
     return res.status(200).json({
       calendars: safeCalendars,
@@ -210,6 +224,16 @@ export class CalendarController {
       ...('participant_count' in calendar
         ? { participant_count: Number(calendar.participant_count) }
         : {}),
+    };
+  }
+
+  private changeToSafeJoinedCalendar(calendar: CalendarWithParticipation): SafeJoinedCalendar {
+    return {
+      ...this.changeToSafeCalendar(calendar, calendar.hostParticipantUuid),
+      participantRole: calendar.participantRole,
+      profileType: calendar.profileType,
+      participantUuid: calendar.participantUuid,
+      participantNickname: calendar.participantNickname,
     };
   }
 }

@@ -37,6 +37,7 @@ export const CALENDAR_ROUTES = {
   BASE: '/calendars',
 
   MY_CALENDAR_LIST: '/my',
+  JOINED_CALENDAR_LIST: '/joined',
 
   CALENDAR_SLUG: '/:slug',
 

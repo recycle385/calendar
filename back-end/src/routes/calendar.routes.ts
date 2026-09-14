@@ -75,6 +75,30 @@ export const createCalendarRouter = (controller: CalendarController): Router => 
 
   /**
    * @swagger
+   * /api/v1/calendars/joined:
+   *   get:
+   *     summary: 현재 회원이 참여한 모든 캘린더 조회
+   *     security:
+   *       - UserAuth: []
+   *     tags: [Calendar]
+   *     responses:
+   *       200:
+   *         description: 참여한 캘린더 목록 조회 완료
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/GetJoinedCalendarsResponse"
+   *       401:
+   *         description: 로그인 필요
+   */
+  router.get(
+    CALENDAR_ROUTES.JOINED_CALENDAR_LIST,
+    authenticateUser,
+    asyncHandler(controller.getJoinedCalendars)
+  );
+
+  /**
+   * @swagger
    * /api/v1/calendars/{slug}:
    *   get:
    *     summary: Slug로 캘린더 조회

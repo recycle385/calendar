@@ -198,6 +198,7 @@ export const participantSchemas = {
       .required()
       .messages({ 'any.required': '닉네임은 필수입니다' }),
     password: Joi.string().trim().min(4).max(50).optional(),
+    profileType: Joi.string().valid('account', 'alias').optional(),
   }),
 
   loginRequest: Joi.object({

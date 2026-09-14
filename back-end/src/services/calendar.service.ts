@@ -6,6 +6,7 @@ import { TransactionManager } from '../infrastructure/transaction.manager';
 import {
   Calendar,
   CalendarWithHostUuid,
+  CalendarWithParticipation,
   CreateCalendarInput,
   UpdateCalendarInput,
 } from '../models/Calendar';
@@ -38,6 +39,7 @@ export interface ICalendarService {
   deleteCalendar(slug: string, ownerId: number): Promise<void>;
   closeCalendar(slug: string, ownerId: number): Promise<Calendar>;
   getUserCalendarsWithPUuids(ownerId: number): Promise<CalendarWithHostUuid[]>;
+  getJoinedCalendars(userId: number): Promise<CalendarWithParticipation[]>;
 }
 
 export class CalendarService implements ICalendarService {
@@ -215,6 +217,10 @@ export class CalendarService implements ICalendarService {
 
   async getUserCalendarsWithPUuids(ownerId: number): Promise<CalendarWithHostUuid[]> {
     return await this.calendarRepository.getCalAndPUuidDatasByUserIds(ownerId);
+  }
+
+  async getJoinedCalendars(userId: number): Promise<CalendarWithParticipation[]> {
+    return this.calendarRepository.getJoinedCalendarsByUserId(userId);
   }
 
   /**

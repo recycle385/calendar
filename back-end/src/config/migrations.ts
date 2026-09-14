@@ -90,7 +90,29 @@ async function migrateDateInfoUniqueKey(): Promise<void> {
   logger.info('[Migration] date_info 출처별 유니크 키 적용 완료');
 }
 
+async function migrateParticipantProfileType(): Promise<void> {
+  if (await hasColumn('participants', 'profile_type')) return;
+
+  await pool.query(
+    `ALTER TABLE participants
+     ADD COLUMN profile_type ENUM('account', 'alias', 'password') NULL AFTER role`
+  );
+  await pool.query(
+    `UPDATE participants
+     SET profile_type = CASE
+       WHEN user_id IS NOT NULL THEN 'account'
+       ELSE 'password'
+     END`
+  );
+  await pool.query(
+    `ALTER TABLE participants
+     MODIFY COLUMN profile_type ENUM('account', 'alias', 'password') NOT NULL DEFAULT 'password'`
+  );
+  logger.info('[Migration] 참가자 프로필 유형 필드 적용 완료');
+}
+
 export async function runDatabaseMigrations(): Promise<void> {
   await migrateCalendarLifecycleFields();
   await migrateDateInfoUniqueKey();
+  await migrateParticipantProfileType();
 }

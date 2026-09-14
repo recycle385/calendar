@@ -228,6 +228,50 @@ export interface GetMyCalendarsResponse {
  * @swagger
  * components:
  *   schemas:
+ *     JoinedCalendarDto:
+ *       allOf:
+ *         - $ref: "#/components/schemas/SafeCalendarDto"
+ *         - type: object
+ *           required: [participantRole, profileType, participantUuid, participantNickname]
+ *           properties:
+ *             participantRole:
+ *               type: string
+ *               enum: [host, guest]
+ *             profileType:
+ *               type: string
+ *               enum: [account, alias]
+ *             participantUuid:
+ *               type: string
+ *               format: uuid
+ *             participantNickname:
+ *               type: string
+ *     GetJoinedCalendarsResponse:
+ *       type: object
+ *       required: [calendars, count]
+ *       properties:
+ *         calendars:
+ *           type: array
+ *           items:
+ *             $ref: "#/components/schemas/JoinedCalendarDto"
+ *         count:
+ *           type: integer
+ */
+export interface JoinedCalendarDto extends SafeCalendarDto {
+  participantRole: 'host' | 'guest';
+  profileType: 'account' | 'alias';
+  participantUuid: string;
+  participantNickname: string;
+}
+
+export interface GetJoinedCalendarsResponse {
+  calendars: JoinedCalendarDto[];
+  count: number;
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
  *     CommonCalendarResponse:
  *       allOf:
  *         - $ref: "#/components/schemas/DefaultResponseDto"

@@ -3,11 +3,14 @@
  * DB: participants
  * 모든 호스트와 게스트는 참가자를 의미함, 참가자가 호스트와 게스트의 상위 개념임.
  */
+export type ParticipantProfileType = 'account' | 'alias' | 'password';
+
 export interface Participant {
   id: number;
   participant_uuid: string; // UUID
   user_id: number | null; // users.id (비회원일 경우 NULL)
   role: 'host' | 'guest';
+  profile_type: ParticipantProfileType;
   calendar_id: number;
   nickname: string;
   password_hash: string | null; // bcrypt 해시
@@ -20,6 +23,7 @@ interface BaseParticipantInput {
   calendar_id: number;
   nickname: string;
   color_code?: string; // 기본값: #FF0000
+  profile_type?: ParticipantProfileType;
 }
 
 export interface HostParticipantInput extends BaseParticipantInput {
@@ -54,6 +58,7 @@ interface BaseParticipantServiceInput {
 
 export interface UserParticipantServiceInput extends BaseParticipantServiceInput {
   userId: number;
+  profileType?: 'account' | 'alias';
   password?: never;
 }
 

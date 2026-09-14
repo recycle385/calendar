@@ -76,4 +76,27 @@ describe('공휴일 출처별 유니크 키 마이그레이션', () => {
       ])
     );
   });
+
+  it('기존 참가자의 계정 연결 여부로 프로필 유형을 백필한다', async () => {
+    query.mockReset().mockImplementation(async (sql: string, params?: string[]) => {
+      if (sql.includes('information_schema.columns')) {
+        return [[{ count: params?.[1] === 'profile_type' ? 0 : 1 }]];
+      }
+      if (sql.includes('information_schema.statistics')) {
+        return [[{ count: ['idx_vote_period', 'unique_date_kind_seq_source'].includes(params?.[1] ?? '') ? 1 : 0 }]];
+      }
+      return [{}];
+    });
+
+    await runDatabaseMigrations();
+
+    const statements = query.mock.calls
+      .map(([sql]) => String(sql))
+      .filter((sql) => !sql.includes('information_schema'));
+    expect(statements).toEqual([
+      expect.stringContaining('ADD COLUMN profile_type'),
+      expect.stringContaining("WHEN user_id IS NOT NULL THEN 'account'"),
+      expect.stringContaining('MODIFY COLUMN profile_type'),
+    ]);
+  });
 });

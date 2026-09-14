@@ -75,6 +75,7 @@ CREATE TABLE participants (
     participant_uuid CHAR(36) NOT NULL UNIQUE,
     user_id BIGINT NULL COMMENT '참가자 사용자 ID (users.id), 비회원일 경우 NULL',
     role ENUM('host', 'guest') DEFAULT 'guest' COMMENT '역할',
+    profile_type ENUM('account', 'alias', 'password') NOT NULL DEFAULT 'password' COMMENT '계정, 별명, 비회원 비밀번호 참여 구분',
     calendar_id BIGINT NOT NULL,
     nickname VARCHAR(20) NOT NULL COMMENT '참가자 닉네임',
     password_hash VARCHAR(255) NULL COMMENT '비밀번호 해시 (bcrypt)',

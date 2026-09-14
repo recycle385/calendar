@@ -21,9 +21,10 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 | PATCH `/calendars/:slug`                                | Main + DB owner         | 수정 후 `{calendar}`. 빈 수정 요청은 보내지 않음                                                 |
 | DELETE `/calendars/:slug`                               | Main + DB owner         | 삭제                                                                                             |
 | POST `/calendars/:slug/close`                           | Main + DB owner         | 마감                                                                                             |
-| POST `/calendars/:slug/participants`                    | 회원 Main / 비회원 없음 | 회원 `{nickname}`, 비회원 `{nickname,password}` → `{participant,participantToken}`               |
+| POST `/calendars/:slug/participants`                    | 회원 Main / 비회원 없음 | 회원 `{nickname,profileType:account\|alias}`, 비회원 `{nickname,password}` → `{participant,participantToken}` |
 | POST `/calendars/:slug/participants/login`              | 회원 Main / 비회원 없음 | 회원 `{}`, 비회원 `{nickname,password}` → `{participant,participantToken}`                       |
 | GET `/calendars/:slug/participants`                     | 없음                    | `{participants,count}`                                                                           |
+| GET `/calendars/joined`                                 | Main                    | 내가 방장 또는 계정/별명으로 참여한 목록 `{calendars,count}`. 각 항목에 현재 참여 역할·프로필 포함 |
 | DELETE `/calendars/:slug/participants/self`             | Participant             | 일반 참가자 탈퇴                                                                                 |
 | DELETE `/calendars/:slug/participants/:participantUuid` | Main + DB owner         | 강퇴                                                                                             |
 | POST `/calendars/:slug/votes`                           | Participant             | `{votes:[{date,voteType}]}` → `{votes,votedCount}`                                               |
@@ -31,7 +32,7 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 | GET `/calendars/:slug/votes/:participantUuid`           | 없음                    | `{participant,votes,voteCount}`                                                                  |
 | GET `/date-infos/:year`                                 | 없음                    | 공휴일·기념일 배열                                                                               |
 
-인증은 `Authorization: Bearer ...`를 사용한다. 회원 재입장 요청에 Participant Token을 보내지 않는다. `/calendars/joined`, 사용자 프로필 조회·수정, 관리자 인증·관리·통계·로그 API는 현재 없다. 해당 기능을 현재 API처럼 호출하지 않는다.
+인증은 `Authorization: Bearer ...`를 사용한다. 회원 재입장 요청에 Participant Token을 보내지 않는다. 사용자 프로필 조회·수정, 관리자 인증·관리·통계·로그 API는 현재 없다. 해당 기능을 현재 API처럼 호출하지 않는다.
 
 ### DTO와 식별자
 
@@ -50,6 +51,7 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 - Main Access Token은 auth 메모리 상태에서 관리하고 localStorage/sessionStorage에 저장하지 않는다. 앱 시작 시 쿠키 기반 refresh를 한 번 수행해 복원한다.
 - 회원 상태는 `복원 중 / 인증됨 / 비로그인 / 일시적 복원 실패`를 구분한다. 복원 중에는 로그인 화면으로 성급하게 redirect하지 않는다.
 - Participant Token은 slug별로 메모리와 sessionStorage에 보존한다. 회원 연결 여부와 user UUID를 함께 구분한다. 탭을 닫은 뒤에는 회원 자동 재입장 또는 비회원 비밀번호 재입장을 사용한다. 비밀번호는 보존하지 않는다.
+- 로그인 회원의 `alias` 참여는 별명만 공개 화면에 사용하고 `user_id`에는 연결한다. 따라서 비밀번호 없이 Main Token으로 재입장할 수 있다. `alias`는 서버와도 연결되지 않는 완전 익명을 뜻하지 않는다.
 - 저장된 참가자 정보는 UI 복원용이다. JWT 만료·slug를 확인하고 최신 캘린더·참가자 조회 및 인증된 요청으로 상태를 확인한다. 토큰 decode를 서버 권한 검증으로 취급하지 않는다.
 - 로그인 응답의 표시용 프로필은 user UUID와 함께 sessionStorage에 보존할 수 있다. refresh로 확인한 회원 UUID와 다르면 버린다. 표시용 사본이 없으면 기본 사용자 표시를 쓰고, 미지원 `/me` API를 만들지 않는다. 다른 탭에서도 최신 프로필을 복원하는 기능은 백엔드 확장 대상이다.
 - 명시적 로그아웃은 서버 logout을 요청하고 앱의 회원·참가 토큰, 프로필 사본, 회원별 캐시와 소켓을 정리한다. 참가 DB 데이터를 삭제하는 동작은 아니다. 서버 logout 실패 시 서버 세션 종료를 성공으로 표시하지 않는다.

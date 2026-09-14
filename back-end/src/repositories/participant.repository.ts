@@ -59,30 +59,35 @@ export class ParticipantRepository implements IParticipantRepository {
 
     let user_id: number | null;
     let password_hash: string | null;
+    let profile_type: Participant['profile_type'];
 
     if (role === 'host') {
       user_id = input.user_id;
       password_hash = null;
+      profile_type = 'account';
     } else {
       if ('password_hash' in input && input.password_hash !== undefined) {
         user_id = null;
         password_hash = input.password_hash;
+        profile_type = 'password';
       } else if ('user_id' in input && input.user_id !== undefined) {
         user_id = input.user_id;
         password_hash = null;
+        profile_type = input.profile_type === 'alias' ? 'alias' : 'account';
       } else {
         throw Errors.BadRequest('게스트는 user_id 또는 password_hash 중 하나가 필요합니다');
       }
     }
 
     const [result] = await poolToUse.execute<ResultSetHeader>(
-      `INSERT INTO participants (participant_uuid, calendar_id, user_id, role, nickname, password_hash, color_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO participants (participant_uuid, calendar_id, user_id, role, profile_type, nickname, password_hash, color_code)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         participant_uuid,
         calendar_id,
         user_id,
         role,
+        profile_type,
         nickname,
         password_hash,
         color_code || '#FF0000',
@@ -342,6 +347,7 @@ export class ParticipantRepository implements IParticipantRepository {
       participant_uuid: row.participant_uuid,
       user_id: row.user_id,
       role: row.role,
+      profile_type: row.profile_type,
       calendar_id: row.calendar_id,
       nickname: row.nickname,
       password_hash: row.password_hash,

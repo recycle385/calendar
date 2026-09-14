@@ -26,6 +26,13 @@ export interface CalendarWithHostUuid extends Calendar {
   participant_count: number;
 }
 
+export interface CalendarWithParticipation extends CalendarWithHostUuid {
+  participantRole: 'host' | 'guest';
+  profileType: 'account' | 'alias';
+  participantUuid: string;
+  participantNickname: string;
+}
+
 // INSERT용
 export interface CreateCalendarInput {
   slug: string;
@@ -75,4 +82,11 @@ export interface SafeCalendar {
   updated_at: Date;
   expired_at: Date;
   participant_count?: number;
+}
+
+export interface SafeJoinedCalendar extends SafeCalendar {
+  participantRole: 'host' | 'guest';
+  profileType: 'account' | 'alias';
+  participantUuid: string;
+  participantNickname: string;
 }

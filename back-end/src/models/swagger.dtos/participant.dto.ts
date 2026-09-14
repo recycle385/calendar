@@ -21,10 +21,15 @@ import { DefaultResponseDto } from './common.dto';
  *           minLength: 4
  *           maxLength: 50
  *           example: "1234"
+ *         profileType:
+ *           type: string
+ *           enum: [account, alias]
+ *           description: 로그인 회원의 계정 프로필 또는 별명 참여 방식
  */
 export interface RegisterParticipantRequest {
   nickname: string;
   password?: string;
+  profileType?: 'account' | 'alias';
 }
 
 /**

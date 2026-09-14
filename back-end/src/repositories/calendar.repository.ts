@@ -3,7 +3,7 @@ import { PoolConnection } from 'mysql2/promise';
 
 import dbpool from '../config/database';
 import { Calendar, CreateCalendarInput, UpdateCalendarInput } from '../models/Calendar';
-import { CalendarWithHostUuid } from '../models/Calendar';
+import { CalendarWithHostUuid, CalendarWithParticipation } from '../models/Calendar';
 import { DateOnlyInput, formatDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 import { formatUtcDateTimeForSql } from '../utils/utcDate';
@@ -24,6 +24,10 @@ export interface ICalendarRepository {
     user_id: number,
     connection?: PoolConnection
   ): Promise<CalendarWithHostUuid[]>;
+  getJoinedCalendarsByUserId(
+    userId: number,
+    connection?: PoolConnection
+  ): Promise<CalendarWithParticipation[]>;
   slugExists(slug: string, connection?: PoolConnection): Promise<boolean>;
   findEndedAndOpen(connection?: PoolConnection, referenceDate?: DateOnlyInput): Promise<Calendar[]>;
   findEndedAndOpenForUpdate(
@@ -336,6 +340,36 @@ export class CalendarRepository implements ICalendarRepository {
     }
 
     return rows.map((row) => this.mapToCalWithPUuid(row));
+  }
+
+  async getJoinedCalendarsByUserId(
+    userId: number,
+    connection?: PoolConnection
+  ): Promise<CalendarWithParticipation[]> {
+    const poolToUse = connection || this.pool;
+
+    const [rows] = await poolToUse.query<RowDataPacket[]>(
+      `SELECT c.*, host.participant_uuid AS hostParticipantUuid,
+          me.role AS participantRole,
+          me.profile_type AS profileType,
+          me.participant_uuid AS participantUuid,
+          me.nickname AS participantNickname,
+          (SELECT COUNT(*) FROM participants AS participant_count
+           WHERE participant_count.calendar_id = c.id) AS participant_count
+       FROM participants AS me
+       JOIN calendars AS c ON c.id = me.calendar_id
+       JOIN participants AS host ON host.calendar_id = c.id AND host.role = 'host'
+       WHERE me.user_id = ?`,
+      [userId]
+    );
+
+    return rows.map((row) => ({
+      ...this.mapToCalWithPUuid(row),
+      participantRole: row.participantRole,
+      profileType: row.profileType,
+      participantUuid: row.participantUuid,
+      participantNickname: row.participantNickname,
+    }));
   }
 
   /**
