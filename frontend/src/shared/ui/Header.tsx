@@ -86,7 +86,7 @@ export function Header({
                 {loggingOut ? "로그아웃 중…" : "로그아웃"}
               </button>
               <Link
-                className={`${buttonClass} ${primaryButtonClass} px-[18px] py-2.5 max-[1535px]:min-w-[74px] max-[1535px]:px-[15px]`}
+                className={`${buttonClass} ${loginButtonClass} w-[100px] px-[18px] py-2.5 max-[1535px]:min-w-[74px] max-[1535px]:px-[15px]`}
                 to="/calendars"
               >
                 내 캘린더

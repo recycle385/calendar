@@ -14,7 +14,7 @@ export const secondaryButtonClass =
   "border-[#dce4ef] bg-white text-[#20314e] hover:border-[#b9cce5] hover:bg-[#f8fbff]";
 
 export const loginButtonClass =
-  "h-[35px] w-[85px] shrink-0 whitespace-nowrap bg-[#031E4A] px-2 py-0 text-[17px] leading-none text-white hover:bg-[#08295F] font-bold";
+  "h-[35px] w-[85px] shrink-0 whitespace-nowrap bg-[#031E4A] px-2 py-0 text-[17px] leading-none text-white hover:bg-[#08295F] font-semibold";
 
 export const panelClass =
   "rounded-[18px] border border-[#e0eaf5] bg-white/95 shadow-[0_16px_38px_rgba(65,104,153,0.065)]";

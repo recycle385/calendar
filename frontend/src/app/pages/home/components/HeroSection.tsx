@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { parseCalendarJoinPath } from '../../../../domains/calendar';
 import { assetUrl, hideUnavailableAsset } from '../../../../shared/assets/assetUrl';
-import { GoogleIcon } from '../../../../shared/ui/GoogleIcon';
-import { buttonClass, eyebrowClass, secondaryButtonClass, shellClass } from '../../../../shared/ui/styles';
+import { buttonClass, eyebrowClass, primaryButtonClass, shellClass } from '../../../../shared/ui/styles';
 
 const days = [
   ['30', '31', '1', '2', '3', '4', '5'],
@@ -17,7 +16,7 @@ const days = [
 
 const mobileHeroImageUrl = assetUrl('edit/calendar-3d.webp');
 
-export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function HeroSection() {
   const navigate = useNavigate();
   const [shareLink, setShareLink] = useState('');
   const [shareLinkError, setShareLinkError] = useState<string | null>(null);
@@ -57,21 +56,11 @@ export function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
               <br />여러 사람의 시간을 모아 모두에게 좋은 시간을 찾아드립니다.
             </span>
           </p>
-          <div className="mt-7 flex gap-3.5 max-md:flex-col">
-            <a className={`${buttonClass} hidden bg-brand-500 text-white shadow-[0_10px_24px_rgba(22,119,255,0.2)] max-md:inline-flex`} href={isAuthenticated ? '#my-calendars' : '/login'}>
-              {isAuthenticated ? (
-                <span>내 캘린더 보기</span>
-              ) : (
-                <>
-                  <GoogleIcon />
-                  <span>지금 시작하기 →</span>
-                </>
-              )}
-            </a>
-            <form className="flex h-11 min-w-0 max-w-[430px] gap-2 max-md:max-w-none" onSubmit={joinCalendar} noValidate>
+          <div className="mt-7">
+            <form className="flex h-11 w-full min-w-0 max-w-[430px] gap-2 max-md:max-w-none" onSubmit={joinCalendar} noValidate>
               <label className="sr-only" htmlFor="calendar-share-link">캘린더 공유 링크</label>
               <input className="min-w-0 flex-1 rounded-[11px] border border-[#d6e2f1] bg-white px-3 text-sm text-[#263d61] outline-0 focus:border-[#72adff] focus:ring-3 focus:ring-[#e9f3ff]" id="calendar-share-link" value={shareLink} onChange={(event) => { setShareLink(event.target.value); setShareLinkError(null); }} placeholder="공유 링크 붙여넣기" />
-              <button className={`${buttonClass} ${secondaryButtonClass} h-11 min-h-11 shrink-0 px-[18px] py-0 text-sm max-[420px]:px-3`} type="submit"><Link2 size={18} /><span>링크로 참여하기</span></button>
+              <button className={`${buttonClass} ${primaryButtonClass} h-11 min-h-11 shrink-0 px-[18px] py-0 text-sm max-[420px]:px-3`} type="submit"><Link2 size={18} /><span>링크로 참여하기</span></button>
             </form>
           </div>
           {shareLinkError && <p className="mt-2 mb-0 text-xs text-[#cf4b4b]" role="alert">{shareLinkError}</p>}

@@ -58,14 +58,19 @@ export function MyCalendarsSection() {
   return (
     <section className="py-16 max-md:py-11" id="my-calendars" aria-labelledby="my-calendars-title">
       <div className={shellClass}>
-        <div className="mb-6 flex items-end justify-between gap-5 max-sm:items-start">
+        <div className="mb-6 flex items-end justify-between gap-5 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <p className={eyebrowClass}>MY CALENDARS</p>
-            <h2 className="mt-2 mb-0 text-[30px] font-black tracking-[-0.05em] text-ink-900 max-sm:text-[25px]" id="my-calendars-title">{user?.nickname ?? '회원'}님이 만든 캘린더</h2>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h2 className="m-0 text-[30px] font-black tracking-[-0.05em] text-ink-900 max-sm:text-[25px]" id="my-calendars-title">{user?.nickname ?? '회원'}님이 만든 캘린더</h2>
+              <span className="shrink-0 rounded-full bg-brand-100 px-3 py-1.5 text-xs font-black text-brand-500">
+                {calendarsQuery.isPending ? '불러오는 중' : `진행 중 ${activeCount}개`}
+              </span>
+            </div>
           </div>
-          <span className="shrink-0 rounded-full bg-brand-100 px-3 py-1.5 text-xs font-black text-brand-500">
-            {calendarsQuery.isPending ? '불러오는 중' : `진행 중 ${activeCount}개`}
-          </span>
+          <Link className="shrink-0 text-sm font-extrabold text-brand-500 transition hover:text-brand-600 max-sm:self-end" to="/calendars">
+            전체 캘린더 보러가기 <span aria-hidden="true">›</span>
+          </Link>
         </div>
 
         {calendarsQuery.isPending ? (

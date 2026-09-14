@@ -17,7 +17,7 @@ export function HomePage() {
     <>
       <Header isAuthenticated={status === 'authenticated'} displayName={user?.nickname} onLogout={logout} />
       <main>
-        <HeroSection isAuthenticated={status === 'authenticated'} />
+        <HeroSection />
         <MyCalendarsSection />
         <FeatureGrid />
         <StepsSection />
