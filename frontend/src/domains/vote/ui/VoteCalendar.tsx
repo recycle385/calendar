@@ -11,6 +11,23 @@ const voteTypeLabel: Record<VoteType, string> = {
   maybe: '애매함',
   unavailable: '불가',
 }
+const heatClass = [
+  'bg-white',
+  'bg-[#f0faf5]',
+  'bg-[#ddf5e8]',
+  'bg-[#bcebd2]',
+  'bg-[#91dfb8] text-[#0f6240]',
+]
+const ownVoteClass: Record<VoteType, string> = {
+  available: 'shadow-[inset_0_-3px_#21ad70]',
+  maybe: 'shadow-[inset_0_-3px_#e9ae27]',
+  unavailable: 'shadow-[inset_0_-3px_#df6972]',
+}
+const ownVoteIndicatorClass: Record<VoteType, string> = {
+  available: 'bg-[#20ae70]',
+  maybe: 'bg-[#e9ae27]',
+  unavailable: 'bg-[#df6972]',
+}
 
 function toDateKey(date: Date) {
   const year = date.getFullYear()
@@ -66,24 +83,24 @@ export function VoteCalendar({ disabled, draft, enabledDates, participantsCount,
   }
 
   return (
-    <div className="vote-calendar">
-      <div className="vote-calendar-toolbar">
-        <div>
-          <button type="button" aria-label="이전 달" disabled={currentMonthIndex <= 0} onClick={() => moveMonth(-1)}>
+    <div className="overflow-hidden rounded-[13px] border border-[#e2eaf4] bg-white">
+      <div className="flex min-h-[58px] items-center justify-between border-b border-[#e8eef6] px-3.5 py-2.5 max-[520px]:px-[9px]">
+        <div className="flex items-center gap-[5px]">
+          <button className="grid size-[30px] place-items-center rounded-lg border border-[#e4ebf4] bg-white text-[#527099] disabled:opacity-35" type="button" aria-label="이전 달" disabled={currentMonthIndex <= 0} onClick={() => moveMonth(-1)}>
             <ChevronLeft size={18} />
           </button>
-          <button type="button" aria-label="다음 달" disabled={currentMonthIndex < 0 || currentMonthIndex >= months.length - 1} onClick={() => moveMonth(1)}>
+          <button className="grid size-[30px] place-items-center rounded-lg border border-[#e4ebf4] bg-white text-[#527099] disabled:opacity-35" type="button" aria-label="다음 달" disabled={currentMonthIndex < 0 || currentMonthIndex >= months.length - 1} onClick={() => moveMonth(1)}>
             <ChevronRight size={18} />
           </button>
-          <strong>{year}년 {month}월</strong>
+          <strong className="ml-2 text-base text-[#18365e] max-[520px]:ml-1 max-[520px]:text-sm">{year}년 {month}월</strong>
         </div>
-        {months.length > 1 && <span>{currentMonthIndex + 1} / {months.length}</span>}
+        {months.length > 1 && <span className="text-xs font-extrabold text-[#8193aa]">{currentMonthIndex + 1} / {months.length}</span>}
       </div>
 
-      <div className="vote-calendar-weekdays" aria-hidden="true">
-        {weekDays.map((day) => <span key={day}>{day}</span>)}
+      <div className="grid grid-cols-7 border-b border-[#edf1f6] px-3 max-[520px]:px-[5px]" aria-hidden="true">
+        {weekDays.map((day, index) => <span className={`px-0.5 py-[11px] text-center text-xs ${index === 0 ? 'text-[#df7474]' : 'text-[#8394aa]'}`} key={day}>{day}</span>)}
       </div>
-      <div className="vote-calendar-grid">
+      <div className="grid grid-cols-7 px-3 max-[520px]:px-[5px]">
         {cells.map((cell) => {
           const status = statusByDate.get(cell.date)
           const selected = draft[cell.date]
@@ -98,24 +115,24 @@ export function VoteCalendar({ disabled, draft, enabledDates, participantsCount,
               disabled={disabled || !enabled}
               aria-label={`${cell.date}${selected ? ` ${voteTypeLabel[selected]}` : ''}`}
               aria-pressed={Boolean(selected)}
-              className={`vote-calendar-day heat-${heatLevel}${cell.inMonth ? '' : ' is-outside'}${enabled ? ' is-enabled' : ''}${selectedDate === cell.date ? ' is-focused' : ''}${selected ? ` has-own-vote own-${selected}` : ''}`}
+              className={`relative grid min-h-16 min-w-0 content-center justify-items-center gap-[3px] border-0 border-r border-b border-[#edf1f6] text-[13px] text-[#526b8e] nth-[7n]:border-r-0 max-[520px]:min-h-[50px] ${heatClass[heatLevel]} ${cell.inMonth ? '' : '!bg-[#fbfcfe] !text-[#bcc7d5]'} ${enabled ? 'cursor-pointer hover:!bg-[#f4f8ff]' : ''} ${selectedDate === cell.date ? 'z-[1] rounded-lg outline-2 -outline-offset-2 outline-brand-500' : ''} ${selected ? ownVoteClass[selected] : ''}`}
               onClick={() => {
                 onSelectDate(cell.date)
                 dispatch({ type: 'SELECT', date: cell.date, voteType: tool })
               }}
             >
-              <span>{cell.day}</span>
-              {selected && <i><Check size={10} /></i>}
-              {enabled && availableCount > 0 && <small>{availableCount}명 가능</small>}
+              <span className="font-extrabold">{cell.day}</span>
+              {selected && <i className={`absolute top-[7px] right-[7px] grid size-[15px] place-items-center rounded-full text-white max-[520px]:top-1 max-[520px]:right-1 max-[520px]:size-[13px] ${ownVoteIndicatorClass[selected]}`}><Check size={10} /></i>}
+              {enabled && availableCount > 0 && <small className="text-xs text-inherit max-[520px]:hidden">{availableCount}명 가능</small>}
             </button>
           )
         })}
       </div>
-      <div className="vote-calendar-legend" aria-hidden="true">
-        <span><i className="heat-4" /> 많이 가능</span>
-        <span><i className="heat-2" /> 일부 가능</span>
-        <span><i className="heat-0" /> 의견 없음</span>
-        <span className="vote-calendar-legend-note">숫자는 ‘가능’으로 선택한 인원입니다.</span>
+      <div className="flex flex-wrap gap-3.5 px-[15px] py-[13px] text-xs text-[#8393a9] [&>span]:inline-flex [&>span]:items-center [&>span]:gap-[5px] [&_i]:size-[7px] [&_i]:rounded-full" aria-hidden="true">
+        <span><i className="bg-[#70d5a2]" /> 많이 가능</span>
+        <span><i className="bg-[#ccefdc]" /> 일부 가능</span>
+        <span><i className="bg-[#e8edf4]" /> 의견 없음</span>
+        <span className="ml-auto">숫자는 ‘가능’으로 선택한 인원입니다.</span>
       </div>
     </div>
   )

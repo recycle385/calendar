@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Brand } from './Brand';
 import { GoogleIcon } from './GoogleIcon';
+import { buttonClass, primaryButtonClass, shellClass } from './styles';
 
 interface HeaderProps {
   isAuthenticated?: boolean;
@@ -33,11 +34,11 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
   }
 
   return (
-    <header className="site-header">
-      <div className="shell header-inner">
+    <header className="sticky top-0 z-50 h-[72px] overflow-visible border-b border-[#e9eef6] bg-white/95 backdrop-blur-[14px] max-[1535px]:h-[66px] max-md:h-[68px] max-[420px]:h-16">
+      <div className={`${shellClass} flex h-full items-center gap-10 max-[1535px]:max-w-[1120px] max-[1535px]:gap-6 max-md:justify-between max-md:gap-3`}>
         <Brand />
 
-        <nav className="desktop-nav" aria-label="주 메뉴">
+        <nav className="flex gap-[34px] text-sm text-[#6f7f98] max-[1535px]:ml-auto max-[1535px]:items-center max-[1535px]:justify-center max-[1535px]:gap-7 max-[1535px]:text-xs max-md:hidden [&>a]:px-1 [&>a]:py-2.5 [&>a:hover]:text-brand-500" aria-label="주 메뉴">
           {workspace ? (
             <>
               <Link to="/">홈</Link>
@@ -49,35 +50,35 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
               <a href="#features">서비스 소개</a>
               <a href="#guide">이용 방법</a>
               <a href="#faq">자주 묻는 질문</a>
-              <a className="desktop-extra-nav" href="#examples">활용 예시</a>
+              <a className="max-[1535px]:hidden" href="#examples">활용 예시</a>
             </>
           )}
         </nav>
 
-        <div className="header-actions">
+        <div className="ml-auto flex items-center gap-6 text-sm max-[1535px]:ml-1.5 max-[1535px]:shrink-0 max-[1535px]:gap-4 max-[1535px]:text-xs max-md:hidden">
           {isAuthenticated ? (
             <>
-              <Link className="login-link" to="/calendars">{displayName ?? '회원'}님</Link>
-              <button className="header-logout-button" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
+              <Link className="font-bold hover:text-brand-500" to="/calendars">{displayName ?? '회원'}님</Link>
+              <button className="border-0 bg-transparent p-0 font-bold text-[#587195] hover:text-brand-500 disabled:cursor-wait disabled:opacity-60" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
                 {loggingOut ? '로그아웃 중…' : '로그아웃'}
               </button>
-              <Link className="button button-primary button-small" to="/calendars">내 캘린더</Link>
-              {logoutError && <span className="header-logout-error" role="alert">로그아웃 실패</span>}
+              <Link className={`${buttonClass} ${primaryButtonClass} px-[18px] py-2.5 max-[1535px]:min-w-[74px] max-[1535px]:px-[15px]`} to="/calendars">내 캘린더</Link>
+              {logoutError && <span className="text-xs font-bold text-[#d14343]" role="alert">로그아웃 실패</span>}
             </>
           ) : (
             <>
-              <Link className="login-link" to="/login">로그인</Link>
-              <Link className="button button-primary button-small" to="/login">
-                <GoogleIcon className="header-google" />
-                <span className="header-label-wide">Google로 시작하기</span>
-                <span className="header-label-tablet">시작하기</span>
+              <Link className="font-bold hover:text-brand-500" to="/login">로그인</Link>
+              <Link className={`${buttonClass} ${primaryButtonClass} px-[18px] py-2.5 max-[1535px]:min-w-[74px] max-[1535px]:px-[15px]`} to="/login">
+                <GoogleIcon className="max-[1535px]:hidden" />
+                <span className="max-[1535px]:hidden">Google로 시작하기</span>
+                <span className="hidden max-[1535px]:inline">시작하기</span>
               </Link>
             </>
           )}
         </div>
 
         <button
-          className="mobile-menu-button"
+          className="hidden size-10 items-center justify-center rounded-xl border-0 bg-white text-[#52627c] shadow-[0_8px_22px_rgba(34,71,118,0.08)] max-md:inline-flex"
           type="button"
           aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
           aria-expanded={mobileMenuOpen}
@@ -88,7 +89,7 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
       </div>
 
       <nav
-        className={`mobile-nav${mobileMenuOpen ? ' is-open' : ''}`}
+        className={`absolute top-[60px] right-3.5 left-3.5 z-[70] hidden gap-0.5 rounded-2xl border border-[#e4ebf5] bg-white/98 p-2.5 shadow-[0_18px_42px_rgba(30,65,112,0.16)] transition duration-150 max-md:grid max-[420px]:top-[57px] max-[420px]:right-2.5 max-[420px]:left-2.5 [&>a]:flex [&>a]:min-h-11 [&>a]:items-center [&>a]:rounded-[10px] [&>a]:px-[13px] [&>a]:text-sm [&>a]:font-bold [&>a]:text-[#40516c] [&>a:active]:bg-brand-50 [&>button]:flex [&>button]:min-h-11 [&>button]:w-full [&>button]:items-center [&>button]:rounded-[10px] [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-[13px] [&>button]:text-sm [&>button]:font-bold${mobileMenuOpen ? ' visible translate-y-0 opacity-100' : ' invisible -translate-y-2 opacity-0'}`}
         aria-label="모바일 주 메뉴"
       >
         {workspace ? (
@@ -107,16 +108,16 @@ export function Header({ isAuthenticated = false, displayName, workspace = false
         {isAuthenticated ? (
           <>
             <Link to="/calendars" onClick={closeMobileMenu}>{displayName ?? '회원'}님</Link>
-            <Link className="mobile-nav-primary" to="/calendars" onClick={closeMobileMenu}>내 캘린더</Link>
-            <button className="mobile-nav-logout" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
+            <Link className="mt-1 !justify-center !bg-brand-500 !text-white" to="/calendars" onClick={closeMobileMenu}>내 캘린더</Link>
+            <button className="!text-[#d14343] disabled:cursor-wait disabled:opacity-60" type="button" disabled={loggingOut} onClick={() => void handleLogout()}>
               {loggingOut ? '로그아웃 중…' : '로그아웃'}
             </button>
-            {logoutError && <p className="mobile-nav-error" role="alert">로그아웃하지 못했어요. 다시 시도해주세요.</p>}
+            {logoutError && <p className="mx-[13px] mt-0.5 mb-0 text-xs leading-[1.45] text-[#d14343]" role="alert">로그아웃하지 못했어요. 다시 시도해주세요.</p>}
           </>
         ) : (
           <>
             <Link to="/login" onClick={closeMobileMenu}>로그인</Link>
-            <Link className="mobile-nav-primary" to="/login" onClick={closeMobileMenu}>지금 시작하기</Link>
+            <Link className="mt-1 !justify-center !bg-brand-500 !text-white" to="/login" onClick={closeMobileMenu}>지금 시작하기</Link>
           </>
         )}
       </nav>

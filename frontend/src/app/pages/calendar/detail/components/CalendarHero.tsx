@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { Calendar } from '../../../../../domains/calendar'
 import { assetUrl, hideUnavailableAsset } from '../../../../../shared/assets/assetUrl'
 import { formatDate } from '../../../../../shared/utils/format'
+import { buttonClass, panelClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
 import { PLACEHOLDER_IMAGE_PATH } from '../../calendarHelpers'
 import type { RealtimeConnectionState } from '../hooks/useCalendarRealtime'
 
@@ -27,19 +28,20 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
   }
 
   return (
-    <section className="workspace-panel detail-calendar-hero">
+    <section className={`${panelClass} grid grid-cols-[145px_minmax(0,1fr)_auto] items-center gap-5 p-4 max-[980px]:grid-cols-[100px_minmax(0,1fr)] max-[980px]:gap-3.5 max-[800px]:grid-cols-[90px_1fr] max-[800px]:gap-3 max-[520px]:grid-cols-[80px_1fr]`}>
       <img
+        className="h-[116px] w-full rounded-[11px] bg-[#eaf4ff] object-contain max-[980px]:h-24 max-[800px]:h-[90px] max-[520px]:h-20"
         src={assetUrl(PLACEHOLDER_IMAGE_PATH)}
         alt={`${calendar.title} 대표 이미지`}
         onError={hideUnavailableAsset}
       />
-      <div className="detail-calendar-hero-body">
-        <div className="detail-status-row">
-          <span className={calendar.is_closed ? 'workspace-status is-closed' : 'workspace-status'}>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-[7px]">
+          <span className={`inline-flex w-fit rounded-full px-[9px] py-[5px] text-xs font-black ${calendar.is_closed ? 'bg-[#edf1f6] text-[#667993]' : 'bg-[#ddf7e8] text-[#178753]'}`}>
             {calendar.is_closed ? '마감됨' : '진행 중'}
           </span>
-          <span className={`realtime-state is-${connectionState}`}>
-            <i />
+          <span className={`inline-flex items-center gap-[5px] text-xs font-extrabold ${connectionState === 'connected' ? 'text-[#168b58]' : connectionState === 'connecting' ? 'text-[#a97300]' : 'text-[#8191a8]'}`}>
+            <i className={`size-[7px] rounded-full ${connectionState === 'connected' ? 'bg-[#1fc275] shadow-[0_0_0_3px_rgba(31,194,117,0.12)]' : connectionState === 'connecting' ? 'bg-[#f1ae33]' : 'bg-[#aab8ca]'}`} />
             {connectionState === 'connected'
               ? '실시간 연결됨'
               : connectionState === 'connecting'
@@ -47,13 +49,13 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
                 : '연결 확인 필요'}
           </span>
         </div>
-        <h1>{calendar.title}</h1>
-        <p>{calendar.description || '참여자와 가능한 날짜를 선택해보세요.'}</p>
-        <span className="detail-hero-date">
+        <h1 className="mt-2 mb-1.5 truncate text-[27px] font-black tracking-[-0.05em] text-[#112d54] max-[800px]:text-[21px]">{calendar.title}</h1>
+        <p className="m-0 truncate leading-6 text-[#7185a1] max-[520px]:whitespace-normal">{calendar.description || '참여자와 가능한 날짜를 선택해보세요.'}</p>
+        <span className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#5b7598]">
           <CalendarDays size={16} /> {formatDate(calendar.start_date)} — {formatDate(calendar.end_date)}
         </span>
       </div>
-      <button type="button" className="button button-secondary detail-share-button" onClick={() => void copyLink()}>
+      <button type="button" className={`${buttonClass} ${secondaryButtonClass} self-start max-[980px]:col-span-full max-[980px]:w-full`} onClick={() => void copyLink()}>
         {copied ? <><Check size={17} /> 복사됨</> : <><Share2 size={17} /> 링크 공유</>}
       </button>
     </section>

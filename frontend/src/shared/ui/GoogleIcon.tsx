@@ -9,7 +9,7 @@ interface GoogleIconProps {
 export function GoogleIcon({ className }: GoogleIconProps) {
   return (
     <img
-      className={`google-dot${className ? ` ${className}` : ''}`}
+      className={`block size-[22px] shrink-0 object-contain${className ? ` ${className}` : ''}`}
       src={googleIconUrl}
       alt=""
       aria-hidden="true"

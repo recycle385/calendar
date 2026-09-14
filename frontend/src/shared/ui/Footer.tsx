@@ -1,20 +1,21 @@
 import { Brand } from './Brand';
+import { shellClass } from './styles';
 
 export function Footer() {
   return (
-    <footer className="site-footer">
-      <div className="shell footer-inner">
+    <footer className="border-t border-[#e7edf5] bg-[#f8fbff] py-9 text-sm text-[#6d809c]">
+      <div className={`${shellClass} grid grid-cols-[1fr_auto] items-center gap-x-12 gap-y-6 max-md:grid-cols-1 max-md:text-center`}>
         <div>
           <Brand />
-          <p>함께 만드는 더 좋은 시간</p>
+          <p className="mt-3 mb-0 text-sm">함께 만드는 더 좋은 시간</p>
         </div>
-        <div className="footer-links">
+        <div className="flex flex-wrap justify-end gap-6 font-bold max-md:justify-center">
           <span title="준비 중">이용약관</span>
           <span title="준비 중">개인정보처리방침</span>
           <span title="준비 중">문의하기</span>
           <a href="https://github.com/recycle385/calendar" target="_blank" rel="noreferrer">GitHub</a>
         </div>
-        <div className="footer-meta">
+        <div className="col-span-full border-t border-[#e7edf5] pt-5 text-[13px] max-md:col-span-1">
           <span>© 2026 moim. All rights reserved.</span>
         </div>
       </div>

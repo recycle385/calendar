@@ -11,6 +11,7 @@ import {
   type ParticipantSession,
 } from '../../../../../domains/participant'
 import { formatPercent } from '../../../../../shared/utils/format'
+import { buttonClass, panelClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
 import {
   clearParticipantPrivateData,
   refreshParticipantData,
@@ -63,15 +64,15 @@ export function ParticipantsPanel({
   const onlineUuids = new Set(onlineUsers?.map((user) => user.sub) ?? [])
 
   return (
-    <section className="workspace-panel participants-panel">
-      <div className="detail-panel-heading">
+    <section className={`${panelClass} p-[25px] max-[800px]:p-5`}>
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2>참여자 ({participants.length})</h2>
-          <p>함께 일정을 맞추고 있는 사람들이에요.</p>
+          <h2 className="m-0 text-[21px] font-black tracking-[-0.04em] text-[#19365e]">참여자 ({participants.length})</h2>
+          <p className="mt-1.5 mb-0 text-xs text-[#7b8da8]">함께 일정을 맞추고 있는 사람들이에요.</p>
         </div>
         {session.participantUuid !== hostUuid && (
           <button
-            className="button button-secondary danger-outline"
+            className={`${buttonClass} ${secondaryButtonClass} border-[#f0bbbb] text-[#d76565]`}
             type="button"
             disabled={leaveMutation.isPending}
             onClick={() => {
@@ -82,26 +83,26 @@ export function ParticipantsPanel({
           </button>
         )}
       </div>
-      <div className="participants-list">
+      <div className="grid">
         {participants.map((participant) => (
-          <article key={participant.uuid}>
-            <span className="participant-avatar" style={{ backgroundColor: participant.color_code }}>
+          <article className="flex items-center gap-[11px] border-t border-[#e9eff6] py-[13px] first:border-t-0" key={participant.uuid}>
+            <span className="grid size-[35px] shrink-0 place-items-center rounded-full border-2 border-white text-[13px] font-black text-white shadow-[0_2px_6px_#b7c8df]" style={{ backgroundColor: participant.color_code }}>
               {participant.nickname.slice(0, 1)}
             </span>
             <div>
-              <h3>
+              <h3 className="m-0 flex items-center gap-1 text-sm font-black text-[#2b486f] [&>svg]:text-[#f4a224]">
                 {participant.nickname} {participant.uuid === hostUuid && <Crown size={15} />}
-                <span className={`participant-presence${connectionState === 'connected' && onlineUuids.has(participant.uuid) ? ' is-online' : ''}`}>
-                  <i />
+                <span className={`ml-[5px] inline-flex items-center gap-1 text-xs font-bold ${connectionState === 'connected' && onlineUuids.has(participant.uuid) ? 'text-[#168b58]' : 'text-[#8b9ab0]'}`}>
+                  <i className={`inline-block size-[7px] rounded-full ${connectionState === 'connected' && onlineUuids.has(participant.uuid) ? 'bg-[#1fc275] shadow-[0_0_0_3px_rgba(31,194,117,0.12)]' : 'bg-[#aab8ca]'}`} />
                   {connectionState !== 'connected' ? '확인 중' : onlineUuids.has(participant.uuid) ? '온라인' : '오프라인'}
                 </span>
               </h3>
-              <p>투표 참여율 {formatPercent(participant.vote_rate)} · {participant.vote_count}/{participant.total_dates}일</p>
+              <p className="mt-[3px] mb-0 text-xs text-[#8293aa]">투표 참여율 {formatPercent(participant.vote_rate)} · {participant.vote_count}/{participant.total_dates}일</p>
             </div>
             {isHost && participant.uuid !== hostUuid && (
               <button
                 type="button"
-                className="participant-kick"
+                className="ml-auto grid size-[33px] place-items-center rounded-lg border-0 bg-[#fff0f0] text-[#e26b6b] disabled:opacity-60"
                 aria-label={`${participant.nickname} 내보내기`}
                 disabled={kickMutation.isPending}
                 onClick={() => {
@@ -117,10 +118,10 @@ export function ParticipantsPanel({
         ))}
       </div>
       {leaveMutation.isError && (
-        <p className="form-error workspace-request-error">캘린더에서 나가지 못했어요. 다시 참여한 뒤 시도해주세요.</p>
+        <p className="mt-3 mb-0 text-[13px] font-bold text-[#df4d4d]">캘린더에서 나가지 못했어요. 다시 참여한 뒤 시도해주세요.</p>
       )}
       {kickMutation.isError && (
-        <p className="form-error workspace-request-error">참여자를 내보내지 못했어요. 다시 시도해주세요.</p>
+        <p className="mt-3 mb-0 text-[13px] font-bold text-[#df4d4d]">참여자를 내보내지 못했어요. 다시 시도해주세요.</p>
       )}
     </section>
   )

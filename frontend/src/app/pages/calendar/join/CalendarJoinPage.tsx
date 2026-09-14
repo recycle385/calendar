@@ -7,6 +7,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { calendarDetailQuery } from '../../../../domains/calendar'
 import { loginParticipant, registerParticipant, setParticipantSession } from '../../../../domains/participant'
 import { isApiError } from '../../../../shared/api/httpClient'
+import { buttonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { useCalendarParticipantAccess } from '../../../guards/useCalendarParticipantAccess'
 import { useAuth } from '../../../providers/AuthProvider'
 import { WorkspaceLayout } from '../../components/WorkspaceLayout'
@@ -62,11 +63,11 @@ export function CalendarJoinPage() {
   }, [joinMutation.error])
 
   if (!slug) return <Navigate to="/" replace />
-  if (memberIdentityUnavailable) return <WorkspaceLayout><section className="workspace-empty-state">{status === 'restore-failed' ? '네트워크 문제로 회원과 참여 세션을 확인하지 못했어요. 새로고침 후 다시 시도해주세요.' : '회원과 참여 세션을 확인하고 있어요.'}</section></WorkspaceLayout>
+  if (memberIdentityUnavailable) return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-center text-[#69809f]">{status === 'restore-failed' ? '네트워크 문제로 회원과 참여 세션을 확인하지 못했어요. 새로고침 후 다시 시도해주세요.' : '회원과 참여 세션을 확인하고 있어요.'}</section></WorkspaceLayout>
   if (usableExistingSession) return <Navigate to={`/c/${slug}`} replace />
 
-  if (calendarQuery.isPending) return <WorkspaceLayout><section className="workspace-empty-state">초대받은 캘린더 정보를 불러오는 중이에요.</section></WorkspaceLayout>
-  if (calendarQuery.isError || !calendarQuery.data) return <WorkspaceLayout><section className="workspace-empty-state"><h1>캘린더를 찾지 못했어요.</h1><p>받은 링크를 다시 확인해주세요.</p><Link className="button button-secondary" to="/">홈으로 돌아가기</Link></section></WorkspaceLayout>
+  if (calendarQuery.isPending) return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-center text-[#69809f]">초대받은 캘린더 정보를 불러오는 중이에요.</section></WorkspaceLayout>
+  if (calendarQuery.isError || !calendarQuery.data) return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center justify-items-center gap-3 text-center text-[#69809f]"><h1 className="m-0 text-[22px] font-black text-[#19345d]">캘린더를 찾지 못했어요.</h1><p>받은 링크를 다시 확인해주세요.</p><Link className={`${buttonClass} ${secondaryButtonClass}`} to="/">홈으로 돌아가기</Link></section></WorkspaceLayout>
 
   const calendar = calendarQuery.data.calendar
   const newEntryBlocked = calendar.is_closed && !isExisting
@@ -87,7 +88,7 @@ export function CalendarJoinPage() {
 
   return (
     <WorkspaceLayout hideRail sideContent={<JoinCalendarSummary slug={slug} title={calendar.title} description={calendar.description} startDate={calendar.start_date} endDate={calendar.end_date} isClosed={calendar.is_closed} />}>
-      <div className="join-content-layout">
+      <div className="grid grid-cols-[minmax(220px,0.68fr)_minmax(400px,1fr)] items-start gap-6 max-[980px]:grid-cols-1 max-[980px]:gap-0">
         <JoinPageIntro />
         <JoinFormPanel
           authStatus={status}

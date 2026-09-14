@@ -41,7 +41,7 @@ export function CalendarCreatePage() {
     },
   })
 
-  if (status === 'restoring') return <WorkspaceLayout><section className="workspace-empty-state">로그인 상태를 확인하고 있어요.</section></WorkspaceLayout>
+  if (status === 'restoring') return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-[#69809f]">로그인 상태를 확인하고 있어요.</section></WorkspaceLayout>
   if (status !== 'authenticated' || !accessToken) return <WorkspaceLayout><LoginRequired /></WorkspaceLayout>
 
   const onSubmit = (values: CalendarForm) => createMutation.mutate(values)

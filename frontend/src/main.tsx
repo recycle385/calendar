@@ -4,8 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./app/App";
 import { AppProviders } from "./app/providers/AppProviders";
 import { assetUrl } from "./shared/assets/assetUrl";
-import "./shared/styles/global.css";
-import "./app/pages/calendar/calendarPages.css";
+import "./shared/styles/tailwind.css";
 
 const favicon =
   document.querySelector<HTMLLinkElement>('link[rel="icon"]') ??

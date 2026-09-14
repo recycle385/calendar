@@ -6,6 +6,7 @@ import {
   type GoogleCallbackLoginResponse,
   type GoogleCallbackPendingSignupResponse,
 } from '../../../../domains/auth'
+import { buttonClass, primaryButtonClass } from '../../../../shared/ui/styles'
 import { useAuth } from '../../../providers/AuthProvider'
 
 type CallbackResult = GoogleCallbackLoginResponse | GoogleCallbackPendingSignupResponse
@@ -64,21 +65,21 @@ export function OAuthCallbackPage() {
   }, [completeLogin, navigate, searchParams])
 
   return (
-    <main className="auth-page">
-      <section className="auth-card auth-status-card" aria-live="polite">
+    <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_50%_20%,#edf7ff_0,#fff_52%)] px-5 py-12">
+      <section className="grid w-full max-w-[460px] justify-items-center gap-5 rounded-3xl border border-[#e0eaf5] bg-white p-10 text-center shadow-[0_24px_60px_rgba(64,104,153,0.12)] max-sm:p-7" aria-live="polite">
         {error ? (
           <>
-            <h1>로그인을 완료하지 못했어요.</h1>
-            <p>{error}</p>
-            <Link className="button button-primary" to="/login">
+            <h1 className="m-0 text-[26px] font-black text-ink-900">로그인을 완료하지 못했어요.</h1>
+            <p className="m-0 leading-7 text-[#7185a3]">{error}</p>
+            <Link className={`${buttonClass} ${primaryButtonClass}`} to="/login">
               로그인 다시 시작하기
             </Link>
           </>
         ) : (
           <>
-            <span className="auth-spinner" aria-hidden="true" />
-            <h1>로그인 정보를 확인하고 있어요.</h1>
-            <p>잠시만 기다려주세요.</p>
+            <span className="size-10 animate-spin rounded-full border-4 border-[#dce9f8] border-t-brand-500" aria-hidden="true" />
+            <h1 className="m-0 text-[26px] font-black text-ink-900">로그인 정보를 확인하고 있어요.</h1>
+            <p className="m-0 text-[#7185a3]">잠시만 기다려주세요.</p>
           </>
         )}
       </section>

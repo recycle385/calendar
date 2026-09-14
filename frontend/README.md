@@ -1,8 +1,10 @@
 # moim frontend
 
-React + TypeScript + Vite 기본 보일러플레이트.
+React + TypeScript + Vite 기반 프론트엔드.
 
-Vite, React Router, TanStack Query를 사용한다. 개발 서버는 백엔드 OAuth 복귀 주소와 맞추기 위해 `http://localhost:8080`에서 실행된다.
+Vite, React Router, TanStack Query와 Tailwind CSS v4를 사용한다. 개발 서버는 백엔드 OAuth 복귀 주소와 맞추기 위해 `http://localhost:8080`에서 실행된다.
+
+스타일은 컴포넌트의 Tailwind 유틸리티 클래스로 관리한다. 공통 디자인 토큰과 전역 기본값, 애니메이션은 `src/shared/styles/tailwind.css`에 두며 별도의 페이지 전역 CSS는 사용하지 않는다.
 
 ## 실행
 

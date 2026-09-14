@@ -14,6 +14,10 @@ import {
   clearDeletedCalendarData,
   refreshCalendarData,
 } from '../../../../cache/calendarCache'
+import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
+
+const labelClass = 'grid gap-2 text-[13px] font-extrabold text-[#2d486e]'
+const inputClass = 'w-full rounded-[10px] border border-[#d5e2f1] bg-white px-[13px] py-3 text-[#233c62] outline-0 focus:border-[#72adff] focus:ring-3 focus:ring-[#e9f3ff]'
 
 interface SettingsPanelProps {
   calendar: Calendar
@@ -54,38 +58,38 @@ export function SettingsPanel({ calendar, accessToken, participantUuid }: Settin
   })
 
   return (
-    <section className="workspace-panel settings-panel">
-      <div className="detail-panel-heading">
+    <section className={`${panelClass} grid gap-[17px] p-[25px] max-[800px]:p-5`}>
+      <div className="mb-1 flex items-start justify-between gap-4">
         <div>
-          <h2>캘린더 설정</h2>
-          <p>방장만 캘린더 정보를 변경하거나 마감할 수 있어요.</p>
+          <h2 className="m-0 text-[21px] font-black tracking-[-0.04em] text-[#19365e]">캘린더 설정</h2>
+          <p className="mt-1.5 mb-0 text-xs text-[#7b8da8]">방장만 캘린더 정보를 변경하거나 마감할 수 있어요.</p>
         </div>
       </div>
-      <label>
+      <label className={labelClass}>
         <span>캘린더 제목</span>
-        <input value={title} maxLength={100} onChange={(event) => setTitle(event.target.value)} />
+        <input className={inputClass} value={title} maxLength={100} onChange={(event) => setTitle(event.target.value)} />
       </label>
-      <label>
+      <label className={labelClass}>
         <span>설명</span>
-        <textarea value={description} maxLength={500} rows={4} onChange={(event) => setDescription(event.target.value)} />
+        <textarea className={`${inputClass} resize-y leading-[1.55]`} value={description} maxLength={500} rows={4} onChange={(event) => setDescription(event.target.value)} />
       </label>
-      {updateMutation.isError && <p className="form-error">저장하지 못했어요. 다시 시도해주세요.</p>}
+      {updateMutation.isError && <p className="m-0 text-[13px] font-bold text-[#df4d4d]">저장하지 못했어요. 다시 시도해주세요.</p>}
       <button
-        className="button button-primary"
+        className={`${buttonClass} ${primaryButtonClass}`}
         type="button"
         disabled={!title.trim() || updateMutation.isPending}
         onClick={() => updateMutation.mutate()}
       >
         {updateMutation.isPending ? '저장 중…' : '변경 사항 저장'}
       </button>
-      <hr />
-      <div className="settings-danger-zone">
+      <hr className="my-2 w-full border-0 border-t border-[#e6edf5]" />
+      <div className="flex items-center justify-between gap-[15px] max-[520px]:flex-col max-[520px]:items-stretch">
         <div>
-          <h3>투표 마감</h3>
-          <p>마감하면 참여자는 더 이상 투표를 바꿀 수 없어요.</p>
+          <h3 className="m-0 text-sm font-black text-[#314c70]">투표 마감</h3>
+          <p className="mt-1 mb-0 text-xs text-[#7f91aa]">마감하면 참여자는 더 이상 투표를 바꿀 수 없어요.</p>
         </div>
         <button
-          className="button button-secondary"
+          className={`${buttonClass} ${secondaryButtonClass}`}
           type="button"
           disabled={calendar.is_closed || closeMutation.isPending}
           onClick={() => {
@@ -97,13 +101,13 @@ export function SettingsPanel({ calendar, accessToken, participantUuid }: Settin
           {calendar.is_closed ? '마감됨' : '투표 마감하기'}
         </button>
       </div>
-      <div className="settings-danger-zone">
+      <div className="flex items-center justify-between gap-[15px] max-[520px]:flex-col max-[520px]:items-stretch">
         <div>
-          <h3>캘린더 삭제</h3>
-          <p>캘린더와 참여 기록을 삭제합니다.</p>
+          <h3 className="m-0 text-sm font-black text-[#314c70]">캘린더 삭제</h3>
+          <p className="mt-1 mb-0 text-xs text-[#7f91aa]">캘린더와 참여 기록을 삭제합니다.</p>
         </div>
         <button
-          className="button danger-button"
+          className={`${buttonClass} bg-[#e96565] text-white`}
           type="button"
           disabled={deleteMutation.isPending}
           onClick={() => {

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { myCalendarsQuery } from '../../../../domains/calendar'
 import { useAuth } from '../../../providers/AuthProvider'
+import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { LoginRequired, WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { CalendarCard } from './components/CalendarCard'
 import { CalendarListAside } from './components/CalendarListAside'
@@ -28,7 +29,7 @@ export function CalendarListPage() {
   } = useCalendarListFilters(calendarsQuery.data?.calendars ?? [])
 
   if (status === 'restoring') {
-    return <WorkspaceLayout><section className="workspace-empty-state">로그인 상태를 확인하고 있어요.</section></WorkspaceLayout>
+    return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-[#69809f]">로그인 상태를 확인하고 있어요.</section></WorkspaceLayout>
   }
 
   if (status !== 'authenticated' || !accessToken) {
@@ -39,10 +40,10 @@ export function CalendarListPage() {
     <WorkspaceLayout
       title="내 캘린더"
       description="내가 만든 일정의 진행 상태를 확인하고, 참여자와 시간을 맞춰보세요."
-      action={<Link className="button button-primary" to="/calendars/new"><Plus size={18} /> 캘린더 만들기</Link>}
+      action={<Link className={`${buttonClass} ${primaryButtonClass} max-[520px]:w-full`} to="/calendars/new"><Plus size={18} /> 캘린더 만들기</Link>}
       sideContent={<CalendarListAside />}
     >
-      <section className="workspace-panel calendar-list-panel" aria-label="내 캘린더 목록">
+      <section className={`${panelClass} p-[18px] max-[520px]:p-3`} aria-label="내 캘린더 목록">
         <CalendarListToolbar
           filter={filter}
           search={search}
@@ -53,15 +54,15 @@ export function CalendarListPage() {
         />
 
         {calendarsQuery.isPending ? (
-          <div className="calendar-feedback">내 캘린더를 불러오는 중이에요.</div>
+          <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]">내 캘린더를 불러오는 중이에요.</div>
         ) : calendarsQuery.isError ? (
-          <div className="calendar-feedback"><p>내 캘린더를 불러오지 못했어요.</p><button className="button button-secondary" type="button" onClick={() => void calendarsQuery.refetch()}>다시 시도</button></div>
+          <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><p>내 캘린더를 불러오지 못했어요.</p><button className={`${buttonClass} ${secondaryButtonClass}`} type="button" onClick={() => void calendarsQuery.refetch()}>다시 시도</button></div>
         ) : filteredCalendars.length === 0 ? (
-          <div className="calendar-feedback"><CalendarDays size={32} /><h2>표시할 캘린더가 없어요.</h2><p>새로운 모임을 만들고 사람들과 가능한 날짜를 모아보세요.</p><Link className="button button-primary" to="/calendars/new">첫 캘린더 만들기</Link></div>
+          <div className="grid min-h-[250px] place-content-center justify-items-center gap-3 p-9 text-center text-[#69809f]"><CalendarDays size={32} /><h2 className="m-0 text-[22px] font-black text-[#19345d]">표시할 캘린더가 없어요.</h2><p className="m-0 max-w-[430px] leading-[1.65]">새로운 모임을 만들고 사람들과 가능한 날짜를 모아보세요.</p><Link className={`${buttonClass} ${primaryButtonClass}`} to="/calendars/new">첫 캘린더 만들기</Link></div>
         ) : (
-          <div className="calendar-workspace-grid">
+          <div className="grid grid-cols-2 gap-4 max-[1180px]:grid-cols-1">
             {filteredCalendars.map((calendar) => <CalendarCard calendar={calendar} key={calendar.slug} />)}
-            <Link className="calendar-create-card" to="/calendars/new"><Plus size={26} /><strong>새 캘린더 만들기</strong><span>새로운 일정을 시작해보세요.</span></Link>
+            <Link className="grid min-h-[175px] place-content-center justify-items-center gap-[7px] rounded-[14px] border border-dashed border-[#a9c9f6] bg-[linear-gradient(140deg,#fbfdff,#f1f7ff)] text-brand-500 [&>svg]:box-content [&>svg]:rounded-full [&>svg]:bg-[#e5f0ff] [&>svg]:p-2" to="/calendars/new"><Plus size={26} /><strong>새 캘린더 만들기</strong><span className="text-xs text-[#7489a6]">새로운 일정을 시작해보세요.</span></Link>
           </div>
         )}
       </section>

@@ -2,17 +2,17 @@ import { assetUrl, hideUnavailableAsset } from "../assets/assetUrl";
 
 export function Brand() {
   return (
-    <a className="brand" href="/" aria-label="moim 홈">
+    <a className="inline-flex shrink-0 items-center" href="/" aria-label="moim 홈">
       <img
-        className="brand-logo"
+        className="h-8 w-auto object-contain"
         src={assetUrl("main/icons/moim-logo.webp")}
-        alt="moim-logo"
+        alt=""
         onError={hideUnavailableAsset}
       />
       <img
-        className="brand-logo brand-logo-text"
+        className="ml-[5px] h-[27px] w-auto object-contain"
         src={assetUrl("main/icons/moim-logo-text.webp")}
-        alt="moim-logo-text"
+        alt="moim"
         onError={hideUnavailableAsset}
       />
     </a>

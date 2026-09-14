@@ -15,6 +15,7 @@ import {
 } from '../../../../domains/vote'
 import { useCalendarParticipantAccess } from '../../../guards/useCalendarParticipantAccess'
 import { useParticipantVoteAction } from '../../../hooks/useParticipantVoteAction'
+import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { CalendarHero } from './components/CalendarHero'
 import { DetailAside } from './components/DetailAside'
@@ -72,16 +73,16 @@ export function CalendarDetailPage() {
     const message = authStatus === 'restore-failed'
       ? '네트워크 문제로 회원과 참여 세션을 확인하지 못했어요. 새로고침 후 다시 시도해주세요.'
       : '회원과 참여 세션을 확인하고 있어요.'
-    return <WorkspaceLayout><section className="workspace-empty-state">{message}</section></WorkspaceLayout>
+    return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-center text-[#69809f]">{message}</section></WorkspaceLayout>
   }
   if (!participantSession) return <Navigate to={`/c/${slug}/join`} replace />
   if (realtime.isDeleted) {
     return (
       <WorkspaceLayout>
-        <section className="workspace-empty-state">
-          <h1>삭제된 캘린더예요.</h1>
-          <p>방장이 캘린더를 삭제해서 더 이상 참여할 수 없어요.</p>
-          <Link className="button button-primary" to="/">홈으로 돌아가기</Link>
+        <section className="grid min-h-[250px] place-content-center justify-items-center gap-3 text-center text-[#69809f]">
+          <h1 className="m-0 text-[22px] font-black text-[#19345d]">삭제된 캘린더예요.</h1>
+          <p className="m-0 leading-[1.65]">방장이 캘린더를 삭제해서 더 이상 참여할 수 없어요.</p>
+          <Link className={`${buttonClass} ${primaryButtonClass}`} to="/">홈으로 돌아가기</Link>
         </section>
       </WorkspaceLayout>
     )
@@ -115,24 +116,24 @@ export function CalendarDetailPage() {
         />
       )}
     >
-      <Link className="detail-back-link" to="/calendars">
+      <Link className="my-[7px] mb-3.5 inline-flex items-center gap-[3px] text-[13px] font-extrabold text-[#5c83ba]" to="/calendars">
         <ChevronLeft size={17} /> 내 캘린더로 돌아가기
       </Link>
       {calendarQuery.isPending ? (
-        <section className="workspace-panel calendar-feedback">캘린더를 불러오는 중이에요.</section>
+        <section className={`${panelClass} grid min-h-[250px] place-content-center text-[#69809f]`}>캘린더를 불러오는 중이에요.</section>
       ) : calendarQuery.isError || !liveCalendar ? (
-        <section className="workspace-panel calendar-feedback">
-          <h1>캘린더 정보를 불러오지 못했어요.</h1>
-          <button className="button button-secondary" type="button" onClick={() => void calendarQuery.refetch()}>
+        <section className={`${panelClass} grid min-h-[250px] place-content-center justify-items-center gap-3 text-center text-[#69809f]`}>
+          <h1 className="m-0 text-[22px] font-black text-[#19345d]">캘린더 정보를 불러오지 못했어요.</h1>
+          <button className={`${buttonClass} ${secondaryButtonClass}`} type="button" onClick={() => void calendarQuery.refetch()}>
             다시 시도
           </button>
         </section>
       ) : (
         <>
           <CalendarHero calendar={liveCalendar} shareUrl={shareUrl} connectionState={realtime.connectionState} />
-          <div className="detail-workspace-layout">
+          <div className="mt-4 grid grid-cols-[150px_minmax(0,1fr)] gap-4 max-[800px]:grid-cols-1">
             <DetailTabRail activeTab={tab} isHost={isHost} onChange={changeTab} />
-            <section className="detail-tab-content">
+            <section className="min-w-0">
               {tab === 'vote' && (
                 <VotePanel
                   isClosed={liveCalendar.is_closed}
