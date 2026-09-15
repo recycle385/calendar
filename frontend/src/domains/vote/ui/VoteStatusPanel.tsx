@@ -124,7 +124,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[#e1eaf5]">
-          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center gap-x-5 bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] @max-[760px]:hidden">
+          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1fr)_232px] items-center gap-x-5 bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] @max-[760px]:hidden">
             <span className="text-center">순위</span>
             <span>날짜</span>
             <span>가능 비율</span>
@@ -139,7 +139,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
 
               return (
                 <article
-                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center gap-x-5 px-3 py-2.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
+                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1fr)_232px] items-center gap-x-5 px-3 py-2.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
                   key={item.date_option_id}
                 >
                   <span className="grid size-8 place-items-center justify-self-center rounded-full bg-[#e8f2ff] text-sm font-black text-[#2879e8] @max-[760px]:row-span-3 @max-[760px]:self-start">
@@ -157,10 +157,10 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
                       />
                     </span>
                   </div>
-                  <div className="flex flex-wrap justify-start gap-5 @max-[760px]:col-start-2 @max-[760px]:gap-2">
-                    <span className="rounded-full bg-[#e2f8eb] px-3 py-1.5 text-[13px] font-black text-[#168a57]">가능 {available}</span>
-                    <span className="rounded-full bg-[#fff5d8] px-3 py-1.5 text-[13px] font-black text-[#a97300]">애매 {maybe}</span>
-                    <span className="rounded-full bg-[#ffebeb] px-3 py-1.5 text-[13px] font-black text-[#dc5058]">불가 {unavailable}</span>
+                  <div className="flex flex-wrap justify-end gap-5 @max-[760px]:col-start-2 @max-[760px]:justify-start @max-[760px]:gap-2">
+                    <span className="min-w-16 rounded-full bg-[#e2f8eb] px-3 py-1.5 text-center text-[13px] font-black text-[#168a57]">가능 {available}</span>
+                    <span className="min-w-16 rounded-full bg-[#fff5d8] px-3 py-1.5 text-center text-[13px] font-black text-[#a97300]">애매 {maybe}</span>
+                    <span className="min-w-16 rounded-full bg-[#ffebeb] px-3 py-1.5 text-center text-[13px] font-black text-[#dc5058]">불가 {unavailable}</span>
                   </div>
                 </article>
               )
