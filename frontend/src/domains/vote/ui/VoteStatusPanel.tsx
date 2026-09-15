@@ -42,6 +42,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
   const overview = getVoteOverview(voteStatus, participantsCount)
   const leadingCandidate = overview.leadingCandidate
   const decision = decisionContent[overview.decisionState]
+  const hasVotes = overview.votedParticipants > 0
 
   if (loading) {
     return (
@@ -54,52 +55,58 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
   return (
     <div className="@container grid gap-4">
       <section className="grid grid-cols-3 gap-3.5 @max-[760px]:grid-cols-2 @max-[500px]:grid-cols-1">
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
-            <UsersRound aria-hidden="true" size={24} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="m-0 text-sm font-black text-[#536c8e]">투표 참여율</h2>
-            <strong className="mt-2 block text-[25px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
-              {overview.votedParticipants} / {participantsCount}명
-            </strong>
-            <div className="mt-5 flex items-center gap-3">
-              <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#e5ebf3]">
-                <i className="block h-full rounded-full bg-brand-500 transition-[width] duration-300" style={{ width: `${overview.participationPercent}%` }} />
-              </span>
-              <b className="text-sm text-[#607a9b]">{overview.participationPercent}%</b>
-            </div>
-          </div>
-        </article>
-
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
-            <CalendarDays aria-hidden="true" size={24} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="m-0 text-sm font-black text-[#536c8e]">현재 가장 유력한 날짜</h2>
-            <strong className="mt-2 block truncate text-[22px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
-              {leadingCandidate ? formatCandidateDate(leadingCandidate.item.date_value) : '아직 없음'}
-            </strong>
-            <div className="mt-4 flex flex-wrap gap-x-2 gap-y-1 text-[13px] font-black">
-              <span className="text-[#168a57]">가능 {leadingCandidate?.available ?? 0}</span>
-              <span className="text-[#a97300]">· 애매 {leadingCandidate?.maybe ?? 0}</span>
-              <span className="text-[#dc5058]">· 불가 {leadingCandidate?.unavailable ?? 0}</span>
-            </div>
-          </div>
-        </article>
-
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[760px]:col-span-2 @max-[500px]:col-span-1 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
-            <CircleCheckBig aria-hidden="true" size={24} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="m-0 text-sm font-black text-[#536c8e]">결정 상태</h2>
-            <span className={`mt-2.5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-black before:size-2.5 before:rounded-full ${decision.badgeClass}`}>
-              {decision.label}
+        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
+              <UsersRound aria-hidden="true" size={24} />
             </span>
-            <p className="mt-3 mb-0 text-[13px] leading-5 text-[#7185a2]">{decision.description}</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="m-0 text-sm font-black text-[#536c8e]">투표 참여율</h2>
+              <strong className="mt-2 block text-[25px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
+                {overview.votedParticipants} / {participantsCount}명
+              </strong>
+            </div>
           </div>
+          <div className="flex w-full items-center gap-3">
+            <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#e5ebf3]">
+              <i className="block h-full rounded-full bg-brand-500 transition-[width] duration-300" style={{ width: `${overview.participationPercent}%` }} />
+            </span>
+            <b className="w-9 shrink-0 text-right text-sm text-[#607a9b]">{overview.participationPercent}%</b>
+          </div>
+        </article>
+
+        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
+              <CalendarDays aria-hidden="true" size={24} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="m-0 text-sm font-black text-[#536c8e]">현재 가장 유력한 날짜</h2>
+              <strong className="mt-2 block truncate text-[22px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
+                {leadingCandidate ? formatCandidateDate(leadingCandidate.item.date_value) : '아직 없음'}
+              </strong>
+            </div>
+          </div>
+          <div className="flex w-full flex-wrap justify-center gap-x-2 gap-y-1 text-sm font-black">
+            <span className="text-[#168a57]">가능 {leadingCandidate?.available ?? 0}</span>
+            <span className="text-[#a97300]">· 애매 {leadingCandidate?.maybe ?? 0}</span>
+            <span className="text-[#dc5058]">· 불가 {leadingCandidate?.unavailable ?? 0}</span>
+          </div>
+        </article>
+
+        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[760px]:col-span-2 @max-[500px]:col-span-1 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
+              <CircleCheckBig aria-hidden="true" size={24} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="m-0 text-sm font-black text-[#536c8e]">결정 상태</h2>
+              <span className={`mt-2.5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-black before:size-2.5 before:rounded-full ${decision.badgeClass}`}>
+                {decision.label}
+              </span>
+            </div>
+          </div>
+          <p className="m-0 text-center text-sm leading-5 text-[#7185a2]">{decision.description}</p>
         </article>
       </section>
 
@@ -109,9 +116,11 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           <p className="mt-1.5 mb-0 text-sm text-[#7185a2]">참여자들이 가능한 날짜를 순위별로 확인해보세요.</p>
         </header>
 
-        {leadingCandidates.length === 0 ? (
-          <div className="grid min-h-[250px] place-content-center text-center text-[#69809f]">
-            아직 표시할 후보 날짜가 없어요.
+        {!hasVotes || leadingCandidates.length === 0 ? (
+          <div className="grid min-h-[180px] place-content-center justify-items-center gap-2 rounded-xl border border-dashed border-[#dce7f4] bg-[#f8fbff] px-5 text-center">
+            <CalendarDays aria-hidden="true" className="text-[#8ca9cf]" size={28} />
+            <strong className="text-base font-black text-[#3e5f88]">아직 투표 결과가 없어요.</strong>
+            <span className="text-sm leading-5 text-[#7185a2]">첫 투표가 등록되면 유력 날짜 후보를 보여드려요.</span>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[#e1eaf5]">
