@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 
 import { logger } from '../middlewares/logger';
 import { ParticipantServiceInput } from '../models';
+import { ParticipantReconciliationAction } from '../models/Participant';
 import { ICalendarService } from '../services/calendar.service';
 import { IParticipantService } from '../services/participant.service';
 import { ITokenService } from '../services/token.service';
@@ -142,6 +143,68 @@ export class ParticipantController {
     return res.status(200).json({
       participants: sanitizedParticipants,
       count: sanitizedParticipants.length,
+    });
+  };
+
+  public previewReconciliation: RequestHandler = async (req, res) => {
+    const { slug } = req.params;
+    if (!req.userUuid) throw Errors.Unauthorized();
+    if (!req.guestParticipantUuid) throw Errors.Unauthorized('게스트 참가자 인증이 필요합니다');
+
+    const [calendar, user] = await Promise.all([
+      this.calendarService.getCalendarBySlug(slug),
+      this.userService.getUserUsingUuid(req.userUuid),
+    ]);
+    const preview = await this.participantService.previewReconciliation({
+      calendarId: calendar.id,
+      userId: user.id,
+      accountNickname: user.nickname,
+      guestParticipantUuid: req.guestParticipantUuid,
+    });
+    return res.status(200).json(preview);
+  };
+
+  public reconcileParticipant: RequestHandler = async (req, res) => {
+    const { slug } = req.params;
+    const { action } = req.body as { action: ParticipantReconciliationAction };
+    if (!req.userUuid) throw Errors.Unauthorized();
+    if (!req.guestParticipantUuid) throw Errors.Unauthorized('게스트 참가자 인증이 필요합니다');
+
+    const [calendar, user] = await Promise.all([
+      this.calendarService.getCalendarBySlug(slug),
+      this.userService.getUserUsingUuid(req.userUuid),
+    ]);
+    const result = await this.participantService.reconcileParticipant({
+      calendarId: calendar.id,
+      userId: user.id,
+      accountNickname: user.nickname,
+      guestParticipantUuid: req.guestParticipantUuid,
+      action,
+    });
+    const participantToken = this.tokenService.generateParticipantToken({
+      sub: result.participant.participant_uuid,
+      nickname: result.participant.nickname,
+      calendarSlug: slug,
+      role: result.participant.role,
+      userUuid: req.userUuid,
+    });
+
+    const io = getIO();
+    io.in(participantSocketRoom(result.removedGuestUuid)).disconnectSockets(true);
+    io.to(slug).emit('participantsUpdated');
+
+    return res.status(200).json({
+      message: '참여 정보가 정리되었습니다',
+      participant: {
+        uuid: result.participant.participant_uuid,
+        nickname: result.participant.nickname,
+        color_code: result.participant.color_code,
+        joined_at: result.participant.joined_at,
+        role: result.participant.role,
+        profileType: result.participant.profile_type,
+      },
+      participantToken,
+      removedGuestUuid: result.removedGuestUuid,
     });
   };
 

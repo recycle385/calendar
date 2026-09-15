@@ -24,22 +24,31 @@ const mockParticipantRepository: jest.Mocked<IParticipantRepository> = {
   create: jest.fn(),
   findById: jest.fn(),
   findByUuid: jest.fn(),
+  findByUuidForUpdate: jest.fn(),
   existsByUuid: jest.fn(),
   existsByCalendarAndUser: jest.fn(),
   getIdUsingUuid: jest.fn(),
   getUuidUsingId: jest.fn(),
   getParticipantUuidByUserIdAndCalendarId: jest.fn(),
   findUserGuestById: jest.fn(),
+  findUserParticipantForUpdate: jest.fn(),
   findByCalendarAndNickname: jest.fn(),
   findAllByCalendarId: jest.fn(),
   findAllByCalendarIdWithVotes: jest.fn(),
   nicknameExists: jest.fn(),
+  nicknameExistsExcluding: jest.fn(),
+  claimAnonymousParticipant: jest.fn(),
   delete: jest.fn(),
 };
 
 const mockCalendarRepository = {
   findByIdForUpdate: jest.fn(),
 } as unknown as jest.Mocked<ICalendarRepository>;
+
+const mockVoteRepository = {
+  findAllByParticipant: jest.fn(),
+  replaceVotesFromParticipant: jest.fn(),
+} as any;
 
 describe('ParticipantService Unit Test', () => {
   let participantService: ParticipantService;
@@ -55,7 +64,11 @@ describe('ParticipantService Unit Test', () => {
       id: 1,
       is_closed: false,
     } as Calendar);
-    participantService = new ParticipantService(mockParticipantRepository, mockCalendarRepository);
+    participantService = new ParticipantService(
+      mockParticipantRepository,
+      mockCalendarRepository,
+      mockVoteRepository
+    );
   });
 
   // =================================================================
@@ -309,6 +322,128 @@ describe('ParticipantService Unit Test', () => {
       await expect(participantService.deleteParticipant(participantId, calendarId)).rejects.toThrow(
         '참가자 삭제에 실패했습니다'
       );
+    });
+  });
+
+  describe('로그인 후 게스트 참여 정보 정리', () => {
+    const guest = {
+      id: 11,
+      participant_uuid: 'guest-uuid',
+      calendar_id: 1,
+      user_id: null,
+      role: 'guest',
+      profile_type: 'password',
+      nickname: '게스트별명',
+    } as Participant;
+    const accountParticipant = {
+      id: 12,
+      participant_uuid: 'account-uuid',
+      calendar_id: 1,
+      user_id: 7,
+      role: 'host',
+      profile_type: 'account',
+      nickname: '계정이름',
+    } as Participant;
+
+    beforeEach(() => {
+      mockParticipantRepository.findByUuidForUpdate.mockResolvedValue(guest);
+      mockParticipantRepository.delete.mockResolvedValue(true);
+      mockParticipantRepository.nicknameExistsExcluding.mockResolvedValue(false);
+      mockVoteRepository.findAllByParticipant.mockResolvedValue([]);
+    });
+
+    it('방장 계정 기록을 선택하면 게스트만 삭제한다', async () => {
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(accountParticipant);
+
+      const result = await participantService.reconcileParticipant({
+        calendarId: 1,
+        userId: 7,
+        accountNickname: '계정이름',
+        guestParticipantUuid: guest.participant_uuid,
+        action: 'keep-account',
+      });
+
+      expect(mockVoteRepository.replaceVotesFromParticipant).not.toHaveBeenCalled();
+      expect(mockParticipantRepository.delete).toHaveBeenCalledWith(guest.id, expect.anything());
+      expect(result.participant).toBe(accountParticipant);
+    });
+
+    it('게스트 기록을 선택하면 계정 참가자의 투표 전체를 교체한다', async () => {
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(accountParticipant);
+
+      await participantService.reconcileParticipant({
+        calendarId: 1,
+        userId: 7,
+        accountNickname: '계정이름',
+        guestParticipantUuid: guest.participant_uuid,
+        action: 'use-guest-votes',
+      });
+
+      expect(mockVoteRepository.replaceVotesFromParticipant).toHaveBeenCalledWith(
+        accountParticipant.id,
+        guest.id,
+        expect.anything()
+      );
+      expect(mockParticipantRepository.delete).toHaveBeenCalledWith(guest.id, expect.anything());
+    });
+
+    it('기존 계정 참가자가 없으면 게스트 행을 계정 프로필로 연결한다', async () => {
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(null);
+      (randomUUID as jest.Mock).mockReturnValue('rotated-uuid');
+      mockParticipantRepository.claimAnonymousParticipant.mockResolvedValue({
+        ...guest,
+        participant_uuid: 'rotated-uuid',
+        user_id: 7,
+        profile_type: 'account',
+        nickname: '계정이름',
+        password_hash: null,
+      });
+
+      const result = await participantService.reconcileParticipant({
+        calendarId: 1,
+        userId: 7,
+        accountNickname: '계정이름',
+        guestParticipantUuid: guest.participant_uuid,
+        action: 'claim-account',
+      });
+
+      expect(mockParticipantRepository.claimAnonymousParticipant).toHaveBeenCalledWith(
+        guest.id,
+        expect.objectContaining({
+          participantUuid: 'rotated-uuid',
+          userId: 7,
+          nickname: '계정이름',
+          profileType: 'account',
+        }),
+        expect.anything()
+      );
+      expect(result.removedGuestUuid).toBe('guest-uuid');
+    });
+
+    it('별명 연결을 선택하면 기존 별명과 투표를 유지한다', async () => {
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(null);
+      mockParticipantRepository.claimAnonymousParticipant.mockResolvedValue({
+        ...guest,
+        participant_uuid: 'rotated-uuid',
+        user_id: 7,
+        profile_type: 'alias',
+        password_hash: null,
+      });
+
+      await participantService.reconcileParticipant({
+        calendarId: 1,
+        userId: 7,
+        accountNickname: '계정이름',
+        guestParticipantUuid: guest.participant_uuid,
+        action: 'claim-alias',
+      });
+
+      expect(mockParticipantRepository.claimAnonymousParticipant).toHaveBeenCalledWith(
+        guest.id,
+        expect.objectContaining({ nickname: '게스트별명', profileType: 'alias' }),
+        expect.anything()
+      );
+      expect(mockVoteRepository.replaceVotesFromParticipant).not.toHaveBeenCalled();
     });
   });
 });

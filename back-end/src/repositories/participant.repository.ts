@@ -14,6 +14,7 @@ export interface IParticipantRepository {
   create(input: CreateParticipantInput, connection?: PoolConnection): Promise<Participant>;
   findById(id: number, connection?: PoolConnection): Promise<Participant | null>;
   findByUuid(uuid: string, connection?: PoolConnection): Promise<Participant | null>;
+  findByUuidForUpdate(uuid: string, connection: PoolConnection): Promise<Participant | null>;
   existsByUuid(uuid: string, connection?: PoolConnection): Promise<boolean>;
   existsByCalendarAndUser(
     calendarId: number,
@@ -32,6 +33,11 @@ export interface IParticipantRepository {
     userId: number,
     connection?: PoolConnection
   ): Promise<Participant | null>;
+  findUserParticipantForUpdate(
+    calendarId: number,
+    userId: number,
+    connection: PoolConnection
+  ): Promise<Participant | null>;
   findByCalendarAndNickname(
     calendarId: number,
     nickname: string,
@@ -43,6 +49,21 @@ export interface IParticipantRepository {
     connection?: PoolConnection
   ): Promise<ParticipantWithVotes[]>;
   nicknameExists(check: ParticipantCheckInput, connection?: PoolConnection): Promise<boolean>;
+  nicknameExistsExcluding(
+    check: ParticipantCheckInput,
+    excludedParticipantId: number,
+    connection: PoolConnection
+  ): Promise<boolean>;
+  claimAnonymousParticipant(
+    participantId: number,
+    input: {
+      participantUuid: string;
+      userId: number;
+      nickname: string;
+      profileType: 'account' | 'alias';
+    },
+    connection: PoolConnection
+  ): Promise<Participant>;
   delete(id: number, connection?: PoolConnection): Promise<boolean>;
 }
 
@@ -138,6 +159,14 @@ export class ParticipantRepository implements IParticipantRepository {
     return this.mapToParticipant(rows[0]);
   }
 
+  async findByUuidForUpdate(uuid: string, connection: PoolConnection): Promise<Participant | null> {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      'SELECT * FROM participants WHERE participant_uuid = ? FOR UPDATE',
+      [uuid]
+    );
+    return rows.length ? this.mapToParticipant(rows[0]) : null;
+  }
+
   async existsByUuid(uuid: string, connection?: PoolConnection): Promise<boolean> {
     const poolToUse = connection || this.pool;
 
@@ -180,6 +209,18 @@ export class ParticipantRepository implements IParticipantRepository {
     }
 
     return this.mapToParticipant(rows[0]);
+  }
+
+  async findUserParticipantForUpdate(
+    calendarId: number,
+    userId: number,
+    connection: PoolConnection
+  ): Promise<Participant | null> {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      'SELECT * FROM participants WHERE calendar_id = ? AND user_id = ? FOR UPDATE',
+      [calendarId, userId]
+    );
+    return rows.length ? this.mapToParticipant(rows[0]) : null;
   }
 
   /**
@@ -322,6 +363,42 @@ export class ParticipantRepository implements IParticipantRepository {
     );
 
     return rows[0].count > 0;
+  }
+
+  async nicknameExistsExcluding(
+    check: ParticipantCheckInput,
+    excludedParticipantId: number,
+    connection: PoolConnection
+  ): Promise<boolean> {
+    const [rows] = await connection.execute<RowDataPacket[]>(
+      'SELECT COUNT(*) as count FROM participants WHERE calendar_id = ? AND nickname = ? AND id <> ?',
+      [check.calendar_id, check.nickname, excludedParticipantId]
+    );
+    return rows[0].count > 0;
+  }
+
+  async claimAnonymousParticipant(
+    participantId: number,
+    input: {
+      participantUuid: string;
+      userId: number;
+      nickname: string;
+      profileType: 'account' | 'alias';
+    },
+    connection: PoolConnection
+  ): Promise<Participant> {
+    const [result] = await connection.execute<ResultSetHeader>(
+      `UPDATE participants
+       SET participant_uuid = ?, user_id = ?, nickname = ?, profile_type = ?, password_hash = NULL
+       WHERE id = ? AND user_id IS NULL AND profile_type = 'password'`,
+      [input.participantUuid, input.userId, input.nickname, input.profileType, participantId]
+    );
+    if (result.affectedRows !== 1) {
+      throw Errors.Conflict('게스트 참여 정보가 이미 변경되었습니다');
+    }
+    const participant = await this.findById(participantId, connection);
+    if (!participant) throw Errors.Internal('참가자 연결 후 조회 실패');
+    return participant;
   }
 
   /**

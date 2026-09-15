@@ -104,6 +104,33 @@ export const authenticateParticipant: RequestHandler = (req, res, next) => {
   }
 };
 
+export const authenticateGuestParticipant: RequestHandler = (req, res, next) => {
+  try {
+    const header = req.headers['x-participant-token'];
+    const token = Array.isArray(header) ? header[0] : header;
+    if (!token) throw Errors.Unauthorized('게스트 참가자 토큰이 필요합니다');
+
+    const decoded = tokenService.verifyParticipantToken(token);
+    if (decoded.userUuid) {
+      throw Errors.BadRequest('익명 게스트 참가자 토큰만 정리할 수 있습니다');
+    }
+    const tokenSlug = decoded.calendarSlug || decoded.calendarId;
+    if (!tokenSlug || tokenSlug !== req.params.slug) {
+      throw Errors.Forbidden('이 캘린더의 게스트 참가자 토큰이 아닙니다');
+    }
+    req.guestParticipantUuid = decoded.sub;
+    next();
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return next(Errors.Unauthorized('게스트 참가자 토큰이 만료되었습니다'));
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(Errors.Unauthorized('유효하지 않은 게스트 참가자 토큰입니다'));
+    }
+    next(error);
+  }
+};
+
 // 역할 기반 권한 확인
 export const authorize = (...allowedRoles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {

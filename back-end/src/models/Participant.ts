@@ -90,3 +90,33 @@ export interface ParticipantWithVotes extends Participant {
   total_dates: number; // 전체 날짜 수
   vote_rate: number; // 투표율 (%)
 }
+
+export type ParticipantReconciliationAction =
+  | 'keep-account'
+  | 'use-guest-votes'
+  | 'claim-account'
+  | 'claim-alias';
+
+export type ParticipantReconciliationState = 'host-conflict' | 'participant-conflict' | 'claimable';
+
+export interface ParticipantReconciliationPreview {
+  state: ParticipantReconciliationState;
+  accountNickname: string;
+  guest: {
+    uuid: string;
+    nickname: string;
+    voteCount: number;
+  };
+  accountParticipant: {
+    uuid: string;
+    nickname: string;
+    role: Participant['role'];
+    profileType: ParticipantProfileType;
+    voteCount: number;
+  } | null;
+}
+
+export interface ParticipantReconciliationResult {
+  participant: Participant;
+  removedGuestUuid: string;
+}

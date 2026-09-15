@@ -5,11 +5,15 @@ import { TransactionManager } from '../infrastructure/transaction.manager';
 import {
   CreateParticipantInput,
   Participant,
+  ParticipantReconciliationAction,
+  ParticipantReconciliationPreview,
+  ParticipantReconciliationResult,
   ParticipantServiceInput,
   ParticipantWithVotes,
 } from '../models/Participant';
 import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IParticipantRepository } from '../repositories/participant.repository';
+import { IVoteRepository } from '../repositories/vote.repository';
 import { Errors } from '../utils/errors';
 
 const SALT_ROUNDS = 10;
@@ -40,12 +44,26 @@ export interface IParticipantService {
   getParticipantsWithVotes(calendarId: number): Promise<ParticipantWithVotes[]>;
 
   deleteParticipant(participantId: number, calendarId: number): Promise<void>;
+  previewReconciliation(input: {
+    calendarId: number;
+    userId: number;
+    accountNickname: string;
+    guestParticipantUuid: string;
+  }): Promise<ParticipantReconciliationPreview>;
+  reconcileParticipant(input: {
+    calendarId: number;
+    userId: number;
+    accountNickname: string;
+    guestParticipantUuid: string;
+    action: ParticipantReconciliationAction;
+  }): Promise<ParticipantReconciliationResult>;
 }
 
 export class ParticipantService implements IParticipantService {
   constructor(
     private participantRepository: IParticipantRepository,
-    private calendarRepository: ICalendarRepository
+    private calendarRepository: ICalendarRepository,
+    private voteRepository: IVoteRepository
   ) {}
 
   /**
@@ -282,6 +300,140 @@ export class ParticipantService implements IParticipantService {
 
     if (!deleted) {
       throw Errors.Internal('참가자 삭제에 실패했습니다');
+    }
+  }
+
+  async previewReconciliation(input: {
+    calendarId: number;
+    userId: number;
+    accountNickname: string;
+    guestParticipantUuid: string;
+  }): Promise<ParticipantReconciliationPreview> {
+    const guest = await this.participantRepository.findByUuid(input.guestParticipantUuid);
+    this.assertAnonymousGuest(guest, input.calendarId);
+
+    const accountParticipant = await this.participantRepository.findUserGuestById(
+      input.calendarId,
+      input.userId
+    );
+    const [guestVotes, accountVotes] = await Promise.all([
+      this.voteRepository.findAllByParticipant(guest.id),
+      accountParticipant
+        ? this.voteRepository.findAllByParticipant(accountParticipant.id)
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      state: accountParticipant
+        ? accountParticipant.role === 'host'
+          ? 'host-conflict'
+          : 'participant-conflict'
+        : 'claimable',
+      accountNickname: input.accountNickname,
+      guest: {
+        uuid: guest.participant_uuid,
+        nickname: guest.nickname,
+        voteCount: guestVotes.length,
+      },
+      accountParticipant: accountParticipant
+        ? {
+            uuid: accountParticipant.participant_uuid,
+            nickname: accountParticipant.nickname,
+            role: accountParticipant.role,
+            profileType: accountParticipant.profile_type,
+            voteCount: accountVotes.length,
+          }
+        : null,
+    };
+  }
+
+  async reconcileParticipant(input: {
+    calendarId: number;
+    userId: number;
+    accountNickname: string;
+    guestParticipantUuid: string;
+    action: ParticipantReconciliationAction;
+  }): Promise<ParticipantReconciliationResult> {
+    return TransactionManager.run(async (connection) => {
+      const calendar = await this.calendarRepository.findByIdForUpdate(
+        input.calendarId,
+        connection
+      );
+      if (!calendar) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
+
+      const guest = await this.participantRepository.findByUuidForUpdate(
+        input.guestParticipantUuid,
+        connection
+      );
+      this.assertAnonymousGuest(guest, input.calendarId);
+
+      const accountParticipant = await this.participantRepository.findUserParticipantForUpdate(
+        input.calendarId,
+        input.userId,
+        connection
+      );
+
+      if (accountParticipant) {
+        if (input.action !== 'keep-account' && input.action !== 'use-guest-votes') {
+          throw Errors.BadRequest('기존 계정 참가자의 투표 기록 처리 방식을 선택해주세요');
+        }
+        if (input.action === 'use-guest-votes') {
+          await this.voteRepository.replaceVotesFromParticipant(
+            accountParticipant.id,
+            guest.id,
+            connection
+          );
+        }
+        if (!(await this.participantRepository.delete(guest.id, connection))) {
+          throw Errors.Conflict('게스트 참여 정보가 이미 변경되었습니다');
+        }
+        return { participant: accountParticipant, removedGuestUuid: guest.participant_uuid };
+      }
+
+      if (input.action !== 'claim-account' && input.action !== 'claim-alias') {
+        throw Errors.BadRequest('게스트 참여 정보를 연결할 프로필을 선택해주세요');
+      }
+
+      const nickname =
+        input.action === 'claim-account' ? input.accountNickname.trim() : guest.nickname;
+      if (
+        await this.participantRepository.nicknameExistsExcluding(
+          { calendar_id: input.calendarId, nickname },
+          guest.id,
+          connection
+        )
+      ) {
+        throw Errors.Conflict('계정 닉네임이 이미 사용 중입니다. 현재 별명으로 연결해주세요');
+      }
+
+      const participant = await this.participantRepository.claimAnonymousParticipant(
+        guest.id,
+        {
+          participantUuid: randomUUID(),
+          userId: input.userId,
+          nickname,
+          profileType: input.action === 'claim-account' ? 'account' : 'alias',
+        },
+        connection
+      );
+      return { participant, removedGuestUuid: guest.participant_uuid };
+    });
+  }
+
+  private assertAnonymousGuest(
+    participant: Participant | null,
+    calendarId: number
+  ): asserts participant is Participant {
+    if (!participant) throw Errors.NotFound('게스트 참여 정보를 찾을 수 없습니다');
+    if (participant.calendar_id !== calendarId) {
+      throw Errors.Forbidden('이 캘린더의 게스트 참여 정보가 아닙니다');
+    }
+    if (
+      participant.role !== 'guest' ||
+      participant.user_id !== null ||
+      participant.profile_type !== 'password'
+    ) {
+      throw Errors.BadRequest('익명 게스트 참여 정보만 계정과 정리할 수 있습니다');
     }
   }
 }

@@ -19,7 +19,11 @@ import {
 
 export const userService = new UserService(userRepository);
 export const tokenService = new TokenService(redisBlacklistRepository, redisSignupRepository);
-export const participantService = new ParticipantService(participantRepository, calendarRepository);
+export const participantService = new ParticipantService(
+  participantRepository,
+  calendarRepository,
+  voteRepository
+);
 
 export const authService = new AuthService(userRepository, tokenService);
 export const dateInfoService = new DateInfoService(dateInfoRepository);

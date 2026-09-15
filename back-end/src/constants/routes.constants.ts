@@ -49,6 +49,8 @@ export const PARTICIPANT_ROUTES = {
 
   LOGIN: '/login',
 
+  RECONCILIATION: '/reconciliation',
+
   DELETE_SELF: '/self',
 
   DELETE_BY_HOST: '/:participantUuid',

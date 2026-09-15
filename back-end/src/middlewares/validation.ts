@@ -205,6 +205,12 @@ export const participantSchemas = {
     nickname: Joi.string().trim().optional(),
     password: Joi.string().trim().optional(),
   }),
+
+  reconciliationRequest: Joi.object({
+    action: Joi.string()
+      .valid('keep-account', 'use-guest-votes', 'claim-account', 'claim-alias')
+      .required(),
+  }),
 };
 
 export const voteSchemas = {

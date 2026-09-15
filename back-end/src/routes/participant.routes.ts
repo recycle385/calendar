@@ -4,7 +4,11 @@ import { env } from '../config/env';
 import { PARTICIPANT_ROUTES } from '../constants/routes.constants';
 import { ParticipantController } from '../controllers/participant.controller';
 import { authRateLimiter, optionalAuth } from '../middlewares';
-import { authenticateParticipant, authenticateUser } from '../middlewares/auth';
+import {
+  authenticateGuestParticipant,
+  authenticateParticipant,
+  authenticateUser,
+} from '../middlewares/auth';
 import { asyncHandler } from '../middlewares/errorHandler';
 import {
   commonSchemas,
@@ -64,6 +68,30 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
     validateBody(participantSchemas.registerRequest),
     optionalAuth,
     asyncHandler(controller.registerParticipant)
+  );
+
+  /**
+   * 로그인 전 사용하던 익명 게스트 참여 정보와 현재 계정의 참여 정보를 비교합니다.
+   * Main 토큰은 Authorization, 게스트 참가자 토큰은 X-Participant-Token으로 전달합니다.
+   */
+  router.get(
+    PARTICIPANT_ROUTES.RECONCILIATION,
+    validateParams(slugParams),
+    authenticateUser,
+    authenticateGuestParticipant,
+    asyncHandler(controller.previewReconciliation)
+  );
+
+  /**
+   * 사용자가 선택한 방식으로 계정/게스트 투표 기록을 하나로 정리합니다.
+   */
+  router.post(
+    PARTICIPANT_ROUTES.RECONCILIATION,
+    validateParams(slugParams),
+    validateBody(participantSchemas.reconciliationRequest),
+    authenticateUser,
+    authenticateGuestParticipant,
+    asyncHandler(controller.reconcileParticipant)
   );
 
   /**

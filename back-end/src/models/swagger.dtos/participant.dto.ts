@@ -59,6 +59,22 @@ export interface LoginParticipantRequest {
  * @swagger
  * components:
  *   schemas:
+ *     ReconcileParticipantRequest:
+ *       type: object
+ *       required: [action]
+ *       properties:
+ *         action:
+ *           type: string
+ *           enum: [keep-account, use-guest-votes, claim-account, claim-alias]
+ */
+export interface ReconcileParticipantRequest {
+  action: 'keep-account' | 'use-guest-votes' | 'claim-account' | 'claim-alias';
+}
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
  *     CommonParticipant:
  *       type: object
  *       required: [uuid, nickname, color_code, joined_at]

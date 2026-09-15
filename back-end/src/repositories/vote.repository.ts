@@ -2,7 +2,6 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
 
 import dbpool from '../config/database';
-import { DateOption } from '../models/DateOption';
 import { CreateVoteInput, DateVoteInput, DateVoteStatus, Vote, VoteType } from '../models/Vote';
 import { compareDateOnly, formatDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
@@ -27,7 +26,12 @@ export interface IVoteRepository {
 
   // 투표 삭제
   delete(participantId: number, dateOptionId: number): Promise<boolean>;
-  deleteAllByParticipant(participantId: number): Promise<number>;
+  deleteAllByParticipant(participantId: number, connection?: PoolConnection): Promise<number>;
+  replaceVotesFromParticipant(
+    targetParticipantId: number,
+    sourceParticipantId: number,
+    connection: PoolConnection
+  ): Promise<number>;
 
   // 날짜별 투표 현황
   getDateVoteStatus(calendarId: number): Promise<DateVoteStatus[]>;
@@ -240,6 +244,20 @@ export class VoteRepository implements IVoteRepository {
       [participantId]
     );
 
+    return result.affectedRows;
+  }
+
+  async replaceVotesFromParticipant(
+    targetParticipantId: number,
+    sourceParticipantId: number,
+    connection: PoolConnection
+  ): Promise<number> {
+    await this.deleteAllByParticipant(targetParticipantId, connection);
+    const [result] = await connection.execute<ResultSetHeader>(
+      `INSERT INTO votes (participant_id, date_option_id, vote_type)
+       SELECT ?, date_option_id, vote_type FROM votes WHERE participant_id = ?`,
+      [targetParticipantId, sourceParticipantId]
+    );
     return result.affectedRows;
   }
 
