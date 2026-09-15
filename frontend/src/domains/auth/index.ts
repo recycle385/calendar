@@ -8,11 +8,13 @@ export {
 export {
   clearAccessToken,
   clearStoredAuthProfile,
+  consumeAuthReturnPath,
   getAccessToken,
   getAccessTokenSubject,
   getStoredAuthProfile,
   isAuthenticated,
   setAccessToken,
+  setAuthReturnPath,
   setStoredAuthProfile,
 } from './model/session'
 export type {

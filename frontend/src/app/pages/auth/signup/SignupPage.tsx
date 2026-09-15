@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
-import { signupWithGoogle } from '../../../../domains/auth'
+import { consumeAuthReturnPath, signupWithGoogle } from '../../../../domains/auth'
 import { buttonClass, eyebrowClass, primaryButtonClass } from '../../../../shared/ui/styles'
 import { useAuth } from '../../../providers/AuthProvider'
 
@@ -52,7 +52,7 @@ export function SignupPage() {
     try {
       const result = await signupWithGoogle({ signupToken, isTermsAgreed: true })
       completeLogin(result.accessToken, result.user)
-      navigate('/', { replace: true })
+      navigate(consumeAuthReturnPath() ?? '/', { replace: true })
     } catch {
       setRequestError('가입 처리에 실패했습니다. 잠시 후 다시 시도하거나 로그인을 새로 시작해주세요.')
     }

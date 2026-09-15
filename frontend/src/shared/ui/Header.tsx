@@ -1,6 +1,7 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { setAuthReturnPath } from "../../domains/auth";
 import { Brand } from "./Brand";
 import {
   buttonClass,
@@ -25,8 +26,13 @@ export function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
+  const location = useLocation();
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
+  const rememberLoginReturnPath = () => {
+    setAuthReturnPath(`${location.pathname}${location.search}`);
+    closeMobileMenu();
+  };
 
   async function handleLogout() {
     if (!onLogout || loggingOut) return;
@@ -102,6 +108,7 @@ export function Header({
               <Link
                 className={`${buttonClass} ${loginButtonClass}`}
                 to="/login"
+                onClick={rememberLoginReturnPath}
               >
                 <span className="max-[1535px]:hidden">로그인</span>
                 <span className="hidden max-[1535px]:inline">로그인</span>
@@ -181,13 +188,13 @@ export function Header({
           </>
         ) : (
           <>
-            <Link to="/login" onClick={closeMobileMenu}>
+            <Link to="/login" onClick={rememberLoginReturnPath}>
               로그인
             </Link>
             <Link
               className="mt-1 !justify-center !bg-brand-500 !text-white"
               to="/login"
-              onClick={closeMobileMenu}
+              onClick={rememberLoginReturnPath}
             >
               지금 시작하기
             </Link>

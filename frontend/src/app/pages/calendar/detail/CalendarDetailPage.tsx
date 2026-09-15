@@ -15,12 +15,14 @@ import {
 } from '../../../../domains/vote'
 import { useCalendarParticipantAccess } from '../../../guards/useCalendarParticipantAccess'
 import { useParticipantVoteAction } from '../../../hooks/useParticipantVoteAction'
+import { useParticipantReconciliation } from '../../../hooks/useParticipantReconciliation'
 import { buttonClass, panelClass, primaryButtonClass, secondaryButtonClass } from '../../../../shared/ui/styles'
 import { WorkspaceLayout } from '../../components/WorkspaceLayout'
 import { CalendarHero } from './components/CalendarHero'
 import { DetailAside } from './components/DetailAside'
 import { DetailTabRail, type DetailTab } from './components/DetailTabRail'
 import { ParticipantsPanel } from './components/ParticipantsPanel'
+import { ParticipantReconciliationDialog } from './components/ParticipantReconciliationDialog'
 import { SettingsPanel } from './components/SettingsPanel'
 import { useCalendarRealtime } from './hooks/useCalendarRealtime'
 import { useUnsavedVoteNavigationWarning } from './hooks/useUnsavedVoteNavigationWarning'
@@ -44,21 +46,34 @@ export function CalendarDetailPage() {
     ? requestedTab as DetailTab
     : 'vote'
 
-  const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug && participantSession) })
-  const participants = useQuery({ ...participantsQuery(slug), enabled: Boolean(slug && participantSession) })
-  const voteStatus = useQuery({ ...voteStatusQuery(slug), enabled: Boolean(slug && participantSession) })
-  const ownVotes = useQuery({
-    ...participantVotesQuery(slug, participantSession?.participantUuid ?? ''),
-    enabled: Boolean(slug && participantSession?.participantUuid),
+  const reconciliation = useParticipantReconciliation({
+    slug,
+    authStatus,
+    accessToken,
+    currentUserUuid,
+    session: participantSession,
   })
-  const realtime = useCalendarRealtime(slug, participantSession?.participantToken, participantSession?.participantUuid)
+  const activeParticipantSession = reconciliation.isRequired ? null : participantSession
+
+  const calendarQuery = useQuery({ ...calendarDetailQuery(slug), enabled: Boolean(slug && activeParticipantSession) })
+  const participants = useQuery({ ...participantsQuery(slug), enabled: Boolean(slug && activeParticipantSession) })
+  const voteStatus = useQuery({ ...voteStatusQuery(slug), enabled: Boolean(slug && activeParticipantSession) })
+  const ownVotes = useQuery({
+    ...participantVotesQuery(slug, activeParticipantSession?.participantUuid ?? ''),
+    enabled: Boolean(slug && activeParticipantSession?.participantUuid),
+  })
+  const realtime = useCalendarRealtime(
+    slug,
+    activeParticipantSession?.participantToken,
+    activeParticipantSession?.participantUuid,
+  )
   const submitParticipantVotes = useParticipantVoteAction({
     slug,
-    session: participantSession,
+    session: activeParticipantSession,
     currentUserUuid,
     mainAccessToken: accessToken,
   })
-  const editorSessionKey = `${slug}:${participantSession?.participantUuid ?? ''}`
+  const editorSessionKey = `${slug}:${activeParticipantSession?.participantUuid ?? ''}`
   const voteEditor = useVoteEditor({
     sourceKey: editorSessionKey,
     voteStatus: voteStatus.data?.voteStatus,
@@ -76,6 +91,26 @@ export function CalendarDetailPage() {
     return <WorkspaceLayout><section className="grid min-h-[250px] place-content-center text-center text-[#69809f]">{message}</section></WorkspaceLayout>
   }
   if (!participantSession) return <Navigate to={`/c/${slug}/join`} replace />
+  if (reconciliation.isRequired) {
+    return (
+      <WorkspaceLayout>
+        <section className={`${panelClass} grid min-h-[320px] place-content-center text-center text-[16px] text-[#69809f]`}>
+          로그인 전 참여 기록을 확인하고 있어요.
+        </section>
+        <ParticipantReconciliationDialog
+          preview={reconciliation.preview}
+          isLoading={reconciliation.isLoading}
+          isSubmitting={reconciliation.isSubmitting}
+          loadError={reconciliation.loadError}
+          actionError={reconciliation.actionError}
+          onResolve={reconciliation.resolve}
+          onRetry={reconciliation.retry}
+          onRecoverAccount={reconciliation.recoverAccountSession}
+          onDiscardGuest={reconciliation.discardGuestSession}
+        />
+      </WorkspaceLayout>
+    )
+  }
   if (realtime.isDeleted) {
     return (
       <WorkspaceLayout>
@@ -90,7 +125,7 @@ export function CalendarDetailPage() {
 
   const calendar = calendarQuery.data?.calendar
   const liveCalendar = calendar && realtime.isClosed ? { ...calendar, is_closed: true } : calendar
-  const isHost = Boolean(accessToken && liveCalendar?.hostParticipantUuid === participantSession.participantUuid)
+  const isHost = Boolean(accessToken && liveCalendar?.hostParticipantUuid === activeParticipantSession?.participantUuid)
   const tab = requestedDetailTab === 'settings' && !isHost ? 'vote' : requestedDetailTab
   const shareUrl = (location.state as DetailLocationState | null)?.shareUrl ?? `${window.location.origin}/c/${slug}/join`
   const changeTab = (nextTab: DetailTab) => setSearchParams(nextTab === 'vote' ? {} : { tab: nextTab })
@@ -164,7 +199,7 @@ export function CalendarDetailPage() {
                 <ParticipantsPanel
                   slug={slug}
                   participants={participants.data?.participants ?? []}
-                  session={participantSession}
+                  session={activeParticipantSession!}
                   currentUserUuid={currentUserUuid}
                   hostUuid={liveCalendar.hostParticipantUuid}
                   isHost={isHost}
@@ -177,7 +212,7 @@ export function CalendarDetailPage() {
                 <SettingsPanel
                   calendar={liveCalendar}
                   accessToken={accessToken!}
-                  participantUuid={participantSession.participantUuid}
+                  participantUuid={activeParticipantSession!.participantUuid}
                 />
               )}
             </section>

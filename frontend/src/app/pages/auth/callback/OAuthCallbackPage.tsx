@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   handleGoogleCallback,
+  consumeAuthReturnPath,
   type GoogleCallbackLoginResponse,
   type GoogleCallbackPendingSignupResponse,
 } from '../../../../domains/auth'
@@ -51,7 +52,7 @@ export function OAuthCallbackPage() {
         }
 
         completeLogin(result.accessToken, result.user)
-        navigate('/', { replace: true })
+        navigate(consumeAuthReturnPath() ?? '/', { replace: true })
       })
       .catch(() => {
         if (active) {

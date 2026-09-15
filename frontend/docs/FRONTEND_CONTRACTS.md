@@ -24,6 +24,8 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 | POST `/calendars/:slug/participants`                    | 회원 Main / 비회원 없음 | 회원 `{nickname,profileType:account\|alias}`, 비회원 `{nickname,password}` → `{participant,participantToken}` |
 | POST `/calendars/:slug/participants/login`              | 회원 Main / 비회원 없음 | 회원 `{}`, 비회원 `{nickname,password}` → `{participant,participantToken}`                       |
 | GET `/calendars/:slug/participants`                     | 없음                    | `{participants,count}`                                                                           |
+| GET `/calendars/:slug/participants/reconciliation`      | Main + guest header     | 익명 게스트와 현재 계정 참가자의 상태·투표 수 비교                                                |
+| POST `/calendars/:slug/participants/reconciliation`     | Main + guest header     | 선택한 한쪽 투표 기록을 유지하거나 게스트 프로필을 계정에 연결하고 새 Participant Token 발급       |
 | GET `/calendars/joined`                                 | Main                    | 내가 방장 또는 계정/별명으로 참여한 목록 `{calendars,count}`. 각 항목에 현재 참여 역할·프로필 포함 |
 | DELETE `/calendars/:slug/participants/self`             | Participant             | 일반 참가자 탈퇴                                                                                 |
 | DELETE `/calendars/:slug/participants/:participantUuid` | Main + DB owner         | 강퇴                                                                                             |
@@ -52,6 +54,7 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 - 회원 상태는 `복원 중 / 인증됨 / 비로그인 / 일시적 복원 실패`를 구분한다. 복원 중에는 로그인 화면으로 성급하게 redirect하지 않는다.
 - Participant Token은 slug별로 메모리와 sessionStorage에 보존한다. 회원 연결 여부와 user UUID를 함께 구분한다. 탭을 닫은 뒤에는 회원 자동 재입장 또는 비회원 비밀번호 재입장을 사용한다. 비밀번호는 보존하지 않는다.
 - 로그인 회원의 `alias` 참여는 별명만 공개 화면에 사용하고 `user_id`에는 연결한다. 따라서 비밀번호 없이 Main Token으로 재입장할 수 있다. `alias`는 서버와도 연결되지 않는 완전 익명을 뜻하지 않는다.
+- 익명 게스트 세션을 가진 상태에서 로그인하면 상세 화면의 편집·Socket 연결을 잠시 막고 참여 정보 정리를 먼저 수행한다. Main Token은 `Authorization`, 기존 게스트 토큰은 `X-Participant-Token`으로 보낸다. 기존 계정 참가자가 있으면 계정 또는 게스트 투표 중 하나의 전체 기록만 남기며 날짜별로 병합하지 않는다. 기존 계정 참가자가 없으면 게스트의 투표를 유지한 채 계정 이름(`account`) 또는 현재 별명(`alias`)으로 연결한다.
 - 저장된 참가자 정보는 UI 복원용이다. JWT 만료·slug를 확인하고 최신 캘린더·참가자 조회 및 인증된 요청으로 상태를 확인한다. 토큰 decode를 서버 권한 검증으로 취급하지 않는다.
 - 로그인 응답의 표시용 프로필은 user UUID와 함께 sessionStorage에 보존할 수 있다. refresh로 확인한 회원 UUID와 다르면 버린다. 표시용 사본이 없으면 기본 사용자 표시를 쓰고, 미지원 `/me` API를 만들지 않는다. 다른 탭에서도 최신 프로필을 복원하는 기능은 백엔드 확장 대상이다.
 - 명시적 로그아웃은 서버 logout을 요청하고 앱의 회원·참가 토큰, 프로필 사본, 회원별 캐시와 소켓을 정리한다. 참가 DB 데이터를 삭제하는 동작은 아니다. 서버 logout 실패 시 서버 세션 종료를 성공으로 표시하지 않는다.
@@ -150,6 +153,7 @@ Socket은 Participant Token으로 `transports: ['websocket'], auth: {token}` 연
 | calendarDeleted          | 해당 slug 연결·캐시 정리, 삭제 안내 표시, 내 목록 갱신                                              |
 | onlineUsers              | `{sub,nickname,role}[]` 온라인 스냅샷 수신. sub는 participant UUID                                  |
 | userOnline / userOffline | UUID 기준 접속 표시 갱신. 참가 DB 등록·삭제로 해석하지 않음                                         |
+| participantsUpdated      | 계정·게스트 참여 정보 정리 후 참가자·투표 현황 재조회                                              |
 | 참가·탈퇴·강퇴 API 성공  | 해당 slug 참가자·현황·개인 투표 및 필요한 목록 재조회                                               |
 | 재연결 성공              | 방 재입장 후 상세·참가자·현황·개인 투표 재조회                                                      |
 

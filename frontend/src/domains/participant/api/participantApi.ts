@@ -4,6 +4,9 @@ import type {
   GetParticipantsResponse,
   LoginParticipantRequest,
   LoginParticipantResponse,
+  ParticipantReconciliationAction,
+  ParticipantReconciliationPreview,
+  ReconcileParticipantResponse,
   RegisterParticipantRequest,
   RegisterParticipantResponse,
 } from '../model/types'
@@ -36,6 +39,39 @@ export function loginParticipant(
 
 export function getParticipants(slug: string) {
   return apiRequest<GetParticipantsResponse>(`/calendars/${slug}/participants`)
+}
+
+export function getParticipantReconciliation(
+  slug: string,
+  guestParticipantToken: string,
+  accessToken: string,
+) {
+  return apiRequest<ParticipantReconciliationPreview>(
+    `/calendars/${slug}/participants/reconciliation`,
+    {
+      token: accessToken,
+      auth: 'main',
+      headers: { 'X-Participant-Token': guestParticipantToken },
+    },
+  )
+}
+
+export function reconcileParticipant(
+  slug: string,
+  guestParticipantToken: string,
+  accessToken: string,
+  action: ParticipantReconciliationAction,
+) {
+  return apiRequest<ReconcileParticipantResponse>(
+    `/calendars/${slug}/participants/reconciliation`,
+    {
+      method: 'POST',
+      body: { action },
+      token: accessToken,
+      auth: 'main',
+      headers: { 'X-Participant-Token': guestParticipantToken },
+    },
+  )
 }
 
 export function deleteParticipantSelf(slug: string, participantToken: string) {

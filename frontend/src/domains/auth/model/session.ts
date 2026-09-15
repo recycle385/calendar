@@ -1,5 +1,6 @@
 let accessToken: string | null = null
 const AUTH_PROFILE_KEY = 'authProfile'
+const AUTH_RETURN_PATH_KEY = 'authReturnPath'
 
 interface StoredAuthProfile {
   userUuid: string
@@ -57,4 +58,16 @@ export function setStoredAuthProfile(user: import('./types').AuthUser) {
 
 export function clearStoredAuthProfile() {
   getStorage()?.removeItem(AUTH_PROFILE_KEY)
+}
+
+export function setAuthReturnPath(path: string) {
+  if (!path.startsWith('/') || path.startsWith('//')) return
+  getStorage()?.setItem(AUTH_RETURN_PATH_KEY, path)
+}
+
+export function consumeAuthReturnPath() {
+  const storage = getStorage()
+  const path = storage?.getItem(AUTH_RETURN_PATH_KEY) ?? null
+  storage?.removeItem(AUTH_RETURN_PATH_KEY)
+  return path && path.startsWith('/') && !path.startsWith('//') ? path : null
 }

@@ -162,10 +162,14 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | POST | `/api/v1/calendars/:slug/participants` | 선택 UserAuth | 참가자 등록 |
 | POST | `/api/v1/calendars/:slug/participants/login` | 선택 UserAuth | 참가자 로그인 |
 | GET | `/api/v1/calendars/:slug/participants` | 없음 | 참가자 및 투표 현황 조회 |
+| GET | `/api/v1/calendars/:slug/participants/reconciliation` | UserAuth + `X-Participant-Token` | 익명 게스트와 현재 계정 참가 정보 비교 |
+| POST | `/api/v1/calendars/:slug/participants/reconciliation` | UserAuth + `X-Participant-Token` | 계정·게스트 참가 및 투표 기록 정리 |
 | DELETE | `/api/v1/calendars/:slug/participants/self` | ParticipantAuth | 본인 참가자 삭제 |
 | DELETE | `/api/v1/calendars/:slug/participants/:uuid` | UserAuth | 방장이 참가자 강퇴 |
 
 로그인 회원은 참가자 등록 시 `profileType`을 함께 보냅니다. `account`는 계정 프로필 이름을, `alias`는 별명을 사용하지만 둘 다 회원 계정에 연결되므로 Main Token만으로 다시 입장할 수 있습니다. 비회원 참여는 `nickname`과 개인 `password`를 사용하며 계정의 참여 목록에는 포함되지 않습니다.
+
+비회원으로 참여한 브라우저에서 로그인하면 reconciliation API로 기존 게스트 기록과 계정 기록을 정리합니다. 계정 참가자가 이미 있으면 `keep-account` 또는 `use-guest-votes`로 한쪽의 전체 투표만 유지하고 게스트를 삭제합니다. 계정 참가자가 없으면 `claim-account` 또는 `claim-alias`로 게스트 행과 투표는 유지하면서 회원에 연결합니다. 연결 시 참가자 UUID와 토큰을 새로 발급해 기존 게스트 토큰과 소켓은 더 이상 사용할 수 없습니다.
 
 ### Votes
 

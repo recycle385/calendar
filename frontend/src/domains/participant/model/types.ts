@@ -49,3 +49,37 @@ export interface GetParticipantsResponse {
   participants: Participant[]
   count: number
 }
+
+export type ParticipantReconciliationAction =
+  | 'keep-account'
+  | 'use-guest-votes'
+  | 'claim-account'
+  | 'claim-alias'
+
+export type ParticipantReconciliationState =
+  | 'host-conflict'
+  | 'participant-conflict'
+  | 'claimable'
+
+export interface ParticipantReconciliationPreview {
+  state: ParticipantReconciliationState
+  accountNickname: string
+  guest: {
+    uuid: string
+    nickname: string
+    voteCount: number
+  }
+  accountParticipant: {
+    uuid: string
+    nickname: string
+    role: ParticipantRole
+    profileType: ParticipantProfileType
+    voteCount: number
+  } | null
+}
+
+export interface ReconcileParticipantResponse extends DefaultResponse {
+  participant: ParticipantWithRole & { profileType: ParticipantProfileType }
+  participantToken: string
+  removedGuestUuid: string
+}

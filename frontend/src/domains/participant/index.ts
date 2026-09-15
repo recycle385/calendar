@@ -2,8 +2,10 @@ export {
   deleteParticipantByHost,
   deleteParticipantSelf,
   getParticipants,
+  getParticipantReconciliation,
   loginParticipant,
   registerParticipant,
+  reconcileParticipant,
 } from './api/participantApi'
 export {
   isParticipantReentryRequiredError,
@@ -23,7 +25,11 @@ export {
   setParticipantToken,
 } from './model/session'
 export type { ParticipantSession } from './model/session'
-export { participantKeys, participantsQuery } from './model/queries'
+export {
+  participantKeys,
+  participantReconciliationQuery,
+  participantsQuery,
+} from './model/queries'
 export type {
   GetParticipantsResponse,
   LoginParticipantRequest,
@@ -31,8 +37,12 @@ export type {
   Participant,
   ParticipantRole,
   ParticipantProfileType,
+  ParticipantReconciliationAction,
+  ParticipantReconciliationPreview,
+  ParticipantReconciliationState,
   ParticipantSummary,
   ParticipantWithRole,
   RegisterParticipantRequest,
   RegisterParticipantResponse,
+  ReconcileParticipantResponse,
 } from './model/types'

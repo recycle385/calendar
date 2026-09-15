@@ -102,6 +102,9 @@ export function useCalendarRealtime(
     const handleCalendarUpdated = () => {
       void refreshCalendarData(queryClient, slug, participantUuid)
     }
+    const handleParticipantsUpdated = () => {
+      void refreshParticipantData(queryClient, slug, participantUuid)
+    }
     const handleCalendarClosed = () => {
       setIsClosed(true)
       void refreshCalendarData(queryClient, slug, participantUuid)
@@ -135,6 +138,7 @@ export function useCalendarRealtime(
     socket.on('connect_error', handleConnectError)
     socket.on('voteUpdated', handleVoteUpdated)
     socket.on('calendarUpdated', handleCalendarUpdated)
+    socket.on('participantsUpdated', handleParticipantsUpdated)
     socket.on('calendarClosed', handleCalendarClosed)
     socket.on('calendarDeleted', handleCalendarDeleted)
     socket.on('onlineUsers', handleOnlineUsers)
@@ -150,6 +154,7 @@ export function useCalendarRealtime(
       socket.off('connect_error', handleConnectError)
       socket.off('voteUpdated', handleVoteUpdated)
       socket.off('calendarUpdated', handleCalendarUpdated)
+      socket.off('participantsUpdated', handleParticipantsUpdated)
       socket.off('calendarClosed', handleCalendarClosed)
       socket.off('calendarDeleted', handleCalendarDeleted)
       socket.off('onlineUsers', handleOnlineUsers)
