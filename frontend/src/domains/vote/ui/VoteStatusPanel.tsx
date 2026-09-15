@@ -54,15 +54,15 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
 
   return (
     <div className="@container grid gap-4">
-      <section className="grid grid-cols-3 gap-3.5 @max-[760px]:grid-cols-2 @max-[500px]:grid-cols-1">
-        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+      <section className="grid grid-cols-3 gap-4 @max-[760px]:grid-cols-2 @max-[500px]:grid-cols-1">
+        <article className={`${panelClass} grid min-h-[134px] content-between p-5 @max-[420px]:min-h-0 @max-[420px]:gap-5 @max-[420px]:p-4`}>
           <div className="flex items-start gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
               <UsersRound aria-hidden="true" size={24} />
             </span>
             <div className="min-w-0 flex-1">
               <h2 className="m-0 text-sm font-black text-[#536c8e]">투표 참여율</h2>
-              <strong className="mt-2 block text-[25px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
+              <strong className="mt-2 block text-[27px] leading-none font-black tracking-[-0.04em] text-[#17345d]">
                 {overview.votedParticipants} / {participantsCount}명
               </strong>
             </div>
@@ -75,7 +75,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           </div>
         </article>
 
-        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+        <article className={`${panelClass} grid min-h-[134px] content-between p-5 @max-[420px]:min-h-0 @max-[420px]:gap-5 @max-[420px]:p-4`}>
           <div className="flex items-start gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
               <CalendarDays aria-hidden="true" size={24} />
@@ -87,14 +87,14 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
               </strong>
             </div>
           </div>
-          <div className="flex w-full flex-wrap justify-center gap-x-2 gap-y-1 text-sm font-black">
+          <div className="flex w-full flex-wrap justify-start gap-x-2 gap-y-1 pl-16 text-sm font-black @max-[500px]:justify-center @max-[500px]:pl-0">
             <span className="text-[#168a57]">가능 {leadingCandidate?.available ?? 0}</span>
             <span className="text-[#a97300]">· 애매 {leadingCandidate?.maybe ?? 0}</span>
             <span className="text-[#dc5058]">· 불가 {leadingCandidate?.unavailable ?? 0}</span>
           </div>
         </article>
 
-        <article className={`${panelClass} grid min-h-[150px] content-between gap-4 p-5 @max-[760px]:col-span-2 @max-[500px]:col-span-1 @max-[420px]:min-h-0 @max-[420px]:p-4`}>
+        <article className={`${panelClass} grid min-h-[134px] content-between p-5 @max-[760px]:col-span-2 @max-[500px]:col-span-1 @max-[420px]:min-h-0 @max-[420px]:gap-5 @max-[420px]:p-4`}>
           <div className="flex items-start gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
               <CircleCheckBig aria-hidden="true" size={24} />
@@ -106,7 +106,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
               </span>
             </div>
           </div>
-          <p className="m-0 text-center text-sm leading-5 text-[#7185a2]">{decision.description}</p>
+          <p className="m-0 pl-16 text-left text-sm leading-5 text-[#7185a2] @max-[500px]:pl-0 @max-[500px]:text-center">{decision.description}</p>
         </article>
       </section>
 
@@ -139,7 +139,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
 
               return (
                 <article
-                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center px-3 py-3.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
+                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center px-3 py-2.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
                   key={item.date_option_id}
                 >
                   <span className="grid size-8 place-items-center justify-self-center rounded-full bg-[#e8f2ff] text-sm font-black text-[#2879e8] @max-[760px]:row-span-3 @max-[760px]:self-start">
@@ -148,7 +148,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
                   <h3 className="m-0 text-base font-black text-[#183762]">
                     {formatCandidateDate(item.date_value)}
                   </h3>
-                  <div className="flex items-center gap-3 @max-[760px]:col-start-2">
+                  <div className="flex items-center gap-4 @max-[760px]:col-start-2">
                     <strong className="w-10 shrink-0 text-sm font-black text-[#50729d]">{availablePercent}%</strong>
                     <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#e5ebf3]">
                       <i
@@ -157,7 +157,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
                       />
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 @max-[760px]:col-start-2">
+                  <div className="flex flex-wrap justify-between gap-3 @max-[760px]:col-start-2 @max-[760px]:justify-start">
                     <span className="rounded-full bg-[#e2f8eb] px-3 py-1.5 text-[13px] font-black text-[#168a57]">가능 {available}</span>
                     <span className="rounded-full bg-[#fff5d8] px-3 py-1.5 text-[13px] font-black text-[#a97300]">애매 {maybe}</span>
                     <span className="rounded-full bg-[#ffebeb] px-3 py-1.5 text-[13px] font-black text-[#dc5058]">불가 {unavailable}</span>
