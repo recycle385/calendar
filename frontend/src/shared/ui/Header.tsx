@@ -55,9 +55,9 @@ export function Header({
         >
           {workspace ? (
             <>
-              <Link to="/">홈</Link>
+              {/*<Link to="/">홈</Link>
               <Link to="/calendars">내 캘린더</Link>
-              <Link to="/calendars/new">캘린더 만들기</Link>
+              <Link to="/calendars/new">캘린더 만들기</Link>*/}
             </>
           ) : (
             <>
@@ -85,12 +85,12 @@ export function Header({
               >
                 {loggingOut ? "로그아웃 중…" : "로그아웃"}
               </button>
-              <Link
+              {/*<Link
                 className={`${buttonClass} ${loginButtonClass} w-[100px] px-[18px] py-2.5 max-[1535px]:min-w-[74px] max-[1535px]:px-[15px]`}
                 to="/calendars"
               >
                 내 캘린더
-              </Link>
+              </Link>*/}
               {logoutError && (
                 <span className="text-sm font-bold text-[#d14343]" role="alert">
                   로그아웃 실패
@@ -125,7 +125,7 @@ export function Header({
         className={`absolute top-[60px] right-3.5 left-3.5 z-[70] hidden gap-0.5 rounded-2xl border border-[#e4ebf5] bg-white/98 p-2.5 shadow-[0_18px_42px_rgba(30,65,112,0.16)] transition duration-150 max-md:grid max-[420px]:top-[57px] max-[420px]:right-2.5 max-[420px]:left-2.5 [&>a]:flex [&>a]:min-h-11 [&>a]:items-center [&>a]:rounded-[10px] [&>a]:px-[13px] [&>a]:text-[15px] [&>a]:font-bold [&>a]:text-[#40516c] [&>a:active]:bg-brand-50 [&>button]:flex [&>button]:min-h-11 [&>button]:w-full [&>button]:items-center [&>button]:rounded-[10px] [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-[13px] [&>button]:text-[15px] [&>button]:font-bold${mobileMenuOpen ? " visible translate-y-0 opacity-100" : " invisible -translate-y-2 opacity-0"}`}
         aria-label="모바일 주 메뉴"
       >
-        {workspace ? (
+        {/*workspace ? (
           <>
             <Link to="/" onClick={closeMobileMenu}>
               홈
@@ -149,7 +149,7 @@ export function Header({
               자주 묻는 질문
             </a>
           </>
-        )}
+        )*/}
         {isAuthenticated ? (
           <>
             <Link to="/calendars" onClick={closeMobileMenu}>
