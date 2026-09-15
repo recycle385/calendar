@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { rankVoteDates } from './ranking'
+import { rankVoteDates, selectLeadingVoteDates } from './ranking'
 import type { DateVoteStatus, VoteType } from './types'
 
 function dateStatus(date: string, votes: VoteType[]): DateVoteStatus {
@@ -26,6 +26,20 @@ describe('rankVoteDates', () => {
       '2026-09-12',
       '2026-09-10',
       '2026-09-09',
+    ])
+  })
+
+  it('유력 후보는 상위 5개만 제공한다', () => {
+    const voteStatus = Array.from({ length: 7 }, (_, index) => (
+      dateStatus(`2026-09-${String(index + 1).padStart(2, '0')}`, Array.from({ length: 7 - index }, () => 'available'))
+    ))
+
+    expect(selectLeadingVoteDates(voteStatus).map(({ item }) => item.date_value)).toEqual([
+      '2026-09-01',
+      '2026-09-02',
+      '2026-09-03',
+      '2026-09-04',
+      '2026-09-05',
     ])
   })
 })

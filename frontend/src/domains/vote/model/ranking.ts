@@ -22,3 +22,7 @@ export function rankVoteDates(voteStatus: DateVoteStatus[]): RankedVoteDate[] {
       || left.item.date_value.localeCompare(right.item.date_value),
     )
 }
+
+export function selectLeadingVoteDates(voteStatus: DateVoteStatus[], limit = 5): RankedVoteDate[] {
+  return rankVoteDates(voteStatus).slice(0, Math.max(0, limit))
+}
