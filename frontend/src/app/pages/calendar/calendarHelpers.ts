@@ -13,7 +13,7 @@ export function isValidCalendarRange(startDate: string, endDate: string) {
 
   const start = new Date(`${startDate}T00:00:00`).getTime()
   const end = new Date(`${endDate}T00:00:00`).getTime()
-  const maxRange = 366 * 24 * 60 * 60 * 1000
+  const maxRange = 365 * 24 * 60 * 60 * 1000
   return Number.isFinite(start) && Number.isFinite(end) && end >= start && end - start <= maxRange
 }
 
