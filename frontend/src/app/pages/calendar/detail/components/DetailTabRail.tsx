@@ -1,4 +1,4 @@
-import { CalendarDays, Settings, Sparkles, Users } from 'lucide-react'
+import { CalendarDays, Check, Settings, Users } from 'lucide-react'
 
 export type DetailTab = 'vote' | 'status' | 'participants' | 'settings'
 
@@ -17,7 +17,7 @@ export function DetailTabRail({ activeTab, isHost, onChange }: DetailTabRailProp
         <CalendarDays size={18} /> 날짜 투표
       </button>
       <button type="button" className={tabClass('status')} onClick={() => onChange('status')}>
-        <Sparkles size={18} /> 유력 후보
+        <Check size={18} /> 투표 현황
       </button>
       <button type="button" className={tabClass('participants')} onClick={() => onChange('participants')}>
         <Users size={18} /> 참여자
