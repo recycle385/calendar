@@ -52,9 +52,9 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
   }
 
   return (
-    <div className="grid gap-4">
-      <section className="grid grid-cols-3 gap-3.5 max-[980px]:grid-cols-1">
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5`}>
+    <div className="@container grid gap-4">
+      <section className="grid grid-cols-3 gap-3.5 @max-[760px]:grid-cols-2 @max-[500px]:grid-cols-1">
+        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
             <UsersRound aria-hidden="true" size={24} />
           </span>
@@ -72,7 +72,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           </div>
         </article>
 
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5`}>
+        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
             <CalendarDays aria-hidden="true" size={24} />
           </span>
@@ -89,7 +89,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           </div>
         </article>
 
-        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5`}>
+        <article className={`${panelClass} flex min-h-[145px] items-start gap-4 p-5 @max-[760px]:col-span-2 @max-[500px]:col-span-1 @max-[420px]:min-h-0 @max-[420px]:gap-3 @max-[420px]:p-4`}>
           <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#edf5ff] text-brand-500">
             <CircleCheckBig aria-hidden="true" size={24} />
           </span>
@@ -103,17 +103,19 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
         </article>
       </section>
 
-      <section className={`${panelClass} p-[25px] max-[800px]:p-5 max-[520px]:p-4`}>
+      <section className={`${panelClass} p-[25px] @max-[760px]:p-5 @max-[420px]:p-4`}>
         <header className="mb-5">
           <h2 className="m-0 text-[22px] font-black tracking-[-0.04em] text-[#19365e]">유력 날짜 후보</h2>
           <p className="mt-1.5 mb-0 text-sm text-[#7185a2]">참여자들이 가능한 날짜를 순위별로 확인해보세요.</p>
         </header>
 
         {leadingCandidates.length === 0 ? (
-        <div className="grid min-h-[250px] place-content-center text-[#69809f]">아직 표시할 후보 날짜가 없어요.</div>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-[#e1eaf5]">
-          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] max-[800px]:hidden">
+          <div className="grid min-h-[250px] place-content-center text-center text-[#69809f]">
+            아직 표시할 후보 날짜가 없어요.
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-[#e1eaf5]">
+          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] @max-[760px]:hidden">
             <span className="text-center">순위</span>
             <span>날짜</span>
             <span>가능 비율</span>
@@ -128,16 +130,16 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
 
               return (
                 <article
-                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center px-3 py-3.5 max-[800px]:grid-cols-[42px_1fr] max-[800px]:gap-x-2 max-[800px]:gap-y-3 max-[800px]:px-3 max-[800px]:py-4"
+                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center px-3 py-3.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
                   key={item.date_option_id}
                 >
-                  <span className="grid size-8 place-items-center justify-self-center rounded-full bg-[#e8f2ff] text-sm font-black text-[#2879e8] max-[800px]:row-span-3 max-[800px]:self-start">
+                  <span className="grid size-8 place-items-center justify-self-center rounded-full bg-[#e8f2ff] text-sm font-black text-[#2879e8] @max-[760px]:row-span-3 @max-[760px]:self-start">
                     {index + 1}
                   </span>
                   <h3 className="m-0 text-base font-black text-[#183762]">
                     {formatCandidateDate(item.date_value)}
                   </h3>
-                  <div className="flex items-center gap-3 max-[800px]:col-start-2">
+                  <div className="flex items-center gap-3 @max-[760px]:col-start-2">
                     <strong className="w-10 shrink-0 text-sm font-black text-[#50729d]">{availablePercent}%</strong>
                     <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#e5ebf3]">
                       <i
@@ -146,7 +148,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
                       />
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 max-[800px]:col-start-2">
+                  <div className="flex flex-wrap gap-2 @max-[760px]:col-start-2">
                     <span className="rounded-full bg-[#e2f8eb] px-3 py-1.5 text-[13px] font-black text-[#168a57]">가능 {available}</span>
                     <span className="rounded-full bg-[#fff5d8] px-3 py-1.5 text-[13px] font-black text-[#a97300]">애매 {maybe}</span>
                     <span className="rounded-full bg-[#ffebeb] px-3 py-1.5 text-[13px] font-black text-[#dc5058]">불가 {unavailable}</span>
@@ -155,7 +157,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
               )
             })}
           </div>
-        </div>
+          </div>
         )}
 
         <p className="mt-4 mb-0 flex items-start gap-2 rounded-xl bg-[#f1f7ff] px-4 py-3 text-[13px] font-medium leading-5 text-[#6c83a2]">
