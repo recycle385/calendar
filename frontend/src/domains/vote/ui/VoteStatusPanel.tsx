@@ -124,7 +124,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-[#e1eaf5]">
-          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] @max-[760px]:hidden">
+          <div className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center gap-x-5 bg-[#edf5ff] px-3 py-3 text-[13px] font-black text-[#52719a] @max-[760px]:hidden">
             <span className="text-center">순위</span>
             <span>날짜</span>
             <span>가능 비율</span>
@@ -139,7 +139,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
 
               return (
                 <article
-                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center px-3 py-2.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
+                  className="grid grid-cols-[52px_minmax(140px,0.9fr)_minmax(220px,1.35fr)_minmax(260px,1.2fr)] items-center gap-x-5 px-3 py-2.5 @max-[760px]:grid-cols-[42px_minmax(0,1fr)] @max-[760px]:gap-x-2 @max-[760px]:gap-y-3 @max-[760px]:px-3 @max-[760px]:py-4"
                   key={item.date_option_id}
                 >
                   <span className="grid size-8 place-items-center justify-self-center rounded-full bg-[#e8f2ff] text-sm font-black text-[#2879e8] @max-[760px]:row-span-3 @max-[760px]:self-start">
