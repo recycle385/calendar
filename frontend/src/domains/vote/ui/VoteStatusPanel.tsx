@@ -157,7 +157,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
                       />
                     </span>
                   </div>
-                  <div className="flex flex-wrap justify-between gap-3 @max-[760px]:col-start-2 @max-[760px]:justify-start">
+                  <div className="flex flex-wrap justify-start gap-5 @max-[760px]:col-start-2 @max-[760px]:gap-2">
                     <span className="rounded-full bg-[#e2f8eb] px-3 py-1.5 text-[13px] font-black text-[#168a57]">가능 {available}</span>
                     <span className="rounded-full bg-[#fff5d8] px-3 py-1.5 text-[13px] font-black text-[#a97300]">애매 {maybe}</span>
                     <span className="rounded-full bg-[#ffebeb] px-3 py-1.5 text-[13px] font-black text-[#dc5058]">불가 {unavailable}</span>
