@@ -10,7 +10,6 @@ import {
   type Participant,
   type ParticipantSession,
 } from '../../../../../domains/participant'
-import { formatPercent } from '../../../../../shared/utils/format'
 import { buttonClass, panelClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
 import {
   clearParticipantPrivateData,
@@ -97,7 +96,9 @@ export function ParticipantsPanel({
                   {connectionState !== 'connected' ? '확인 중' : onlineUuids.has(participant.uuid) ? '온라인' : '오프라인'}
                 </span>
               </h3>
-              <p className="mt-[3px] mb-0 text-xs text-[#8293aa]">투표 참여율 {formatPercent(participant.vote_rate)} · {participant.vote_count}/{participant.total_dates}일</p>
+              <span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ${participant.vote_count > 0 ? 'bg-[#e2f8eb] text-[#168a57]' : 'bg-[#edf2f7] text-[#71839c]'}`}>
+                {participant.vote_count > 0 ? '투표 완료' : '미투표'}
+              </span>
             </div>
             {isHost && participant.uuid !== hostUuid && (
               <button
