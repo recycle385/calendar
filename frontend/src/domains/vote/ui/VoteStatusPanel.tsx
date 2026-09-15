@@ -106,7 +106,7 @@ export function VoteStatusPanel({ voteStatus, participantsCount, loading }: Vote
               </span>
             </div>
           </div>
-          <p className="m-0 pl-16 text-left text-sm leading-5 text-[#7185a2] @max-[500px]:pl-0 @max-[500px]:text-center">{decision.description}</p>
+          <p className="m-0 w-full text-center text-sm leading-5 text-[#7185a2]">{decision.description}</p>
         </article>
       </section>
 
