@@ -30,7 +30,7 @@ export function WorkspaceLayout({
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#f7fbff_0%,#fff_48%,#f4f9ff_100%)]">
       <Header
-        workspace
+        workspace={status === "authenticated"}
         isAuthenticated={status === "authenticated"}
         displayName={user?.nickname}
         onLogout={logout}
