@@ -14,6 +14,7 @@ import {
 import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IParticipantRepository } from '../repositories/participant.repository';
 import { IVoteRepository } from '../repositories/vote.repository';
+import { compareDateOnly, formatDateOnly, todayDateOnlyKst } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 
 const SALT_ROUNDS = 10;
@@ -309,7 +310,11 @@ export class ParticipantService implements IParticipantService {
     accountNickname: string;
     guestParticipantUuid: string;
   }): Promise<ParticipantReconciliationPreview> {
-    const guest = await this.participantRepository.findByUuid(input.guestParticipantUuid);
+    const [calendar, guest] = await Promise.all([
+      this.calendarRepository.findById(input.calendarId),
+      this.participantRepository.findByUuid(input.guestParticipantUuid),
+    ]);
+    if (!calendar) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
     this.assertAnonymousGuest(guest, input.calendarId);
 
     const accountParticipant = await this.participantRepository.findUserGuestById(
@@ -330,6 +335,7 @@ export class ParticipantService implements IParticipantService {
           : 'participant-conflict'
         : 'claimable',
       accountNickname: input.accountNickname,
+      voteChangesAllowed: this.canChangeVoteResult(calendar),
       guest: {
         uuid: guest.participant_uuid,
         nickname: guest.nickname,
@@ -376,6 +382,9 @@ export class ParticipantService implements IParticipantService {
       if (accountParticipant) {
         if (input.action !== 'keep-account' && input.action !== 'use-guest-votes') {
           throw Errors.BadRequest('기존 계정 참가자의 투표 기록 처리 방식을 선택해주세요');
+        }
+        if (!this.canChangeVoteResult(calendar)) {
+          throw Errors.Conflict('마감되거나 투표 기간이 끝난 캘린더의 투표 기록은 변경할 수 없습니다');
         }
         if (input.action === 'use-guest-votes') {
           await this.voteRepository.replaceVotesFromParticipant(
@@ -435,5 +444,16 @@ export class ParticipantService implements IParticipantService {
     ) {
       throw Errors.BadRequest('익명 게스트 참여 정보만 계정과 정리할 수 있습니다');
     }
+  }
+
+  private canChangeVoteResult(calendar: {
+    is_closed: boolean;
+    vote_start_date: string;
+    vote_end_date: string;
+  }): boolean {
+    if (calendar.is_closed) return false;
+
+    const today = todayDateOnlyKst();
+    return compareDateOnly(today, formatDateOnly(calendar.vote_end_date)) <= 0;
   }
 }

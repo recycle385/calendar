@@ -4,7 +4,7 @@ import { PoolConnection } from 'mysql2/promise';
 import dbpool from '../config/database';
 import { Calendar, CreateCalendarInput, UpdateCalendarInput } from '../models/Calendar';
 import { CalendarWithHostUuid, CalendarWithParticipation } from '../models/Calendar';
-import { DateOnlyInput, formatDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
+import { DateOnlyInput, formatDateOnly, todayDateOnlyKst } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 import { formatUtcDateTimeForSql } from '../utils/utcDate';
 
@@ -284,7 +284,7 @@ export class CalendarRepository implements ICalendarRepository {
 
   async findEndedAndOpen(
     connection?: PoolConnection,
-    referenceDate: DateOnlyInput = todayDateOnlyUtc()
+    referenceDate: DateOnlyInput = todayDateOnlyKst()
   ): Promise<Calendar[]> {
     const poolToUse = connection || this.pool;
 
@@ -298,7 +298,7 @@ export class CalendarRepository implements ICalendarRepository {
 
   async findEndedAndOpenForUpdate(
     connection: PoolConnection,
-    referenceDate: DateOnlyInput = todayDateOnlyUtc()
+    referenceDate: DateOnlyInput = todayDateOnlyKst()
   ): Promise<Calendar[]> {
     const [rows] = await connection.execute<RowDataPacket[]>(
       'SELECT * FROM calendars WHERE is_closed = FALSE AND vote_end_date < ? FOR UPDATE',

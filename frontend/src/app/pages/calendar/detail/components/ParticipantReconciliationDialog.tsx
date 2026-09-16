@@ -99,7 +99,22 @@ export function ParticipantReconciliationDialog({
               </p>
             </div>
 
-            {hasExistingParticipant && preview.accountParticipant ? (
+            {hasExistingParticipant && preview.accountParticipant && !preview.voteChangesAllowed ? (
+              <div className="rounded-2xl border border-[#f1dfb9] bg-[#fff8e9] p-5 text-center">
+                <strong className="block text-[17px] text-ink-900">마감된 투표 기록은 변경할 수 없어요</strong>
+                <span className="mt-2 block text-[14px] leading-6 text-[#657b9c]">
+                  기존 계정 참여 기록으로 결과를 확인할 수 있습니다. 게스트 기록은 그대로 보존됩니다.
+                </span>
+                <button
+                  className={`${buttonClass} ${primaryButtonClass} mt-4`}
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => void onRecoverAccount()}
+                >
+                  계정 참여로 계속하기
+                </button>
+              </div>
+            ) : hasExistingParticipant && preview.accountParticipant ? (
               <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
                 <button
                   className="grid min-h-[154px] cursor-pointer content-start gap-2 rounded-2xl border border-[#d9e5f3] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-brand-500 hover:bg-brand-50 disabled:cursor-wait disabled:opacity-60"

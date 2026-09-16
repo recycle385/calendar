@@ -64,6 +64,7 @@ export type ParticipantReconciliationState =
 export interface ParticipantReconciliationPreview {
   state: ParticipantReconciliationState
   accountNickname: string
+  voteChangesAllowed: boolean
   guest: {
     uuid: string
     nickname: string

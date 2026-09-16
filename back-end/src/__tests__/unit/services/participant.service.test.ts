@@ -42,6 +42,7 @@ const mockParticipantRepository: jest.Mocked<IParticipantRepository> = {
 };
 
 const mockCalendarRepository = {
+  findById: jest.fn(),
   findByIdForUpdate: jest.fn(),
 } as unknown as jest.Mocked<ICalendarRepository>;
 
@@ -63,6 +64,14 @@ describe('ParticipantService Unit Test', () => {
     mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
       id: 1,
       is_closed: false,
+      vote_start_date: '2000-01-01',
+      vote_end_date: '2099-12-31',
+    } as Calendar);
+    mockCalendarRepository.findById.mockResolvedValue({
+      id: 1,
+      is_closed: false,
+      vote_start_date: '2000-01-01',
+      vote_end_date: '2099-12-31',
     } as Calendar);
     participantService = new ParticipantService(
       mockParticipantRepository,
@@ -387,6 +396,54 @@ describe('ParticipantService Unit Test', () => {
       expect(mockParticipantRepository.delete).toHaveBeenCalledWith(guest.id, expect.anything());
     });
 
+    it.each(['keep-account', 'use-guest-votes'] as const)(
+      '마감 후 %s 선택은 투표와 참가자를 변경하지 않는다',
+      async (action) => {
+        mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
+          id: 1,
+          is_closed: true,
+          vote_start_date: '2000-01-01',
+          vote_end_date: '2099-12-31',
+        } as Calendar);
+        mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(accountParticipant);
+
+        await expect(
+          participantService.reconcileParticipant({
+            calendarId: 1,
+            userId: 7,
+            accountNickname: '계정이름',
+            guestParticipantUuid: guest.participant_uuid,
+            action,
+          })
+        ).rejects.toThrow('마감되거나 투표 기간이 끝난 캘린더의 투표 기록은 변경할 수 없습니다');
+
+        expect(mockVoteRepository.replaceVotesFromParticipant).not.toHaveBeenCalled();
+        expect(mockParticipantRepository.delete).not.toHaveBeenCalled();
+      }
+    );
+
+    it('투표 종료일이 지난 뒤에는 기록 통합을 차단한다', async () => {
+      mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
+        id: 1,
+        is_closed: false,
+        vote_start_date: '2000-01-01',
+        vote_end_date: '2000-01-02',
+      } as Calendar);
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(accountParticipant);
+
+      await expect(
+        participantService.reconcileParticipant({
+          calendarId: 1,
+          userId: 7,
+          accountNickname: '계정이름',
+          guestParticipantUuid: guest.participant_uuid,
+          action: 'keep-account',
+        })
+      ).rejects.toThrow('마감되거나 투표 기간이 끝난 캘린더의 투표 기록은 변경할 수 없습니다');
+
+      expect(mockParticipantRepository.delete).not.toHaveBeenCalled();
+    });
+
     it('기존 계정 참가자가 없으면 게스트 행을 계정 프로필로 연결한다', async () => {
       mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(null);
       (randomUUID as jest.Mock).mockReturnValue('rotated-uuid');
@@ -418,6 +475,34 @@ describe('ParticipantService Unit Test', () => {
         expect.anything()
       );
       expect(result.removedGuestUuid).toBe('guest-uuid');
+    });
+
+    it('마감 후에도 투표를 바꾸지 않는 계정 연결은 허용한다', async () => {
+      mockCalendarRepository.findByIdForUpdate.mockResolvedValue({
+        id: 1,
+        is_closed: true,
+        vote_start_date: '2000-01-01',
+        vote_end_date: '2000-01-02',
+      } as Calendar);
+      mockParticipantRepository.findUserParticipantForUpdate.mockResolvedValue(null);
+      mockParticipantRepository.claimAnonymousParticipant.mockResolvedValue({
+        ...guest,
+        participant_uuid: 'rotated-uuid',
+        user_id: 7,
+        profile_type: 'alias',
+        password_hash: null,
+      });
+
+      await participantService.reconcileParticipant({
+        calendarId: 1,
+        userId: 7,
+        accountNickname: '계정이름',
+        guestParticipantUuid: guest.participant_uuid,
+        action: 'claim-alias',
+      });
+
+      expect(mockParticipantRepository.claimAnonymousParticipant).toHaveBeenCalled();
+      expect(mockParticipantRepository.delete).not.toHaveBeenCalled();
     });
 
     it('별명 연결을 선택하면 기존 별명과 투표를 유지한다', async () => {

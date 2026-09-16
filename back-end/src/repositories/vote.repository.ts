@@ -3,7 +3,7 @@ import { PoolConnection } from 'mysql2/promise';
 
 import dbpool from '../config/database';
 import { CreateVoteInput, DateVoteInput, DateVoteStatus, Vote, VoteType } from '../models/Vote';
-import { compareDateOnly, formatDateOnly, todayDateOnlyUtc } from '../utils/dateOnly';
+import { compareDateOnly, formatDateOnly, todayDateOnlyKst } from '../utils/dateOnly';
 import { Errors } from '../utils/errors';
 
 export interface IVoteRepository {
@@ -106,7 +106,7 @@ export class VoteRepository implements IVoteRepository {
     );
     if (!calendars.length) throw Errors.NotFound('캘린더를 찾을 수 없습니다');
     if (calendars[0].is_closed) throw Errors.BadRequest('마감된 캘린더에는 투표할 수 없습니다');
-    const today = todayDateOnlyUtc();
+    const today = todayDateOnlyKst();
     if (compareDateOnly(today, formatDateOnly(calendars[0].vote_start_date)) < 0) {
       throw Errors.BadRequest('투표 기간이 시작되지 않았습니다');
     }

@@ -56,4 +56,44 @@ describe('투표 트랜잭션 재시도', () => {
       expect(connection.commit).not.toHaveBeenCalled();
     }
   });
+
+  it('한국 날짜로 시작일이 된 오전 9시 이전에도 투표를 허용한다', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-16T15:30:00.000Z'));
+    const connection = {
+      ...makeConnection(),
+      execute: jest
+        .fn()
+        .mockResolvedValueOnce([
+          [{ is_closed: 0, vote_start_date: '2026-09-17', vote_end_date: '2026-09-17' }],
+        ])
+        .mockResolvedValueOnce([[{ calendar_id: 10 }]])
+        .mockResolvedValueOnce([[]]),
+    };
+    const repository = new VoteRepository({
+      getConnection: jest.fn().mockResolvedValue(connection),
+    } as never);
+
+    await expect(repository.replaceParticipantVotes(1, 10, [])).resolves.toBe(0);
+    expect(connection.commit).toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('한국 날짜로 종료일 다음 날이 되면 자정부터 투표를 거절한다', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-17T15:00:00.000Z'));
+    const connection = {
+      ...makeConnection(),
+      execute: jest.fn().mockResolvedValueOnce([
+        [{ is_closed: 0, vote_start_date: '2026-09-17', vote_end_date: '2026-09-17' }],
+      ]),
+    };
+    const repository = new VoteRepository({
+      getConnection: jest.fn().mockResolvedValue(connection),
+    } as never);
+
+    await expect(repository.replaceParticipantVotes(1, 10, [])).rejects.toThrow(
+      '투표 기간이 종료되었습니다'
+    );
+    expect(connection.rollback).toHaveBeenCalled();
+    jest.useRealTimers();
+  });
 });

@@ -102,6 +102,7 @@ export type ParticipantReconciliationState = 'host-conflict' | 'participant-conf
 export interface ParticipantReconciliationPreview {
   state: ParticipantReconciliationState;
   accountNickname: string;
+  voteChangesAllowed: boolean;
   guest: {
     uuid: string;
     nickname: string;
