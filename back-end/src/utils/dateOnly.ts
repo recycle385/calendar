@@ -115,6 +115,18 @@ export function todayDateOnlyUtc(now: Date = new Date()): DateOnlyString {
   return formatDateOnly(now);
 }
 
+export function todayDateOnlyKst(now: Date = new Date()): DateOnlyString {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 export function eachDateOnlyInRange(start: DateOnlyInput, end: DateOnlyInput): DateOnlyString[] {
   const result: DateOnlyString[] = [];
   let current = formatDateOnly(start);

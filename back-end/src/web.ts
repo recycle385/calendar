@@ -34,8 +34,9 @@ async function startServer() {
     const server = http.createServer(app);
     initializeSocketIO(server);
 
+    await cronService.runCalendarClosure(undefined, false);
     cronService.start();
-    logger.info('[Cron] 서비스 시작 (매일 UTC 19:00 / KST 04:00 실행)');
+    logger.info('[Cron] 서비스 시작 (자동 마감 KST 00:00 / 유지보수 KST 04:00)');
 
     server.listen(env.PORT, () => {
       logger.info(`

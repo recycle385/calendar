@@ -7,7 +7,7 @@ import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IDateInfoRepository } from '../repositories/dateInfo.repository';
 import { getIO } from '../sockets';
 import { dateKindCodeToDateKind } from '../utils/dateKindCodeChanger';
-import { addDateOnlyDays } from '../utils/dateOnly';
+import { todayDateOnlyKst } from '../utils/dateOnly';
 import { getSpcdeInfoUrl } from '../utils/Spcde.api';
 
 export class CronService {
@@ -19,22 +19,33 @@ export class CronService {
 
   public start() {
     cron.schedule(
-      '0 19 * * *',
+      '0 0 * * *',
       async ({ date }) => {
-        // UTC 19시는 한국 기준 다음 날 04시다. 예약 시각으로 기준일을 고정한다.
-        const referenceDate = addDateOnlyDays(date, 1);
+        const referenceDate = todayDateOnlyKst(date);
+        logger.info('[Cron] 투표 자동 마감 시작 (KST 00:00)');
+
+        await this.runCalendarClosure(referenceDate);
+
+        logger.info('[Cron] 투표 자동 마감 종료');
+      },
+      { timezone: 'Asia/Seoul' }
+    );
+
+    cron.schedule(
+      '0 4 * * *',
+      async ({ date }) => {
+        const referenceDate = todayDateOnlyKst(date);
         const [year, month, day] = referenceDate.split('-').map(Number);
-        logger.info('[Cron] 정기 점검 시작 (UTC 19:00 / KST 04:00)');
+        logger.info('[Cron] 정기 유지보수 시작 (KST 04:00)');
 
         await this.deleteExpiredCalendars();
 
-        await this.closeEndedCalendars(referenceDate);
         const fullUpdate = month === 12 && day === 1;
         await this.runHolidayUpdate(!fullUpdate, year);
 
-        logger.info('[Cron] 정기 점검 종료');
+        logger.info('[Cron] 정기 유지보수 종료');
       },
-      { timezone: 'UTC' }
+      { timezone: 'Asia/Seoul' }
     );
   }
 
@@ -75,7 +86,10 @@ export class CronService {
     }
   }
 
-  private async closeEndedCalendars(referenceDate: string) {
+  public async runCalendarClosure(
+    referenceDate: string = todayDateOnlyKst(),
+    emitRealtime = true
+  ) {
     try {
       const closedCalendars = await TransactionManager.run(async (connection) => {
         const targetCalendars = await this.calendarRepository.findEndedAndOpenForUpdate(
@@ -103,6 +117,8 @@ export class CronService {
       if (closedCalendars.length === 0) return;
 
       logger.info(`[Cron] 투표 기간이 끝난 ${closedCalendars.length}개의 캘린더를 마감`);
+
+      if (!emitRealtime) return;
 
       const io = getIO();
 

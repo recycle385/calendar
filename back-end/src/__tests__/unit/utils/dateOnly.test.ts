@@ -5,6 +5,7 @@ import {
   eachDateOnlyInRange,
   normalizeCompactDateOnly,
   normalizeDateOnly,
+  todayDateOnlyKst,
   todayDateOnlyUtc,
 } from '../../../utils/dateOnly';
 
@@ -49,5 +50,12 @@ describe('dateOnly util', () => {
 
   it('todayDateOnlyUtc는 주어진 시각의 UTC 날짜 문자열을 반환해야 한다', () => {
     expect(todayDateOnlyUtc(new Date('2026-04-28T23:30:00.000Z'))).toBe('2026-04-28');
+  });
+
+  it.each([
+    ['2026-04-28T14:59:59.000Z', '2026-04-28'],
+    ['2026-04-28T15:00:00.000Z', '2026-04-29'],
+  ])('todayDateOnlyKst는 UTC 시각 %s를 한국 날짜 %s로 반환해야 한다', (now, expected) => {
+    expect(todayDateOnlyKst(new Date(now))).toBe(expected);
   });
 });
