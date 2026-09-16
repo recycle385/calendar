@@ -12,7 +12,7 @@ export function CalendarListAside() {
         className={`${panelClass} relative grid min-h-[200px] content-end overflow-hidden p-5 max-[1180px]:min-h-[150px] max-[800px]:[&:not(:first-child)]:hidden`}
       >
         <img
-          className="absolute inset-0 size-full bg-[#eaf4ff] object-contain opacity-35"
+          className="absolute inset-0 size-full bg-[#eaf4ff] -scale-x-100 object-contain opacity-35"
           src={assetUrl("main/link_together_bg.webp") ?? PLACEHOLDER_IMAGE_PATH}
           alt="모임 캘린더 안내 이미지"
           onError={hideUnavailableAsset}
