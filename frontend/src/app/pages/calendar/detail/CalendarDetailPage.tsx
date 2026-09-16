@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft } from 'lucide-react'
 import { Link, Navigate, useLocation, useParams, useSearchParams } from 'react-router-dom'
 
-import { calendarDetailQuery } from '../../../../domains/calendar'
+import { calendarDetailQuery, getDaysUntilCalendarDate } from '../../../../domains/calendar'
 import { participantsQuery } from '../../../../domains/participant'
 import {
   participantVotesQuery,
@@ -126,7 +126,15 @@ export function CalendarDetailPage() {
   const calendar = calendarQuery.data?.calendar
   const liveCalendar = calendar && realtime.isClosed ? { ...calendar, is_closed: true } : calendar
   const isHost = Boolean(accessToken && liveCalendar?.hostParticipantUuid === activeParticipantSession?.participantUuid)
-  const tab = requestedDetailTab === 'settings' && !isHost ? 'vote' : requestedDetailTab
+  const isVotingClosed = Boolean(
+    liveCalendar
+      && (liveCalendar.is_closed || getDaysUntilCalendarDate(liveCalendar.vote_end_date) < 0),
+  )
+  const tab: DetailTab = isVotingClosed
+    ? 'status'
+    : requestedDetailTab === 'settings' && !isHost
+      ? 'vote'
+      : requestedDetailTab
   const shareUrl = (location.state as DetailLocationState | null)?.shareUrl ?? `${window.location.origin}/c/${slug}/join`
   const changeTab = (nextTab: DetailTab) => setSearchParams(nextTab === 'vote' ? {} : { tab: nextTab })
 
@@ -166,12 +174,14 @@ export function CalendarDetailPage() {
       ) : (
         <>
           <CalendarHero calendar={liveCalendar} shareUrl={shareUrl} connectionState={realtime.connectionState} />
-          <div className="mt-4 grid grid-cols-[150px_minmax(0,1fr)] gap-4 max-[800px]:grid-cols-1">
-            <DetailTabRail activeTab={tab} isHost={isHost} onChange={changeTab} />
+          <div className={isVotingClosed ? 'mt-4' : 'mt-4 grid grid-cols-[150px_minmax(0,1fr)] gap-4 max-[800px]:grid-cols-1'}>
+            {!isVotingClosed && (
+              <DetailTabRail activeTab={tab} isHost={isHost} onChange={changeTab} />
+            )}
             <section className="min-w-0">
               {tab === 'vote' && (
                 <VotePanel
-                  isClosed={liveCalendar.is_closed}
+                  isClosed={isVotingClosed}
                   enabledDates={voteEditor.enabledDates}
                   enabledDateSet={voteEditor.enabledDateSet}
                   sourceDataReady={voteEditor.sourceDataReady}
