@@ -1,7 +1,11 @@
 import { CalendarDays, Check, Share2 } from 'lucide-react'
 import { useState } from 'react'
 
-import type { Calendar } from '../../../../../domains/calendar'
+import {
+  getCalendarVoteState,
+  getDaysUntilCalendarDate,
+  type Calendar,
+} from '../../../../../domains/calendar'
 import { assetUrl, hideUnavailableAsset } from '../../../../../shared/assets/assetUrl'
 import { formatDate } from '../../../../../shared/utils/format'
 import { buttonClass, panelClass, secondaryButtonClass } from '../../../../../shared/ui/styles'
@@ -16,6 +20,11 @@ interface CalendarHeroProps {
 
 export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHeroProps) {
   const [copied, setCopied] = useState(false)
+  const voteState = getCalendarVoteState(
+    calendar.is_closed,
+    getDaysUntilCalendarDate(calendar.vote_end_date),
+    getDaysUntilCalendarDate(calendar.vote_start_date),
+  )
 
   async function copyLink() {
     try {
@@ -37,8 +46,8 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
       />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-[7px]">
-          <span className={`inline-flex w-fit rounded-full px-[9px] py-[5px] text-xs font-black ${calendar.is_closed ? 'bg-[#edf1f6] text-[#667993]' : 'bg-[#ddf7e8] text-[#178753]'}`}>
-            {calendar.is_closed ? '마감됨' : '진행 중'}
+          <span className={`inline-flex w-fit rounded-full px-[9px] py-[5px] text-xs font-black ${voteState.className}`}>
+            {voteState.label}
           </span>
           <span className={`inline-flex items-center gap-[5px] text-xs font-extrabold ${connectionState === 'connected' ? 'text-[#168b58]' : connectionState === 'connecting' ? 'text-[#a97300]' : 'text-[#8191a8]'}`}>
             <i className={`size-[7px] rounded-full ${connectionState === 'connected' ? 'bg-[#1fc275] shadow-[0_0_0_3px_rgba(31,194,117,0.12)]' : connectionState === 'connecting' ? 'bg-[#f1ae33]' : 'bg-[#aab8ca]'}`} />

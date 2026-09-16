@@ -19,3 +19,4 @@ export type {
 } from './model/types'
 export { calendarDetailQuery, calendarKeys, joinedCalendarsQuery, myCalendarsQuery } from './model/queries'
 export { parseCalendarJoinPath } from './model/shareLink'
+export { getCalendarVoteState, getDaysUntilCalendarDate } from './model/voteState'
