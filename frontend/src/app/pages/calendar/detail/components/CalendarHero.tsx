@@ -38,7 +38,7 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
   }
 
   return (
-    <section className={`${panelClass} grid grid-cols-[145px_minmax(0,1fr)_auto] items-center gap-5 p-4 max-[980px]:grid-cols-[100px_minmax(0,1fr)] max-[980px]:gap-3.5 max-[800px]:grid-cols-[90px_1fr] max-[800px]:gap-3 max-[520px]:grid-cols-[80px_1fr]`}>
+    <section className={`${panelClass} grid grid-cols-[145px_minmax(0,1fr)_auto] items-center gap-5 p-4 max-[980px]:grid-cols-[100px_minmax(0,1fr)] max-[980px]:gap-3.5 max-[800px]:grid-cols-[90px_1fr] max-[800px]:gap-3 max-[520px]:grid-cols-[80px_1fr] ${isVotingClosed ? '!bg-gray-200 opacity-65' : ''}`}>
       <img
         className="h-[116px] w-full rounded-[11px] bg-[#eaf4ff] object-contain max-[980px]:h-24 max-[800px]:h-[90px] max-[520px]:h-20"
         src={assetUrl(PLACEHOLDER_IMAGE_PATH)}
