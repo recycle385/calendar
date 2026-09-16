@@ -87,7 +87,11 @@ export function CalendarCard({ calendar }: { calendar: JoinedCalendar }) {
   return (
     <Link
       className={`group grid min-h-[190px] cursor-pointer gap-3.5 rounded-2xl border border-[#dfe8f3] p-3.5 text-inherit shadow-[0_4px_14px_rgba(33,75,125,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-[#b8d5fb] hover:shadow-[0_12px_25px_rgba(30,100,192,0.1)] ${
-        isVotingClosed ? "bg-gray-200 opacity-65" : "bg-white"
+        isVotingClosed
+          ? "bg-gray-200 opacity-65"
+          : voteState.label === "시작 전"
+            ? "bg-blue-50 opacity-90"
+            : "bg-white"
       }`}
       to={`/c/${calendar.slug}`}
     >
