@@ -25,6 +25,7 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
     getDaysUntilCalendarDate(calendar.vote_end_date),
     getDaysUntilCalendarDate(calendar.vote_start_date),
   )
+  const isVotingClosed = voteState.label === '마감' || voteState.label === '조기 마감'
 
   async function copyLink() {
     try {
@@ -49,14 +50,16 @@ export function CalendarHero({ calendar, shareUrl, connectionState }: CalendarHe
           <span className={`inline-flex w-fit rounded-full px-[9px] py-[5px] text-xs font-black ${voteState.className}`}>
             {voteState.label}
           </span>
-          <span className={`inline-flex items-center gap-[5px] text-xs font-extrabold ${connectionState === 'connected' ? 'text-[#168b58]' : connectionState === 'connecting' ? 'text-[#a97300]' : 'text-[#8191a8]'}`}>
-            <i className={`size-[7px] rounded-full ${connectionState === 'connected' ? 'bg-[#1fc275] shadow-[0_0_0_3px_rgba(31,194,117,0.12)]' : connectionState === 'connecting' ? 'bg-[#f1ae33]' : 'bg-[#aab8ca]'}`} />
-            {connectionState === 'connected'
-              ? '실시간 연결됨'
-              : connectionState === 'connecting'
-                ? '실시간 연결 중'
-                : '연결 확인 필요'}
-          </span>
+          {!isVotingClosed && (
+            <span className={`inline-flex items-center gap-[5px] text-xs font-extrabold ${connectionState === 'connected' ? 'text-[#168b58]' : connectionState === 'connecting' ? 'text-[#a97300]' : 'text-[#8191a8]'}`}>
+              <i className={`size-[7px] rounded-full ${connectionState === 'connected' ? 'bg-[#1fc275] shadow-[0_0_0_3px_rgba(31,194,117,0.12)]' : connectionState === 'connecting' ? 'bg-[#f1ae33]' : 'bg-[#aab8ca]'}`} />
+              {connectionState === 'connected'
+                ? '실시간 연결됨'
+                : connectionState === 'connecting'
+                  ? '실시간 연결 중'
+                  : '연결 확인 필요'}
+            </span>
+          )}
         </div>
         <h1 className="mt-2 mb-1.5 truncate text-[27px] font-black tracking-[-0.05em] text-[#112d54] max-[800px]:text-[21px]">{calendar.title}</h1>
         <p className="m-0 truncate leading-6 text-[#7185a1] max-[520px]:whitespace-normal">{calendar.description || '참여자와 가능한 날짜를 선택해보세요.'}</p>
