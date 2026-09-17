@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+
+import { PRIVACY_ROUTE, TERMS_ROUTE } from '../constants/routes';
 import { Brand } from './Brand';
 import { shellClass } from './styles';
 
@@ -10,8 +13,12 @@ export function Footer() {
           <p className="mt-3 mb-0 text-sm">함께 만드는 더 좋은 시간</p>
         </div>
         <div className="flex flex-wrap justify-end gap-6 font-bold max-md:justify-center">
-          <span title="준비 중">이용약관</span>
-          <span title="준비 중">개인정보처리방침</span>
+          <Link className="hover:text-brand-500" to={TERMS_ROUTE}>
+            이용약관
+          </Link>
+          <Link className="hover:text-brand-500" to={PRIVACY_ROUTE}>
+            개인정보처리방침
+          </Link>
           <span title="준비 중">문의하기</span>
           <a href="https://github.com/recycle385/calendar" target="_blank" rel="noreferrer">GitHub</a>
         </div>

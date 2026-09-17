@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { consumeAuthReturnPath, signupWithGoogle } from '../../../../domains/auth'
+import { PRIVACY_ROUTE, TERMS_ROUTE } from '../../../../shared/constants/routes'
 import { buttonClass, eyebrowClass, primaryButtonClass } from '../../../../shared/ui/styles'
 import { useAuth } from '../../../providers/AuthProvider'
 
@@ -67,10 +68,27 @@ export function SignupPage() {
           <p className="m-0 leading-7 text-[#7185a3]">필수 약관에 동의하면 바로 캘린더를 만들 수 있어요.</p>
         </div>
         <form className="grid gap-4 text-left" onSubmit={form.handleSubmit(onSubmit)}>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#dce6f3] p-4 text-sm font-bold text-[#405b7f]">
-            <input className="mt-0.5 size-4 accent-brand-500" type="checkbox" {...form.register('isTermsAgreed')} />
-            <span>이용약관과 개인정보 처리방침에 동의합니다. (필수)</span>
-          </label>
+          <div className="flex items-start gap-3 rounded-xl border border-[#dce6f3] p-4 text-sm font-bold text-[#405b7f]">
+            <input
+              className="mt-0.5 size-4 accent-brand-500"
+              id="terms-agreement"
+              type="checkbox"
+              {...form.register('isTermsAgreed')}
+            />
+            <div>
+              <label className="cursor-pointer" htmlFor="terms-agreement">
+                이용약관과 개인정보처리방침에 동의합니다. (필수)
+              </label>
+              <p className="mt-2 mb-0 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
+                <Link className="text-brand-500 underline underline-offset-2" to={TERMS_ROUTE} target="_blank" rel="noreferrer">
+                  이용약관 보기
+                </Link>
+                <Link className="text-brand-500 underline underline-offset-2" to={PRIVACY_ROUTE} target="_blank" rel="noreferrer">
+                  개인정보처리방침 보기
+                </Link>
+              </p>
+            </div>
+          </div>
           {form.formState.errors.isTermsAgreed && (
             <p className="m-0 text-[13px] font-bold text-[#d14343]" role="alert">
               {form.formState.errors.isTermsAgreed.message}
