@@ -49,6 +49,8 @@ export const PARTICIPANT_ROUTES = {
 
   LOGIN: '/login',
 
+  GUEST_ENTRY: '/guest-entry',
+
   RECONCILIATION: '/reconciliation',
 
   DELETE_SELF: '/self',

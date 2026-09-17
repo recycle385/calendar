@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator, RateLimitRequestHandler } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 
 import { env } from '../config/env';
@@ -82,6 +82,41 @@ export const authRateLimiter: RateLimitRequestHandler = rateLimit({
     '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.',
     'AUTH_RATE_LIMIT_EXCEEDED',
     900
+  ),
+});
+
+const guestEntryKey = (req: Request) => {
+  const ip = ipKeyGenerator(req.ip ?? 'unknown');
+  const slug = String(req.params.slug ?? 'unknown');
+  const nickname = String(req.body?.nickname ?? '').trim().toLocaleLowerCase('ko-KR');
+  return `${ip}:${slug}:${nickname}`;
+};
+
+export const guestEntryAuthRateLimiter: RateLimitRequestHandler = rateLimit({
+  ...commonConfig,
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  keyGenerator: guestEntryKey,
+  store: createRedisStore('guest-auth'),
+  handler: createHandler(
+    '비밀번호 확인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.',
+    'GUEST_AUTH_RATE_LIMIT_EXCEEDED',
+    900
+  ),
+});
+
+export const guestEntryRegistrationRateLimiter: RateLimitRequestHandler = rateLimit({
+  ...commonConfig,
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) =>
+    `${ipKeyGenerator(req.ip ?? 'unknown')}:${String(req.params.slug ?? 'unknown')}`,
+  store: createRedisStore('guest-registration'),
+  handler: createHandler(
+    '신규 게스트 참여 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+    'GUEST_REGISTRATION_RATE_LIMIT_EXCEEDED',
+    3600
   ),
 });
 

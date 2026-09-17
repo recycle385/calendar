@@ -1,9 +1,14 @@
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 
 import { env } from '../config/env';
 import { PARTICIPANT_ROUTES } from '../constants/routes.constants';
 import { ParticipantController } from '../controllers/participant.controller';
-import { authRateLimiter, optionalAuth } from '../middlewares';
+import {
+  authRateLimiter,
+  guestEntryAuthRateLimiter,
+  guestEntryRegistrationRateLimiter,
+  optionalAuth,
+} from '../middlewares';
 import {
   authenticateGuestParticipant,
   authenticateParticipant,
@@ -17,6 +22,11 @@ import {
   validateBody,
   validateParams,
 } from '../middlewares/validation';
+
+const applyGuestEntryRateLimit: RequestHandler = (req, res, next) =>
+  (res.locals.guestParticipantExists
+    ? guestEntryAuthRateLimiter
+    : guestEntryRegistrationRateLimiter)(req, res, next);
 
 export const createParticipantRouter = (controller: ParticipantController): Router => {
   const router = Router({ mergeParams: true });
@@ -68,6 +78,19 @@ export const createParticipantRouter = (controller: ParticipantController): Rout
     validateBody(participantSchemas.registerRequest),
     optionalAuth,
     asyncHandler(controller.registerParticipant)
+  );
+
+  router.post(
+    PARTICIPANT_ROUTES.GUEST_ENTRY,
+    validateParams(slugParams),
+    validateBody(participantSchemas.guestEntryRequest),
+    ...(env.ENABLE_RATE_LIMIT
+      ? [
+          asyncHandler(controller.classifyGuestEntry),
+          applyGuestEntryRateLimit,
+        ]
+      : []),
+    asyncHandler(controller.enterGuestParticipant)
   );
 
   /**

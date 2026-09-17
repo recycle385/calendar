@@ -123,6 +123,46 @@ export class ParticipantController {
     });
   };
 
+  public classifyGuestEntry: RequestHandler = async (req, res, next) => {
+    const { slug } = req.params;
+    const { nickname } = req.body;
+    const calendar = await this.calendarService.getCalendarBySlug(slug);
+    res.locals.guestParticipantExists = await this.participantService.guestParticipantExists(
+      calendar.id,
+      nickname
+    );
+    next();
+  };
+
+  public enterGuestParticipant: RequestHandler = async (req, res) => {
+    const { slug } = req.params;
+    const { nickname, password } = req.body;
+    const calendar = await this.calendarService.getCalendarBySlug(slug);
+    const result = await this.participantService.enterGuestParticipant(
+      calendar.id,
+      nickname,
+      password
+    );
+    const participantToken = this.tokenService.generateParticipantToken({
+      sub: result.participantUuid,
+      nickname: result.participant.nickname,
+      role: result.participant.role,
+      calendarSlug: slug,
+    });
+
+    return res.status(result.created ? 201 : 200).json({
+      message: result.created ? '참가자 등록이 완료되었습니다' : '로그인 성공',
+      participant: {
+        uuid: result.participant.participant_uuid,
+        nickname: result.participant.nickname,
+        color_code: result.participant.color_code,
+        joined_at: result.participant.joined_at,
+        role: result.participant.role,
+      },
+      participantToken,
+    });
+  };
+
   public getParticipants: RequestHandler = async (req, res) => {
     const { slug } = req.params;
 

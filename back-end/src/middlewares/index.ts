@@ -11,7 +11,12 @@ export {
 export { corsMiddleware } from './cors';
 export { errorHandler, notFoundHandler } from './errorHandler';
 export { requestLogger } from './logger';
-export { authRateLimiter, rateLimiter } from './rateLimiter';
+export {
+  authRateLimiter,
+  guestEntryAuthRateLimiter,
+  guestEntryRegistrationRateLimiter,
+  rateLimiter,
+} from './rateLimiter';
 export { validateBody, validateParams, validateQuery } from './validation';
 
 export function registerMiddlewares(app: express.Express) {

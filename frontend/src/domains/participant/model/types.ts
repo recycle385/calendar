@@ -45,6 +45,8 @@ export interface LoginParticipantResponse extends DefaultResponse {
   participantToken: string
 }
 
+export type EnterGuestParticipantResponse = RegisterParticipantResponse
+
 export interface GetParticipantsResponse {
   participants: Participant[]
   count: number

@@ -1,4 +1,5 @@
 export {
+  enterGuestParticipant,
   deleteParticipantByHost,
   deleteParticipantSelf,
   getParticipants,
@@ -31,6 +32,7 @@ export {
   participantsQuery,
 } from './model/queries'
 export type {
+  EnterGuestParticipantResponse,
   GetParticipantsResponse,
   LoginParticipantRequest,
   LoginParticipantResponse,

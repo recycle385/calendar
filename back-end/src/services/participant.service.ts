@@ -28,6 +28,12 @@ export interface IParticipantService {
     nickname: string,
     password: string
   ): Promise<{ participant: Participant; participantUuid: string }>;
+  guestParticipantExists(calendarId: number, nickname: string): Promise<boolean>;
+  enterGuestParticipant(
+    calendarId: number,
+    nickname: string,
+    password: string
+  ): Promise<{ participant: Participant; participantUuid: string; created: boolean }>;
   loginGuestUserAsParticipant(
     calendarId: number,
     userId: number
@@ -210,6 +216,46 @@ export class ParticipantService implements IParticipantService {
       participant,
       participantUuid: participant.participant_uuid,
     };
+  }
+
+  async guestParticipantExists(calendarId: number, nickname: string): Promise<boolean> {
+    return Boolean(
+      await this.participantRepository.findByCalendarAndNickname(calendarId, nickname.trim())
+    );
+  }
+
+  async enterGuestParticipant(
+    calendarId: number,
+    nickname: string,
+    password: string
+  ): Promise<{ participant: Participant; participantUuid: string; created: boolean }> {
+    const normalizedNickname = nickname.trim();
+    const existing = await this.participantRepository.findByCalendarAndNickname(
+      calendarId,
+      normalizedNickname
+    );
+
+    if (existing) {
+      const result = await this.loginParticipant(calendarId, normalizedNickname, password);
+      return { ...result, created: false };
+    }
+
+    try {
+      const result = await this.registerParticipant({
+        calendarId,
+        nickname: normalizedNickname,
+        password,
+      });
+      return { ...result, created: true };
+    } catch (error) {
+      // 같은 닉네임의 동시 생성은 UNIQUE 제약과 캘린더 행 잠금으로 한 건만 허용한다.
+      // 뒤늦게 충돌한 요청은 새로 생긴 참가자의 비밀번호를 검증해 재입장으로 처리한다.
+      if (!(error instanceof Error) || !('statusCode' in error) || error.statusCode !== 409) {
+        throw error;
+      }
+      const result = await this.loginParticipant(calendarId, normalizedNickname, password);
+      return { ...result, created: false };
+    }
   }
 
   async loginGuestUserAsParticipant(

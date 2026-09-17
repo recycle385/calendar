@@ -23,6 +23,7 @@ API prefix는 `/api/v1`이다. 아래 표의 경로는 prefix 이후 경로다. 
 | POST `/calendars/:slug/close`                           | Main + DB owner         | 마감                                                                                             |
 | POST `/calendars/:slug/participants`                    | 회원 Main / 비회원 없음 | 회원 `{nickname,profileType:account\|alias}`, 비회원 `{nickname,password}` → `{participant,participantToken}` |
 | POST `/calendars/:slug/participants/login`              | 회원 Main / 비회원 없음 | 회원 `{}`, 비회원 `{nickname,password}` → `{participant,participantToken}`                       |
+| POST `/calendars/:slug/participants/guest-entry`        | 없음                    | 비회원 닉네임이 없으면 신규 생성, 있으면 비밀번호 검증 후 재입장                                  |
 | GET `/calendars/:slug/participants`                     | 없음                    | `{participants,count}`                                                                           |
 | GET `/calendars/:slug/participants/reconciliation`      | Main + guest header     | 익명 게스트와 현재 계정 참가자의 상태·투표 수 비교                                                |
 | POST `/calendars/:slug/participants/reconciliation`     | Main + guest header     | 선택한 한쪽 투표 기록을 유지하거나 게스트 프로필을 계정에 연결하고 새 Participant Token 발급       |

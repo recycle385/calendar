@@ -206,6 +206,21 @@ export const participantSchemas = {
     password: Joi.string().trim().optional(),
   }),
 
+  guestEntryRequest: Joi.object({
+    nickname: Joi.string()
+      .trim()
+      .min(1)
+      .max(20)
+      .required()
+      .messages({ 'any.required': '닉네임은 필수입니다' }),
+    password: Joi.string()
+      .trim()
+      .min(4)
+      .max(50)
+      .required()
+      .messages({ 'any.required': '비밀번호는 필수입니다' }),
+  }),
+
   reconciliationRequest: Joi.object({
     action: Joi.string()
       .valid('keep-account', 'use-guest-votes', 'claim-account', 'claim-alias')

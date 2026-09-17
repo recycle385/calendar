@@ -2,6 +2,7 @@ import { apiRequest } from '../../../shared/api/httpClient'
 import type { DefaultResponse } from '../../../shared/types/api'
 import type {
   GetParticipantsResponse,
+  EnterGuestParticipantResponse,
   LoginParticipantRequest,
   LoginParticipantResponse,
   ParticipantReconciliationAction,
@@ -35,6 +36,20 @@ export function loginParticipant(
     token: accessToken,
     auth: accessToken ? 'main' : 'none',
   })
+}
+
+export function enterGuestParticipant(
+  slug: string,
+  payload: { nickname: string; password: string },
+) {
+  return apiRequest<EnterGuestParticipantResponse>(
+    `/calendars/${slug}/participants/guest-entry`,
+    {
+      method: 'POST',
+      body: payload,
+      auth: 'none',
+    },
+  )
 }
 
 export function getParticipants(slug: string) {

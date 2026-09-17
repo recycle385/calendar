@@ -7,6 +7,7 @@ import { Participant } from '../../../models/Participant';
 import { ICalendarRepository } from '../../../repositories/calendar.repository';
 import { IParticipantRepository } from '../../../repositories/participant.repository';
 import { ParticipantService } from '../../../services/participant.service';
+import { Errors } from '../../../utils/errors';
 
 // 외부 라이브러리 Mocking
 jest.mock('bcrypt');
@@ -281,6 +282,73 @@ describe('ParticipantService Unit Test', () => {
       await expect(
         participantService.loginParticipant(calendarId, 'Unknown', password)
       ).rejects.toThrow('닉네임 또는 비밀번호가 일치하지 않습니다');
+    });
+  });
+
+  describe('enterGuestParticipant', () => {
+    const calendarId = 1;
+    const nickname = 'GuestUser';
+    const password = 'password123';
+    const participant = {
+      id: 1,
+      participant_uuid: 'uuid-123',
+      nickname,
+      password_hash: 'hashed_password',
+      calendar_id: calendarId,
+      role: 'guest',
+    } as Participant;
+
+    it('기존 닉네임이면 비밀번호를 검증해 재입장한다', async () => {
+      mockParticipantRepository.findByCalendarAndNickname.mockResolvedValue(participant);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true as never);
+
+      const result = await participantService.enterGuestParticipant(
+        calendarId,
+        nickname,
+        password
+      );
+
+      expect(result).toEqual(
+        expect.objectContaining({ participant, participantUuid: 'uuid-123', created: false })
+      );
+      expect(mockParticipantRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('등록되지 않은 닉네임이면 신규 참가자를 만든다', async () => {
+      mockParticipantRepository.findByCalendarAndNickname.mockResolvedValue(null);
+      mockParticipantRepository.nicknameExists.mockResolvedValue(false);
+      mockParticipantRepository.create.mockResolvedValue(participant);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password' as never);
+      (randomUUID as jest.Mock).mockReturnValue('uuid-123');
+
+      const result = await participantService.enterGuestParticipant(
+        calendarId,
+        nickname,
+        password
+      );
+
+      expect(result.created).toBe(true);
+      expect(mockParticipantRepository.create).toHaveBeenCalled();
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('동시 생성 충돌은 생성된 참가자의 비밀번호를 검증해 중복 생성을 막는다', async () => {
+      mockParticipantRepository.findByCalendarAndNickname
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(participant);
+      jest
+        .spyOn(participantService, 'registerParticipant')
+        .mockRejectedValueOnce(Errors.Conflict('이미 사용 중인 닉네임입니다'));
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true as never);
+
+      const result = await participantService.enterGuestParticipant(
+        calendarId,
+        nickname,
+        password
+      );
+
+      expect(result.created).toBe(false);
+      expect(result.participantUuid).toBe(participant.participant_uuid);
     });
   });
 

@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getParticipantReconciliation, reconcileParticipant } from './participantApi'
+import {
+  enterGuestParticipant,
+  getParticipantReconciliation,
+  reconcileParticipant,
+} from './participantApi'
 
 function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -47,5 +51,28 @@ describe('참여 정보 정리 API', () => {
     )
 
     expect(fetchMock).toHaveBeenCalledOnce()
+  })
+})
+
+describe('게스트 참여 API', () => {
+  it('신규 참여와 재입장을 단일 엔드포인트로 요청한다', async () => {
+    const fetchMock = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      expect(init?.method).toBe('POST')
+      expect(JSON.parse(String(init?.body))).toEqual({
+        nickname: '게스트',
+        password: 'password',
+      })
+      return jsonResponse({ participantToken: 'guest-token' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await enterGuestParticipant('calendar-slug', {
+      nickname: '게스트',
+      password: 'password',
+    })
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      '/calendars/calendar-slug/participants/guest-entry',
+    )
   })
 })
