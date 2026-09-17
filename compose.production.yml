@@ -13,6 +13,9 @@ services:
     volumes:
       - ./deploy/certbot/www:/var/www/certbot:ro
       - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/nginx/secrets:/etc/nginx/secrets:ro
+      - nginx_access_logs:/var/log/nginx/analytics
+      - goaccess_reports:/var/www/goaccess:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -134,6 +137,25 @@ services:
     networks:
       - moim
 
+  goaccess:
+    image: allinurl/goaccess:1.12
+    restart: unless-stopped
+    entrypoint: ['/bin/sh', '/etc/goaccess/generate-report.sh']
+    environment:
+      GOACCESS_REFRESH_SECONDS: ${GOACCESS_REFRESH_SECONDS:-300}
+    volumes:
+      - nginx_access_logs:/var/log/nginx/analytics:ro
+      - goaccess_reports:/var/www/goaccess
+      - goaccess_data:/var/lib/goaccess
+      - ./deploy/goaccess:/etc/goaccess:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+    mem_limit: 64m
+    networks:
+      - moim
+    logging: *default-logging
+
 networks:
   moim:
     driver: bridge
@@ -142,3 +164,6 @@ volumes:
   backend_logs:
   db_data:
   redis_data:
+  nginx_access_logs:
+  goaccess_reports:
+  goaccess_data:

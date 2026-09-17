@@ -161,5 +161,6 @@ deploy/.env.production
 deploy/backups/
 deploy/certbot/conf/
 deploy/certbot/www/
+deploy/nginx/secrets/
 
 public/
