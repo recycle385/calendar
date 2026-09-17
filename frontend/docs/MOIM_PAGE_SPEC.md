@@ -239,10 +239,12 @@ Main 로그인 및 현재 회원으로 확인한 방장 참가 상태에서 접�
 ├─ login
 ├─ auth/callback
 ├─ signup
+├─ terms
+├─ privacy
 ├─ calendars
 ├─ calendars/new
 ├─ c/:slug/join
 └─ c/:slug?tab=vote|status|participants|settings
 ```
 
-현재 사용자 화면 7개 + OAuth 처리 경로 1개다. U-05 `/joined`와 A-01~04 `/admin...`는 백엔드 확장 후 추가한다. 상세의 투표·현황·참가자·설정은 별도 페이지가 아닌 내부 탭이다.
+현재 사용자 화면 7개와 법적 고지 화면 2개 + OAuth 처리 경로 1개다. U-05 `/joined`와 A-01~04 `/admin...`는 백엔드 확장 후 추가한다. 상세의 투표·현황·참가자·설정은 별도 페이지가 아닌 내부 탭이다.
