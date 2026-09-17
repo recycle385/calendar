@@ -29,7 +29,7 @@ const corsOptions: cors.CorsOptions = {
    * allowedHeaders: 요청 헤더에 포함될 수 있는 커스텀 헤더를 지정합니다.
    * 'Authorization'은 JWT 같은 인증 토큰을 주고받을 때 필요합니다.
    */
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Participant-Token'],
 
   /**
    * credentials: 자격 증명(쿠키, 인증 헤더 등)을 포함한 요청을 허용할지 여부입니다.
