@@ -20,16 +20,26 @@
 ## 스크린샷
 
 <!--
-스크린샷을 docs/images 아래에 추가한 뒤 이 주석을 표로 교체하세요.
-권장 구성:
+아래 8개 화면을 docs/images 아래에 추가한 뒤 이 주석을 표로 교체하세요.
+브라우저 주소창과 테스트용 개인정보는 제외하고, 데스크톱은 같은 1440px 폭으로 맞추는 것을 권장합니다.
 
-| 홈 | 내 캘린더 | 날짜 투표 |
-|:---:|:---:|:---:|
-| <img src="docs/images/home.png" width="280"> | <img src="docs/images/calendar-list.png" width="280"> | <img src="docs/images/vote.png" width="280"> |
+| 홈 | 내 캘린더 | 캘린더 만들기 | 링크 참여 |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/images/01-home.png" width="220"> | <img src="docs/images/02-calendar-list.png" width="220"> | <img src="docs/images/03-calendar-create.png" width="220"> | <img src="docs/images/04-calendar-join.png" width="220"> |
 
-| 투표 현황 | 참여자 | 캘린더 설정 |
-|:---:|:---:|:---:|
-| <img src="docs/images/vote-status.png" width="280"> | <img src="docs/images/participants.png" width="280"> | <img src="docs/images/settings.png" width="280"> |
+| 날짜 투표 | 투표 현황 | 참여자 | 모바일 홈 |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/images/05-date-vote.png" width="220"> | <img src="docs/images/06-vote-status.png" width="220"> | <img src="docs/images/07-participants.png" width="220"> | <img src="docs/images/08-mobile-home.png" width="220"> |
+
+촬영 상태:
+1. 홈: Hero의 공유 링크 입력과 Feature Grid가 함께 보이는 비로그인 데스크톱 화면
+2. 내 캘린더: 상태가 다른 카드가 4개 이상 있고 정렬 드롭다운을 연 화면
+3. 캘린더 만들기: 투표 기간과 후보 날짜 기간이 모두 보이는 입력 화면
+4. 링크 참여: 로그인 상태에서 계정 이름/별명 선택지가 보이는 화면
+5. 날짜 투표: 히트맵 달력과 오른쪽 날짜 상세·추천 날짜 패널이 함께 보이는 화면
+6. 투표 현황: 참여율·유력 날짜·결정 상태 카드와 유력 후보 표가 함께 보이는 화면
+7. 참여자: 방장·온라인 상태·투표 완료 여부가 함께 보이는 참여자 탭
+8. 모바일 홈: 390px 안팎 폭에서 Hero와 2열 Feature Grid가 보이는 화면
 -->
 
 ---

@@ -32,6 +32,22 @@ chmod 600 deploy/.env.production
 
 예시 값을 실제 값으로 모두 교체합니다. JWT·세션 키는 서로 다른 긴 난수로 생성하고, `.env.production`은 Git에 올리지 않습니다. `IMAGE_TAG`는 GHCR에 올라간 전체 Git SHA를 사용합니다.
 
+주요 설정은 다음 기준으로 채웁니다.
+
+| 구분 | 설정 |
+| --- | --- |
+| 이미지 | `GHCR_OWNER`, 전체 40자리 `IMAGE_TAG` |
+| 공개 주소 | `DOMAIN`, `CLIENT_URL`, `BACKEND_URL`을 같은 HTTPS origin으로 설정 |
+| 인증 | 서로 다른 JWT secret, `SESSION_SECRET`, Google OAuth ID·secret |
+| 저장소 | 운영용 MySQL root/user 비밀번호, 내부 호스트 `db`, `redis` 유지 |
+| 외부 데이터 | 공공데이터포털 서비스 키 |
+
+운영 값이 모두 준비되면 컨테이너를 띄우기 전에 Compose 해석 결과를 검증합니다. 출력에는 secret이 포함될 수 있으므로 로그나 이슈에 그대로 올리지 않습니다.
+
+```bash
+docker compose --env-file deploy/.env.production -f compose.production.yml config --quiet
+```
+
 접속 통계 대시보드는 별도의 Basic Auth 인증 파일을 사용합니다. 최초 배포 전에 서버에서 다음 명령을 한 번 실행합니다. 생성되는 파일은 `deploy/nginx/secrets/.htpasswd`이며 Git에서 제외됩니다.
 
 ```bash
@@ -104,7 +120,17 @@ gzip -dc deploy/backups/calendar_db_<timestamp>.sql.gz \
       sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
-## 6. 운영 확인
+## 6. 롤백
+
+애플리케이션 문제로 이전 버전이 필요하면 DB 스키마 호환성을 먼저 확인한 뒤, 정상 동작했던 전체 Git SHA로 같은 배포 스크립트를 다시 실행합니다.
+
+```bash
+./deploy/scripts/deploy.sh <previous-full-git-sha>
+```
+
+이 방식은 프론트엔드와 백엔드를 같은 커밋으로 함께 되돌립니다. 데이터 복구가 필요한 장애는 이미지 롤백과 분리해 검토하고, 운영 DB에 백업 파일을 바로 덮어쓰지 않습니다.
+
+## 7. 운영 확인
 
 ```bash
 docker compose --env-file deploy/.env.production -f compose.production.yml ps

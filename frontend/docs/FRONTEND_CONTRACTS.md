@@ -2,7 +2,7 @@
 
 이 문서의 확인·동의·재시도 선택은 별도 언급이 없으면 앱 사용자의 화면 동작을 뜻한다. 해당 UI 구현을 시작하기 위한 에이전트 승인 요구가 아니다. 실제 데이터나 운영 환경을 변경하는 에이전트 작업의 승인 조건을 대체하지 않는다.
 
-2026-09-09 기준 calendar-backend의 실제 route·controller·validation을 바탕으로 한다. 화면 행동은 [페이지 명세](MOIM_PAGE_SPEC.md), 배치는 [아키텍처](FRONTEND_ARCHITECTURE.md)를 따른다. 이 문서는 백엔드 기능 추가를 지시하지 않는다. 이후 API 변경 시 관련 항목과 테스트를 함께 갱신한다.
+2026-09-18 기준 calendar-backend의 실제 route·controller·validation을 바탕으로 한다. 화면 행동은 [페이지 명세](MOIM_PAGE_SPEC.md), 배치는 [아키텍처](FRONTEND_ARCHITECTURE.md)를 따른다. 이 문서는 백엔드 기능 추가를 지시하지 않는다. 이후 API 변경 시 관련 항목과 테스트를 함께 갱신한다.
 
 ## 1. HTTP와 현재 지원 범위
 
