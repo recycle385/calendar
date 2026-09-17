@@ -75,7 +75,8 @@
 
 권장 버전:
 
-- Node.js 20+
+- Frontend: Node.js 22.12+
+- Backend: Node.js 20+
 - npm 10+
 
 ## 8. 프로젝트 구조
