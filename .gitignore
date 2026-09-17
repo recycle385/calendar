@@ -156,4 +156,10 @@ back-end/logs
 back-end/.env
 back-end/build
 
+# Production deployment secrets and runtime data
+deploy/.env.production
+deploy/backups/
+deploy/certbot/conf/
+deploy/certbot/www/
+
 public/
