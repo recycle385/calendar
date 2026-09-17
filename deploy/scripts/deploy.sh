@@ -35,6 +35,13 @@ if [[ -z "$DOMAIN" ]]; then
   exit 1
 fi
 
+TRAFFIC_DASHBOARD_PATH="$(read_env TRAFFIC_DASHBOARD_PATH)"
+if [[ ! "$TRAFFIC_DASHBOARD_PATH" =~ ^[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)+$ ]]; then
+  echo "TRAFFIC_DASHBOARD_PATH는 슬래시로 구분된 두 개 이상의 안전한 경로여야 합니다." >&2
+  echo "앞뒤 슬래시는 넣지 마세요." >&2
+  exit 1
+fi
+
 update_image_tag() {
   local value="$1"
   local temporary

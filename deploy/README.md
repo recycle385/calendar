@@ -113,8 +113,6 @@ curl -fsS https://<DOMAIN>/healthz
 curl -fsS https://<DOMAIN>/api/v1/health/ready
 ```
 
-접속 통계는 `https://<DOMAIN>/admin/traffic/`에서 확인합니다. 이 경로는 React 라우트가 아니라 Nginx가 직접 제공하며 앞에서 만든 Basic Auth 계정으로 보호됩니다. 최초 실제 요청이 기록되고 최대 `GOACCESS_REFRESH_SECONDS`가 지난 뒤 보고서가 생성됩니다.
-
 Nginx는 헬스체크, 정적 에셋, Socket.IO 요청을 통계에서 제외하고 쿼리 문자열·쿠키·요청 본문·Referer를 저장하지 않습니다. 캘린더 공유 코드와 참가자 UUID도 `:slug`, `:participant`로 치환합니다. 접근 시각, IP, 메서드, 정규화된 URL 경로, 프로토콜, 상태 코드, 응답 크기, User-Agent, 처리 시간만 `nginx_access_logs` 볼륨에 보관합니다. GoAccess 보고서에서는 IP 마지막 영역을 익명화하며 집계 DB와 생성된 HTML은 각각 `goaccess_data`, `goaccess_reports` 볼륨에 저장됩니다.
 
 필터링된 원본 접근 로그는 현재 자동 삭제하지 않고 유지하므로 서버 디스크 사용량을 정기적으로 확인합니다.
