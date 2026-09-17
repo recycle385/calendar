@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-ARG VITE_ASSET_BASE_URL=https://pub-52f1db68b62c420aa3b098926983d749.r2.dev
+ARG VITE_ASSET_BASE_URL=https://pub-e087bd56df154773817ccefb4b6fc042.r2.dev
 ENV VITE_API_URL=/api/v1 \
     VITE_SOCKET_URL=/ \
     VITE_ASSET_BASE_URL=${VITE_ASSET_BASE_URL}
