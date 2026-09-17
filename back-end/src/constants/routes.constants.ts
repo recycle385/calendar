@@ -67,3 +67,9 @@ export const VOTE_ROUTES = {
 export const SWAGGER_ROUTES = {
   BASE: '/api-docs',
 };
+
+export const HEALTH_ROUTES = {
+  BASE: '/health',
+  LIVE: '/live',
+  READY: '/ready',
+};

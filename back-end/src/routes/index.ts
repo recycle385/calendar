@@ -6,6 +6,7 @@ import {
   AUTH_ROUTES,
   CALENDAR_ROUTES,
   DATE_INFO_ROUTES,
+  HEALTH_ROUTES,
   PARTICIPANT_ROUTES,
   SWAGGER_ROUTES,
   VOTE_ROUTES,
@@ -20,6 +21,7 @@ import { createCalendarRouter } from './calendar.routes';
 import { createDateInfoRouter } from './dateInfo.routes';
 import { createParticipantRouter } from './participant.routes';
 import { createVoteRouter } from './vote.routes';
+import { healthRouter } from './health.routes';
 
 const router = Router();
 const authRouter = createAuthRouter(authController);
@@ -32,6 +34,7 @@ const swaggerRouter = swaggerUi.setup(swaggerSets);
 router.use(AUTH_ROUTES.BASE, authRouter);
 router.use(CALENDAR_ROUTES.BASE, calendarRouter);
 router.use(DATE_INFO_ROUTES.BASE, dateInfoRouter);
+router.use(HEALTH_ROUTES.BASE, healthRouter);
 router.use(PARTICIPANT_ROUTES.BASE, participantRouter);
 router.use(VOTE_ROUTES.BASE, voteRouter);
 router.use(SWAGGER_ROUTES.BASE, swaggerUi.serve, swaggerRouter);
