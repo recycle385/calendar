@@ -19,7 +19,6 @@ export function LegalPage({ document }: LegalPageProps) {
   return (
     <div className="min-h-screen bg-[linear-gradient(145deg,#f7fbff_0%,#fff_42%,#f4f8ff_100%)]">
       <Header
-        workspace
         isAuthenticated={status === "authenticated"}
         displayName={user?.nickname}
         onLogout={logout}
