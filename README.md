@@ -247,6 +247,7 @@ REFRESH_JWT_SECRET=replace-with-another-long-random-value
 SESSION_SECRET=replace-with-another-long-random-value
 SIGNUP_MODE=immediate
 ENABLE_RATE_LIMIT=false
+GENERAL_RATE_LIMIT_MAX=600
 
 DB_HOST=127.0.0.1
 DB_USER=calendar_user

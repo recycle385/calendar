@@ -58,7 +58,7 @@ export function ParticipantsPanel({
   })
   const kickMutation = useMutation({
     mutationFn: (uuid: string) => deleteParticipantByHost(slug, uuid, accessToken!),
-    onSuccess: () => void refreshParticipantData(queryClient, slug, session.participantUuid),
+    onSuccess: () => void refreshParticipantData(queryClient, slug),
   })
   const onlineUuids = new Set(onlineUsers?.map((user) => user.sub) ?? [])
 

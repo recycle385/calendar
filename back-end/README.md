@@ -84,9 +84,10 @@ GOOGLE_CLIENT_SECRET=...
 
 GET_REST_DE_INFO=...
 ENABLE_RATE_LIMIT=false
+GENERAL_RATE_LIMIT_MAX=600
 ```
 
-`MAIN_JWT_SECRET`, `PARTICIPANT_JWT_SECRET`, `REFRESH_JWT_SECRET`은 서로 다른 긴 무작위 값으로 설정합니다. `LEGACY_JWT_SECRET`은 기존 단일 JWT secret에서 분리 배포할 때만 임시로 설정하고, 기존 토큰 만료 기간이 지난 뒤 제거합니다. `SIGNUP_MODE`는 `pending` 또는 `immediate`, `ENABLE_RATE_LIMIT`는 `true` 또는 `false`만 허용합니다. `DB_ROOT_PASSWORD`는 Docker Compose의 MySQL 컨테이너에서 사용합니다. 애플리케이션 내부 검증 필수값은 `src/config/env.ts` 기준입니다.
+`MAIN_JWT_SECRET`, `PARTICIPANT_JWT_SECRET`, `REFRESH_JWT_SECRET`은 서로 다른 긴 무작위 값으로 설정합니다. `LEGACY_JWT_SECRET`은 기존 단일 JWT secret에서 분리 배포할 때만 임시로 설정하고, 기존 토큰 만료 기간이 지난 뒤 제거합니다. `SIGNUP_MODE`는 `pending` 또는 `immediate`, `ENABLE_RATE_LIMIT`는 `true` 또는 `false`만 허용합니다. `GENERAL_RATE_LIMIT_MAX`는 15분 동안 IP별로 허용할 일반 API 요청 수이며 생략하면 600입니다. `DB_ROOT_PASSWORD`는 Docker Compose의 MySQL 컨테이너에서 사용합니다. 애플리케이션 내부 검증 필수값은 `src/config/env.ts` 기준입니다.
 
 ## 개발 실행
 

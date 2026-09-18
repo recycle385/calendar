@@ -64,7 +64,7 @@ const createHandler = (message: string, code: string, retryAfter?: number) => {
 export const rateLimiter: RateLimitRequestHandler = rateLimit({
   ...commonConfig,
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: env.GENERAL_RATE_LIMIT_MAX,
   store: createRedisStore('general'),
   handler: createHandler(
     '요청 제한을 초과했습니다. 잠시 후 다시 시도해주세요.',
