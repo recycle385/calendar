@@ -107,15 +107,20 @@ export function VoteCalendar({ disabled, draft, enabledDates, participantsCount,
           const availableCount = status?.votes.filter((vote) => vote.vote_type === 'available').length ?? 0
           const enabled = Boolean(cell.inMonth && status)
           const heatLevel = getAvailabilityHeatLevel(availableCount, participantsCount)
+          const unavailableClass = !enabled
+            ? cell.inMonth
+              ? '!bg-[#e5e9ef] !text-[#7d8999] cursor-not-allowed'
+              : '!bg-[#f0f2f5] !text-[#a5afbc] cursor-not-allowed'
+            : ''
 
           return (
             <button
               type="button"
               key={cell.date}
               disabled={disabled || !enabled}
-              aria-label={`${cell.date}${selected ? ` ${voteTypeLabel[selected]}` : ''}`}
+              aria-label={`${cell.date}${enabled ? selected ? ` ${voteTypeLabel[selected]}` : '' : ' 투표 불가'}`}
               aria-pressed={Boolean(selected)}
-              className={`relative grid min-h-16 min-w-0 content-center justify-items-center gap-[3px] border-0 border-r border-b border-[#edf1f6] text-[13px] text-[#526b8e] nth-[7n]:border-r-0 max-[520px]:min-h-[50px] ${heatClass[heatLevel]} ${cell.inMonth ? '' : '!bg-[#fbfcfe] !text-[#bcc7d5]'} ${enabled ? 'cursor-pointer hover:!bg-[#f4f8ff]' : ''} ${selectedDate === cell.date ? 'z-[1] rounded-lg outline-2 -outline-offset-2 outline-brand-500' : ''} ${selected ? ownVoteClass[selected] : ''}`}
+              className={`relative grid min-h-16 min-w-0 content-center justify-items-center gap-[3px] border-0 border-r border-b border-[#edf1f6] text-[13px] text-[#526b8e] nth-[7n]:border-r-0 max-[520px]:min-h-[50px] ${heatClass[heatLevel]} ${unavailableClass} ${enabled ? 'cursor-pointer hover:!bg-[#f4f8ff]' : ''} ${selectedDate === cell.date ? 'z-[1] rounded-lg outline-2 -outline-offset-2 outline-brand-500' : ''} ${selected ? ownVoteClass[selected] : ''}`}
               onClick={() => {
                 onSelectDate(cell.date)
                 dispatch({ type: 'SELECT', date: cell.date, voteType: tool })
@@ -132,6 +137,7 @@ export function VoteCalendar({ disabled, draft, enabledDates, participantsCount,
         <span><i className="bg-[#70d5a2]" /> 많이 가능</span>
         <span><i className="bg-[#ccefdc]" /> 일부 가능</span>
         <span><i className="bg-[#e8edf4]" /> 의견 없음</span>
+        <span><i className="bg-[#aeb8c5]" /> 투표 불가</span>
         <span className="ml-auto">숫자는 ‘가능’으로 선택한 인원입니다.</span>
       </div>
     </div>
