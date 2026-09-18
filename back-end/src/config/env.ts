@@ -31,7 +31,19 @@ interface EnvConfig {
   SIGNUP_MODE: 'pending' | 'immediate';
   DB_CONNECTION_LIMIT: number;
   ENABLE_RATE_LIMIT: boolean;
+  GENERAL_RATE_LIMIT_MAX: number;
   HOST_ACCESS_TOKEN?: string;
+}
+
+function parsePositiveIntegerEnv(key: string, fallback: number): number {
+  const rawValue = process.env[key];
+  const value = rawValue === undefined || rawValue === '' ? fallback : Number(rawValue);
+
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`${key}는 1 이상의 정수여야 합니다. 현재 값: ${rawValue}`);
+  }
+
+  return value;
 }
 
 function parseBooleanEnv(key: string): boolean {
@@ -93,6 +105,7 @@ function validateEnv(): EnvConfig {
   const connectionLimit = Number(process.env.DB_CONNECTION_LIMIT);
   const signupMode = parseSignupMode();
   const enableRateLimit = parseBooleanEnv('ENABLE_RATE_LIMIT');
+  const generalRateLimitMax = parsePositiveIntegerEnv('GENERAL_RATE_LIMIT_MAX', 600);
 
   if (!Number.isInteger(connectionLimit) || connectionLimit <= 0) {
     throw new Error(
@@ -121,6 +134,7 @@ function validateEnv(): EnvConfig {
     SIGNUP_MODE: signupMode,
     DB_CONNECTION_LIMIT: connectionLimit,
     ENABLE_RATE_LIMIT: enableRateLimit,
+    GENERAL_RATE_LIMIT_MAX: generalRateLimitMax,
     HOST_ACCESS_TOKEN: process.env.HOST_ACCESS_TOKEN,
   };
 }

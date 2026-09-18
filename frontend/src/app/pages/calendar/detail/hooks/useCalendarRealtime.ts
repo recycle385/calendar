@@ -2,12 +2,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { removeParticipantToken } from '../../../../../domains/participant'
+import type { DateVoteStatus } from '../../../../../domains/vote'
 import { createCalendarSocket } from '../../../../../shared/socket/socketClient'
 import {
+  applyRealtimeVoteData,
   clearDeletedCalendarData,
   refreshCalendarData,
   refreshParticipantData,
-  refreshVoteData,
 } from '../../../../cache/calendarCache'
 
 export interface OnlineCalendarUser {
@@ -31,6 +32,7 @@ interface CalendarRealtimeState {
 
 interface VoteUpdatedEvent {
   participantNickname: string
+  voteStatus: DateVoteStatus[]
 }
 
 function isOnlineUser(value: unknown): value is OnlineCalendarUser {
@@ -42,9 +44,11 @@ function isOnlineUser(value: unknown): value is OnlineCalendarUser {
 
 export function parseVoteUpdatedEvent(value: unknown): VoteUpdatedEvent | null {
   if (!value || typeof value !== 'object') return null
-  const participantNickname = (value as { participantNickname?: unknown }).participantNickname
-  return typeof participantNickname === 'string' && participantNickname.trim()
-    ? { participantNickname }
+  const payload = value as { participantNickname?: unknown; voteStatus?: unknown }
+  return typeof payload.participantNickname === 'string'
+    && payload.participantNickname.trim()
+    && Array.isArray(payload.voteStatus)
+    ? { participantNickname: payload.participantNickname, voteStatus: payload.voteStatus as DateVoteStatus[] }
     : null
 }
 
@@ -97,13 +101,13 @@ export function useCalendarRealtime(
         setVoteNotification({ id: notificationSequence, nickname: event.participantNickname })
         notificationTimer = setTimeout(() => setVoteNotification(null), 4400)
       }
-      void refreshVoteData(queryClient, slug, participantUuid)
+      if (event) void applyRealtimeVoteData(queryClient, slug, event.voteStatus)
     }
     const handleCalendarUpdated = () => {
       void refreshCalendarData(queryClient, slug, participantUuid)
     }
     const handleParticipantsUpdated = () => {
-      void refreshParticipantData(queryClient, slug, participantUuid)
+      void refreshParticipantData(queryClient, slug)
     }
     const handleCalendarClosed = () => {
       setIsClosed(true)
@@ -125,7 +129,6 @@ export function useCalendarRealtime(
         const others = (current ?? []).filter((item) => item.sub !== user.sub)
         return [...others, user]
       })
-      void refreshParticipantData(queryClient, slug, participantUuid)
     }
     const handleUserOffline = (user: unknown) => {
       if (!user || typeof user !== 'object' || typeof (user as { sub?: unknown }).sub !== 'string') return

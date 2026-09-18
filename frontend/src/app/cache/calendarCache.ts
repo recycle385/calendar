@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import { calendarKeys } from '../../domains/calendar'
 import { participantKeys } from '../../domains/participant'
-import { voteKeys } from '../../domains/vote'
+import { voteKeys, type DateVoteStatus, type GetVoteStatusResponse } from '../../domains/vote'
 
 export function refreshVoteData(queryClient: QueryClient, slug: string, participantUuid: string) {
   return Promise.all([
@@ -12,11 +12,33 @@ export function refreshVoteData(queryClient: QueryClient, slug: string, particip
   ])
 }
 
-export function refreshParticipantData(queryClient: QueryClient, slug: string, participantUuid: string) {
+export function refreshParticipantData(queryClient: QueryClient, slug: string) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: participantKeys.list(slug) }),
     queryClient.invalidateQueries({ queryKey: voteKeys.status(slug) }),
-    queryClient.invalidateQueries({ queryKey: voteKeys.participant(slug, participantUuid) }),
+  ])
+}
+
+export function applyRealtimeVoteData(
+  queryClient: QueryClient,
+  slug: string,
+  voteStatus: DateVoteStatus[],
+) {
+  const statusKey = voteKeys.status(slug)
+  const currentStatus = queryClient.getQueryData<GetVoteStatusResponse>(statusKey)
+
+  if (currentStatus) {
+    queryClient.setQueryData<GetVoteStatusResponse>(statusKey, {
+      ...currentStatus,
+      voteStatus,
+    })
+  }
+
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: participantKeys.list(slug) }),
+    ...(currentStatus
+      ? []
+      : [queryClient.invalidateQueries({ queryKey: statusKey })]),
   ])
 }
 
