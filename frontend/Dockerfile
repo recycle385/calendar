@@ -18,7 +18,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 ENV BACKEND_UPSTREAM=backend:3000 \
     DOMAIN=localhost \
-    NGINX_ENVSUBST_FILTER=^(DOMAIN|BACKEND_UPSTREAM)$
+    TRAFFIC_DASHBOARD_PATH=configure-private-path/traffic \
+    NGINX_ENVSUBST_FILTER=^(DOMAIN|BACKEND_UPSTREAM|TRAFFIC_DASHBOARD_PATH)$
 
 EXPOSE 80 443
 

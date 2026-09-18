@@ -6,9 +6,16 @@ PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 ENV_FILE="${DEPLOY_ENV_FILE:-$PROJECT_ROOT/deploy/.env.production}"
 COMPOSE_FILE="$PROJECT_ROOT/compose.production.yml"
 IMAGE_TAG="${1:-}"
+TRAFFIC_AUTH_FILE="$PROJECT_ROOT/deploy/nginx/secrets/.htpasswd"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "배포 환경 파일이 없습니다: $ENV_FILE" >&2
+  exit 1
+fi
+
+if [[ ! -s "$TRAFFIC_AUTH_FILE" ]]; then
+  echo "접속 통계 대시보드 인증 파일이 없습니다: $TRAFFIC_AUTH_FILE" >&2
+  echo "먼저 ./deploy/scripts/setup-traffic-dashboard-auth.sh 를 실행하세요." >&2
   exit 1
 fi
 
@@ -25,6 +32,13 @@ read_env() {
 DOMAIN="$(read_env DOMAIN)"
 if [[ -z "$DOMAIN" ]]; then
   echo "DOMAIN이 설정되지 않았습니다." >&2
+  exit 1
+fi
+
+TRAFFIC_DASHBOARD_PATH="$(read_env TRAFFIC_DASHBOARD_PATH)"
+if [[ ! "$TRAFFIC_DASHBOARD_PATH" =~ ^[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)+$ ]]; then
+  echo "TRAFFIC_DASHBOARD_PATH는 슬래시로 구분된 두 개 이상의 안전한 경로여야 합니다." >&2
+  echo "앞뒤 슬래시는 넣지 마세요." >&2
   exit 1
 fi
 
@@ -47,7 +61,7 @@ update_image_tag "$IMAGE_TAG"
 compose=(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE")
 
 echo "[$IMAGE_TAG] 프론트엔드와 백엔드 이미지를 받습니다."
-"${compose[@]}" pull frontend backend
+"${compose[@]}" pull frontend backend goaccess
 
 echo "컨테이너를 새 이미지로 교체합니다."
 "${compose[@]}" up -d --remove-orphans
@@ -66,7 +80,7 @@ for attempt in {1..40}; do
   if [[ "$attempt" -eq 40 ]]; then
     echo "제한 시간 안에 서비스가 정상 상태가 되지 않았습니다." >&2
     "${compose[@]}" ps >&2
-    "${compose[@]}" logs --tail 100 backend frontend >&2
+    "${compose[@]}" logs --tail 100 backend frontend goaccess >&2
     exit 1
   fi
 

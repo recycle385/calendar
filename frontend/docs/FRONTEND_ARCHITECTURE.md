@@ -82,8 +82,8 @@ Zustand는 필수 도구가 아니다. 실제 화면 간 클라이언트 상태 
 
 ## 기술 선택과 실행 준비
 
-명세에서 정한 도구는 React + TypeScript, TanStack Query, Socket.IO client, React Hook Form + Zod이다. 기존 프론트 설정이 있다면 먼저 확인한다.
+현재 구현은 React 19 + TypeScript, Vite 7, React Router 7, TanStack Query 5, Socket.IO client, React Hook Form + Zod, Tailwind CSS 4, Vitest와 npm을 사용한다. 페이지 스타일은 Tailwind 유틸리티로 작성하고 공통 토큰·전역 기본값·애니메이션은 `src/shared/styles/tailwind.css`에서 관리한다.
 
-빌드 도구·라우터·스타일링/컴포넌트 도구·테스트 도구·패키지 관리자는 아직 이 문서에서 확정하지 않는다. 최초 앱 구성 작업에서 각각 한 가지 방식을 결정하고 frontend README에 선택 근거, 개발 실행, typecheck, 관련 테스트, production build 명령을 기록한다. 실행되지 않은 명령을 검증 완료로 기록하지 않는다.
+개발 서버는 `npm run dev`, 타입 검사는 `npm run typecheck`, 회귀 테스트는 `npm test`, production build는 `npm run build`로 실행한다. 작업 범위에 맞는 검증을 실행하고 실행하지 않은 명령을 완료로 기록하지 않는다.
 
 API/Socket 주소와 공개 설정은 프론트 환경 변수로 분리한다. 백엔드 비밀키나 운영자 토큰을 프론트 설정에 포함하지 않는다. 로컬 origin·credentials·OAuth 복귀 주소의 조건은 계약 문서를 따른다.

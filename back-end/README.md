@@ -12,7 +12,7 @@
 - Validation: Joi
 - Docs: Swagger UI
 - Test: Jest, Supertest, socket.io-client
-- Infra: Docker, Docker Compose, PM2
+- Infra: Docker, Docker Compose
 
 ## 주요 기능
 
@@ -55,7 +55,7 @@ npm install
 필수 환경 변수는 `.env` 또는 테스트 환경의 `.env.test`에 설정합니다.
 
 ```env
-PORT=4000
+PORT=3000
 NODE_ENV=development
 
 MAIN_JWT_SECRET=...
@@ -76,8 +76,8 @@ DB_CONNECTION_LIMIT=10
 
 REDIS_URL=redis://127.0.0.1:6379
 
-CLIENT_URL=http://localhost:3000
-BACKEND_URL=http://localhost:4000
+CLIENT_URL=http://localhost:8080
+BACKEND_URL=http://localhost:3000
 
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
@@ -111,20 +111,16 @@ npm run build
 npm run start
 ```
 
-`npm run build`는 TypeScript를 `dist`로 컴파일합니다. `npm run start`는 PM2로 `dist/web.js`를 `tooniz` 이름으로 실행합니다.
-
-```bash
-npm run reload
-npm run stop
-```
+`npm run build`는 TypeScript를 `dist`로 컴파일합니다. `npm run start`는 Node.js로 `dist/web.js`를 실행합니다. 운영 환경은 저장소 루트의 `compose.production.yml`과 [배포 가이드](../deploy/README.md)를 사용합니다.
 
 ## 테스트
 
-테스트용 MySQL/Redis는 `docker-compose.test.yml` 기준으로 각각 `3307`, `6380` 포트를 사용합니다.
+테스트용 MySQL/Redis는 `docker-compose.ci.yml` 기준으로 각각 `3307`, `6380` 포트를 사용합니다.
 
 ```bash
-docker compose -f docker-compose.test.yml up -d db redis
+docker compose -f docker-compose.ci.yml up -d --wait
 npm test
+docker compose -f docker-compose.ci.yml down --volumes
 ```
 
 Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실행합니다.
@@ -161,6 +157,7 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 | --- | --- | --- | --- |
 | POST | `/api/v1/calendars/:slug/participants` | 선택 UserAuth | 참가자 등록 |
 | POST | `/api/v1/calendars/:slug/participants/login` | 선택 UserAuth | 참가자 로그인 |
+| POST | `/api/v1/calendars/:slug/participants/guest-entry` | 없음 | 닉네임 기준 비회원 신규 참여 또는 비밀번호 재입장 |
 | GET | `/api/v1/calendars/:slug/participants` | 없음 | 참가자 및 투표 현황 조회 |
 | GET | `/api/v1/calendars/:slug/participants/reconciliation` | UserAuth + `X-Participant-Token` | 익명 게스트와 현재 계정 참가 정보 비교 |
 | POST | `/api/v1/calendars/:slug/participants/reconciliation` | UserAuth + `X-Participant-Token` | 계정·게스트 참가 및 투표 기록 정리 |
@@ -216,7 +213,7 @@ Jest 설정은 `jest.config.js`에 있으며 `src/__tests__/**/*.test.ts`를 실
 Socket.IO는 HTTP 서버 위에서 초기화되며 `websocket` transport를 사용합니다. 연결 시 참가자 토큰이 필요합니다.
 
 ```ts
-io("http://localhost:4000", {
+io("http://localhost:3000", {
   transports: ["websocket"],
   auth: { token: participantToken },
 });
@@ -237,14 +234,15 @@ io("http://localhost:4000", {
 
 ## Cron 작업
 
-서버는 환경 설정을 읽은 뒤 `TZ=UTC`를 적용하므로 로컬 실행과 Docker 실행 모두 UTC를 사용합니다. 로그 시각은 `2026-09-08T19:00:00.000Z`처럼 UTC가 명시된 ISO 8601 형식으로 기록합니다. 일정·공휴일의 날짜 전용 값에는 시간대 변환을 적용하지 않습니다.
+서버 timestamp와 로그는 UTC를 사용하고, 투표 가능 날짜와 크론 기준일은 `Asia/Seoul`의 날짜로 계산합니다. `YYYY-MM-DD` 날짜 전용 값에는 timestamp 시간대 변환을 적용하지 않습니다.
 
 `src/services/cron.service.ts`에서 서버 시작 시 다음 작업을 등록합니다.
 
-- 매일 UTC 19:00(한국 시간 다음 날 04:00): 만료 캘린더 삭제, 종료 캘린더 자동 마감, 공휴일 동기화 누락 복구 및 오래된 date-info 정리
-- 한국 시간 12월 1일 04:00(UTC 11월 30일 19:00): 공휴일 정보를 전체 갱신
-- 마감은 예약된 UTC 실행일의 다음 날짜를 기준으로, 한국 날짜 기준 전날까지 종료된 캘린더에 적용합니다. 공휴일 갱신 연도도 같은 기준일을 사용합니다.
-- 삭제는 기존 `종료일 + 30일`의 UTC 만료 시각을 유지하며, 해당 시각이 지난 뒤 첫 크론에서 처리합니다.
+- 매일 KST 00:00: 전날까지 투표 기간이 끝난 열린 캘린더를 자동 마감
+- 매일 KST 04:00: 보관 기간이 지난 캘린더 삭제, 공휴일 동기화 누락 복구, 오래된 date-info 정리
+- 매년 12월 1일 KST 04:00 유지보수에서는 공휴일 정보를 전체 갱신
+- 자동 마감은 대상 조회와 상태 변경을 같은 트랜잭션과 행 잠금 안에서 재확인하고 실제 마감된 캘린더에만 Socket 이벤트를 전송합니다.
+- 삭제는 서버가 계산한 `vote_end_date + 30일`의 `expired_at`이 지난 뒤 첫 04시 유지보수에서 처리합니다.
 
 ## 데이터베이스
 

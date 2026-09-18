@@ -15,7 +15,6 @@ export function FaqSection() {
         <div>
           <p className={eyebrowClass}>FAQ</p>
           <h2 className="mt-3 mb-0 text-[34px] font-black tracking-[-0.05em] text-ink-900 max-md:text-[28px]">자주 묻는 질문</h2>
-          <a className="mt-5 inline-flex text-[13px] font-bold text-brand-500" href="#faq">전체 보기 ›</a>
         </div>
         <div className="border-t border-[#dfe8f3]">
           {faqs.map(([question, answer]) => (

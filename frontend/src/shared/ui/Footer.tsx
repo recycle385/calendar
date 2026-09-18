@@ -19,7 +19,6 @@ export function Footer() {
           <Link className="hover:text-brand-500" to={PRIVACY_ROUTE}>
             개인정보처리방침
           </Link>
-          <span title="준비 중">문의하기</span>
           <a href="https://github.com/recycle385/calendar" target="_blank" rel="noreferrer">GitHub</a>
         </div>
         <div className="col-span-full border-t border-[#e7edf5] pt-5 text-[13px] max-md:col-span-1">
