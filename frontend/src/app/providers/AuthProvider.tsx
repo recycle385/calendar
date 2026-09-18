@@ -12,6 +12,7 @@ import {
   setAccessToken,
   setStoredAuthProfile,
   type AuthUser,
+  type RefreshTokenResponse,
 } from '../../domains/auth'
 import { calendarKeys } from '../../domains/calendar'
 import {
@@ -34,15 +35,13 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-let refreshInFlight: Promise<string> | null = null
+let refreshInFlight: Promise<RefreshTokenResponse> | null = null
 
 function restoreAccessToken() {
   if (!refreshInFlight) {
-    refreshInFlight = refreshAccessToken()
-      .then(({ accessToken }) => accessToken)
-      .finally(() => {
-        refreshInFlight = null
-      })
+    refreshInFlight = refreshAccessToken().finally(() => {
+      refreshInFlight = null
+    })
   }
 
   return refreshInFlight
@@ -105,13 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshForRequest = useCallback(async () => {
     const refreshEpoch = sessionEpoch.current
-    const token = await restoreAccessToken()
+    const refreshedSession = await restoreAccessToken()
     if (sessionEpoch.current !== refreshEpoch) {
       const currentToken = getAccessToken()
       if (!currentToken) throw new Error('인증 세션이 변경되었습니다.')
       return currentToken
     }
-    return applyAuthenticatedToken(token)
+    return applyAuthenticatedToken(refreshedSession.accessToken, refreshedSession.user)
   }, [applyAuthenticatedToken])
 
   useLayoutEffect(() => {
@@ -133,10 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const restoreEpoch = sessionEpoch.current
 
     void restoreAccessToken()
-      .then((token) => {
+      .then(({ accessToken: token, user: restoredUser }) => {
         if (!active || sessionEpoch.current !== restoreEpoch) return
 
-        applyAuthenticatedToken(token)
+        applyAuthenticatedToken(token, restoredUser)
       })
       .catch((error: unknown) => {
         if (!active || sessionEpoch.current !== restoreEpoch) return

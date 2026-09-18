@@ -32,4 +32,5 @@ export interface GoogleSignupResponse extends DefaultResponse {
 
 export interface RefreshTokenResponse extends DefaultResponse {
   accessToken: string
+  user: AuthUser
 }

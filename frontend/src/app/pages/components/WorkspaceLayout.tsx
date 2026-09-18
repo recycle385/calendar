@@ -31,7 +31,7 @@ export function WorkspaceLayout({
     <div className="min-h-screen bg-[linear-gradient(135deg,#f7fbff_0%,#fff_48%,#f4f9ff_100%)]">
       <Header
         isAuthenticated={status === "authenticated"}
-        displayName={user?.nickname}
+        displayName={user?.nickname || user?.email}
         onLogout={logout}
       />
       <main className={`mx-auto grid min-h-[calc(100vh-72px)] w-[min(1480px,calc(100%-48px))] gap-[26px] py-[30px] pb-12 max-[1180px]:grid-cols-[185px_minmax(0,1fr)] max-[800px]:block max-[800px]:w-[min(calc(100%-28px),680px)] max-[800px]:pt-[18px] max-[520px]:w-[calc(100%-24px)] ${hideRail ? "grid-cols-[minmax(0,1fr)_270px] max-[1180px]:grid-cols-1" : "grid-cols-[210px_minmax(0,1fr)_270px]"}`}>

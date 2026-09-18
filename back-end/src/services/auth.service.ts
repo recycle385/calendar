@@ -25,7 +25,7 @@ export interface IAuthService {
     signUpToken: string,
     isTermsAgreed: boolean
   ): Promise<{ tokenPair: TokenPair; user: User }>;
-  refreshToken(refreshToken: string): Promise<TokenPair>;
+  refreshToken(refreshToken: string): Promise<{ tokenPair: TokenPair; user: User }>;
   revokeRefreshToken(token: string): Promise<void>;
 }
 
@@ -97,9 +97,12 @@ export class AuthService implements IAuthService {
     return signupProcessResult;
   }
 
-  public async refreshToken(refreshToken: string): Promise<TokenPair> {
-    const newTokenPair = await this.tokenService.refreshAccessToken(refreshToken);
-    return newTokenPair;
+  public async refreshToken(refreshToken: string): Promise<{ tokenPair: TokenPair; user: User }> {
+    const tokenPair = await this.tokenService.refreshAccessToken(refreshToken);
+    const { sub: userUuid } = this.tokenService.verifyMainToken(tokenPair.accessToken);
+    const user = await this.userRepository.findUserInfoByUuid(userUuid);
+
+    return { tokenPair, user };
   }
 
   public async revokeRefreshToken(token: string) {

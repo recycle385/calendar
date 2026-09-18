@@ -149,8 +149,11 @@ export interface GoogleSignupResponse extends DefaultResponseDto {
  *             accessToken:
  *               type: string
  *               description: "새로 발급된 액세스 토큰"
- *           required: [accessToken]
+ *             user:
+ *               $ref: "#/components/schemas/SafeUserForDto"
+ *           required: [accessToken, user]
  */
 export interface RefreshTokenResponse extends DefaultResponseDto {
   accessToken: string;
+  user: SafeUserForDto;
 }

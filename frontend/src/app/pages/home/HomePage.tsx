@@ -17,7 +17,7 @@ export function HomePage() {
     <>
       <Header
         isAuthenticated={status === "authenticated"}
-        displayName={user?.nickname}
+        displayName={user?.nickname || user?.email}
         onLogout={logout}
       />
       <main>

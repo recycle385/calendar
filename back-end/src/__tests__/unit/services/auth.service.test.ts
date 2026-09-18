@@ -322,16 +322,31 @@ describe('AuthService 테스트', () => {
   describe('refreshToken', () => {
     const mockRefreshToken = 'valid-refresh-token';
     const mockTokenPair = { accessToken: 'acc', refreshToken: 'ref' };
+    const mockUser: User = {
+      id: 1,
+      user_uuid: 'uuid-123',
+      email: 'test@example.com',
+      oauth_provider: 'google',
+      oauth_id: 'google_123',
+      nickname: '테스터',
+      profile_image_url: 'image.jpg',
+      isTermsAgreed: true,
+      created_at: new Date('2026-09-18T00:00:00.000Z'),
+    };
 
-    it('[성공] 유효한 Refresh Token으로 새 토큰 페어를 반환', async () => {
+    it('[성공] 유효한 Refresh Token으로 새 토큰 페어와 회원 정보를 반환', async () => {
       mockTokenService.refreshAccessToken.mockResolvedValue(mockTokenPair);
+      mockTokenService.verifyMainToken.mockReturnValue({ sub: mockUser.user_uuid, role: 'host' });
+      mockUserRepository.findUserInfoByUuid.mockResolvedValue(mockUser);
 
       const result = await authService.refreshToken(mockRefreshToken);
 
       expect(mockTokenService.refreshAccessToken).toHaveBeenCalledWith(mockRefreshToken);
+      expect(mockTokenService.verifyMainToken).toHaveBeenCalledWith(mockTokenPair.accessToken);
+      expect(mockUserRepository.findUserInfoByUuid).toHaveBeenCalledWith(mockUser.user_uuid);
       expect(mockUserRepository.recordLogin).not.toHaveBeenCalled();
 
-      expect(result).toEqual(mockTokenPair);
+      expect(result).toEqual({ tokenPair: mockTokenPair, user: mockUser });
     });
 
     it('[실패] TokenService에서 발생한 에러 그대로 throw', async () => {

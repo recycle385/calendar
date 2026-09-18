@@ -7,7 +7,6 @@ import { REFRESH_TOKEN_EXPIRES_IN } from '../constants/token.constants';
 import { User } from '../models';
 import { IAuthService } from '../services/auth.service';
 import { OAuthCallbackResponse, SafeUser } from '../types/auth.types';
-import { TokenPair } from '../types/token.types';
 import { AppError, Errors } from '../utils/errors';
 import { toMilliseconds } from '../utils/timeConverter';
 
@@ -127,16 +126,17 @@ export class AuthController {
     }
 
     try {
-      const newTokenPair: TokenPair = await this.authService.refreshToken(refreshTokenCookie);
+      const { tokenPair, user } = await this.authService.refreshToken(refreshTokenCookie);
 
-      res.cookie('jwt', newTokenPair.refreshToken, {
+      res.cookie('jwt', tokenPair.refreshToken, {
         ...this.cookieOptions,
         maxAge: toMilliseconds(REFRESH_TOKEN_EXPIRES_IN),
       });
 
       return res.status(200).json({
         message: '토큰 갱신 성공',
-        accessToken: newTokenPair.accessToken,
+        accessToken: tokenPair.accessToken,
+        user: this.changeToSafeUser(user),
       });
     } catch (err) {
       // 저장소 장애(503)나 예상하지 못한 서버 오류에서는 유효할 수 있는 쿠키를 보존한다.
