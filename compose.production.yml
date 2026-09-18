@@ -143,6 +143,7 @@ services:
     restart: unless-stopped
     entrypoint: ['/bin/sh', '/etc/goaccess/generate-report.sh']
     environment:
+      LANG: ko_KR.UTF-8
       GOACCESS_REFRESH_SECONDS: ${GOACCESS_REFRESH_SECONDS:-300}
     volumes:
       - nginx_access_logs:/var/log/nginx/analytics:ro
