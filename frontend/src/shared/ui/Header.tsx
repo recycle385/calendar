@@ -56,7 +56,7 @@ export function Header({
           {isAuthenticated ? (
             <>
               <Link className="font-bold hover:text-brand-500" to="/calendars">
-                {displayName ?? "회원"}님
+                {displayName || "내 계정"}{displayName ? "님" : ""}
               </Link>
               <button
                 className="border-0 bg-transparent p-0 font-bold text-[#587195] hover:text-brand-500 disabled:cursor-wait disabled:opacity-60"
@@ -104,7 +104,7 @@ export function Header({
         {isAuthenticated ? (
           <>
             <Link to="/calendars" onClick={closeMobileMenu}>
-              {displayName ?? "회원"}님
+              {displayName || "내 계정"}{displayName ? "님" : ""}
             </Link>
             <Link
               className="mt-1 !justify-center !bg-brand-500 !text-white"

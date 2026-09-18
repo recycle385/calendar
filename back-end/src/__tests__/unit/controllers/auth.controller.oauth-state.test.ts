@@ -76,6 +76,42 @@ describe('AuthController OAuth state', () => {
 });
 
 describe('AuthController refresh cookie', () => {
+  it('갱신된 Access Token과 안전한 회원 정보를 함께 반환한다', async () => {
+    const authService = createMockAuthService();
+    authService.refreshToken.mockResolvedValue({
+      tokenPair: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' },
+      user: {
+        id: 1,
+        user_uuid: 'user-uuid',
+        email: 'member@example.com',
+        oauth_provider: 'google',
+        oauth_id: 'google-id',
+        nickname: '신준하',
+        profile_image_url: 'profile.webp',
+        isTermsAgreed: true,
+        created_at: new Date('2026-09-18T00:00:00.000Z'),
+      },
+    });
+
+    const response = await request(createTestApp(authService))
+      .post('/refresh')
+      .set('Cookie', 'jwt=valid-token')
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      message: '토큰 갱신 성공',
+      accessToken: 'new-access-token',
+      user: {
+        user_uuid: 'user-uuid',
+        email: 'member@example.com',
+        nickname: '신준하',
+      },
+    });
+    expect(response.body.user).not.toHaveProperty('id');
+    expect(response.body.user).not.toHaveProperty('oauth_id');
+    expect(response.headers['set-cookie']?.[0]).toContain('jwt=new-refresh-token');
+  });
+
   it('Redis 장애로 갱신이 503이면 기존 Refresh Token 쿠키를 지우지 않는다', async () => {
     const authService = createMockAuthService();
     authService.refreshToken.mockRejectedValue(Errors.ServiceUnavailable());
