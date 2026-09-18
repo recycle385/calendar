@@ -48,12 +48,6 @@ chmod 600 deploy/.env.production
 docker compose --env-file deploy/.env.production -f compose.production.yml config --quiet
 ```
 
-접속 통계 대시보드는 별도의 Basic Auth 인증 파일을 사용합니다. 최초 배포 전에 서버에서 다음 명령을 한 번 실행합니다. 생성되는 파일은 `deploy/nginx/secrets/.htpasswd`이며 Git에서 제외됩니다.
-
-```bash
-./deploy/scripts/setup-traffic-dashboard-auth.sh
-```
-
 Google OAuth에는 다음 주소를 운영 리디렉션 URI로 등록합니다.
 
 ```text
@@ -139,14 +133,4 @@ curl -fsS https://<DOMAIN>/healthz
 curl -fsS https://<DOMAIN>/api/v1/health/ready
 ```
 
-Nginx는 헬스체크, 정적 에셋, Socket.IO 요청을 통계에서 제외하고 쿼리 문자열·쿠키·요청 본문·Referer를 저장하지 않습니다. 캘린더 공유 코드와 참가자 UUID도 `:slug`, `:participant`로 치환합니다. 접근 시각, IP, 메서드, 정규화된 URL 경로, 프로토콜, 상태 코드, 응답 크기, User-Agent, 처리 시간만 `nginx_access_logs` 볼륨에 보관합니다. GoAccess 보고서에서는 IP 마지막 영역을 익명화하며 집계 DB와 생성된 HTML은 각각 `goaccess_data`, `goaccess_reports` 볼륨에 저장됩니다.
-
-필터링된 원본 접근 로그는 현재 자동 삭제하지 않고 유지하므로 서버 디스크 사용량을 정기적으로 확인합니다.
-
-```bash
-docker system df
-docker compose --env-file deploy/.env.production -f compose.production.yml exec frontend \
-  du -h /var/log/nginx/analytics/moim-access.log
-```
-
-Redis는 AOF `everysec`로 저장하며 MySQL·Redis·백엔드 로그·접속 통계는 named volume에 보관됩니다. Docker json 로그는 파일당 10MB, 최대 3개로 회전합니다. DB 볼륨과 백업 파일은 서로 대체 관계가 아니므로 둘 다 유지합니다.
+Redis는 AOF `everysec`로 저장하며 영속 데이터는 named volume에 보관됩니다. Docker json 로그는 파일당 10MB, 최대 3개로 회전합니다. DB 볼륨과 백업 파일은 서로 대체 관계가 아니므로 둘 다 유지합니다.
