@@ -33,6 +33,7 @@ mkdir -p "$AUTH_DIR"
 umask 077
 password_hash="$(printf '%s' "$password" | openssl passwd -apr1 -stdin)"
 printf '%s:%s\n' "$username" "$password_hash" > "$AUTH_FILE"
+chmod 0644 "$AUTH_FILE"
 
 unset password password_confirm password_hash
 echo "대시보드 인증 파일을 생성했습니다: $AUTH_FILE"
