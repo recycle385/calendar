@@ -6,10 +6,11 @@
 
 1. `main` 푸시 시 프론트엔드·백엔드 테스트를 병렬 실행합니다.
 2. 테스트 성공 후 두 Docker 이미지를 같은 전체 Git SHA로 태그해 GHCR에 올립니다.
-3. 서버에서 `deploy/scripts/deploy.sh <전체 Git SHA>`를 실행합니다.
-4. 스크립트가 `compose pull`, `compose up -d`, HTTPS 및 백엔드 readiness 확인을 차례로 수행합니다.
+3. GitHub Actions의 `Deploy production` 워크플로에서 배포할 전체 Git SHA를 선택합니다.
+4. 서버 저장소가 해당 SHA를 checkout한 뒤, 같은 SHA의 `deploy/scripts/deploy.sh`를 실행합니다.
+5. 스크립트가 `compose pull`, `compose up -d`, HTTPS 및 백엔드 readiness 확인을 차례로 수행합니다.
 
-GitHub Actions의 `Deploy production` 워크플로를 수동 실행해 3번을 SSH로 수행할 수도 있습니다.
+GitHub Actions에서는 production 배포를 직렬화하고, 서버 SSH 단계에서도 `flock`을 잡습니다. `deploy.sh`를 서버에서 직접 실행하는 경우에도 같은 lock을 사용하므로 Actions 배포와 수동 배포가 겹치지 않습니다.
 
 ## 1. 서버 준비
 
@@ -34,13 +35,13 @@ chmod 600 deploy/.env.production
 
 주요 설정은 다음 기준으로 채웁니다.
 
-| 구분 | 설정 |
-| --- | --- |
-| 이미지 | `GHCR_OWNER`, 전체 40자리 `IMAGE_TAG` |
-| 공개 주소 | `DOMAIN`, `CLIENT_URL`, `BACKEND_URL`을 같은 HTTPS origin으로 설정 |
-| 인증 | 서로 다른 JWT secret, `SESSION_SECRET`, Google OAuth ID·secret |
-| 저장소 | 운영용 MySQL root/user 비밀번호, 내부 호스트 `db`, `redis` 유지 |
-| 외부 데이터 | 공공데이터포털 서비스 키 |
+| 구분        | 설정                                                               |
+| ----------- | ------------------------------------------------------------------ |
+| 이미지      | `GHCR_OWNER`, 전체 40자리 `IMAGE_TAG`                              |
+| 공개 주소   | `DOMAIN`, `CLIENT_URL`, `BACKEND_URL`을 같은 HTTPS origin으로 설정 |
+| 인증        | 서로 다른 JWT secret, `SESSION_SECRET`, Google OAuth ID·secret     |
+| 저장소      | 운영용 MySQL root/user 비밀번호, 내부 호스트 `db`, `redis` 유지    |
+| 외부 데이터 | 공공데이터포털 서비스 키                                           |
 
 운영 값이 모두 준비되면 컨테이너를 띄우기 전에 Compose 해석 결과를 검증합니다. 출력에는 secret이 포함될 수 있으므로 로그나 이슈에 그대로 올리지 않습니다.
 
@@ -74,11 +75,17 @@ https://<DOMAIN>/auth/callback
 
 ## 4. 배포
 
-GHCR에 두 이미지가 모두 있는 SHA를 지정합니다.
+GHCR에 두 이미지가 모두 있는 전체 Git SHA를 `Deploy production` 워크플로에 입력합니다. 워크플로는 대상 SHA가 `main` 이력에 포함되는지 확인하고 서버 저장소를 같은 SHA로 checkout한 뒤 배포합니다.
+
+서버에서 직접 실행해야 한다면 배포 설정과 이미지가 같은 커밋을 사용하도록 먼저 대상 SHA를 checkout합니다.
 
 ```bash
-./deploy/scripts/deploy.sh 0123456789abcdef0123456789abcdef01234567
+git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main'
+git switch --detach <full-git-sha>
+./deploy/scripts/deploy.sh <full-git-sha>
 ```
+
+`deploy.sh`는 현재 checkout된 Git SHA와 이미지 태그가 다르면 배포를 거부합니다.
 
 백엔드는 시작 시 현재의 멱등 마이그레이션을 실행합니다. 스키마 변경은 이전 애플리케이션 버전과 호환되는 순서로 작성해야 하며, 마이그레이션 실패 시 배포 스크립트의 상태 확인도 실패합니다.
 
@@ -116,9 +123,13 @@ gzip -dc deploy/backups/calendar_db_<timestamp>.sql.gz \
 
 ## 6. 롤백
 
-애플리케이션 문제로 이전 버전이 필요하면 DB 스키마 호환성을 먼저 확인한 뒤, 정상 동작했던 전체 Git SHA로 같은 배포 스크립트를 다시 실행합니다.
+애플리케이션 문제로 이전 버전이 필요하면 DB 스키마 호환성을 먼저 확인한 뒤, 정상 동작했던 전체 Git SHA를 `Deploy production` 워크플로에 입력합니다. 워크플로가 해당 SHA의 배포 설정과 같은 SHA의 이미지를 사용합니다.
+
+서버에서 직접 롤백해야 한다면 동일하게 이전 SHA를 checkout한 뒤 배포합니다.
 
 ```bash
+git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main'
+git switch --detach <previous-full-git-sha>
 ./deploy/scripts/deploy.sh <previous-full-git-sha>
 ```
 

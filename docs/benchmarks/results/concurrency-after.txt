@@ -1,0 +1,51 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: k6/concurrency.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 20 max VUs, 40s max duration (incl. graceful stop):
+              * exact_concurrency: 1 iterations for each of 20 VUs (maxDuration: 10s, gracefulStop: 30s)
+
+
+Run                 [ 100% ] setup()
+exact_concurrency   [   0% ]
+
+Run                 [ 100% ] setup()
+exact_concurrency   [   0% ]
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 20      8.643928/s
+    checks_succeeded...: 100.00% 20 out of 20
+    checks_failed......: 0.00%   0 out of 20
+
+    ✓ 동시 투표 성공 (200)
+
+    HTTP
+    http_req_duration..............: avg=104.59ms min=27.31ms med=102.49ms max=146.44ms p(90)=134.57ms p(95)=139.8ms 
+      { expected_response:true }...: avg=104.59ms min=27.31ms med=102.49ms max=146.44ms p(90)=134.57ms p(95)=139.8ms 
+    http_req_failed................: 0.00% 0 out of 42
+    http_reqs......................: 42    18.15225/s
+
+    EXECUTION
+    iteration_duration.............: avg=119.64ms min=84.48ms med=116.57ms max=150.09ms p(90)=142.96ms p(95)=148.22ms
+    iterations.....................: 20    8.643928/s
+    vus............................: 0     min=0       max=0 
+    vus_max........................: 20    min=20      max=20
+
+    NETWORK
+    data_received..................: 52 kB 23 kB/s
+    data_sent......................: 16 kB 6.8 kB/s
+
+
+
+
+running (02.3s), 00/20 VUs, 20 complete and 0 interrupted iterations
+exact_concurrency ✓ [ 100% ] 20 VUs  00.2s/10s  20/20 iters, 1 per VU

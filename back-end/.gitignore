@@ -47,7 +47,6 @@ tree.txt
 results/
 docker-compose.test.yml
 hi.json
-k6/
 result.txt
 utc-time-unification-before-after.txt
 *.txt
@@ -55,3 +54,8 @@ utc-time-unification-before-after.txt
 
 
 frontMd/
+
+# k6 
+back-end/tests/k6/.env
+back-end/tests/k6/*.log
+back-end/tests/k6/results/
