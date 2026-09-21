@@ -28,6 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - run: npm run typecheck
       - run: npm test
 
   backend-test:
@@ -64,9 +65,9 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: back-end/package-lock.json
+      - run: npm ci
       - name: Start test dependencies
         run: docker compose -f docker-compose.ci.yml up -d --wait --wait-timeout 120
-      - run: npm ci
       - run: npm test
       - name: Show dependency logs on failure
         if: failure()
@@ -89,7 +90,7 @@ jobs:
             build_args: VITE_ASSET_BASE_URL=https://pub-e087bd56df154773817ccefb4b6fc042.r2.dev
           - name: backend
             context: ./back-end
-            build_args: ''
+            build_args: ""
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3

@@ -7,6 +7,20 @@ ENV_FILE="${DEPLOY_ENV_FILE:-$PROJECT_ROOT/deploy/.env.production}"
 COMPOSE_FILE="$PROJECT_ROOT/compose.production.yml"
 IMAGE_TAG="${1:-}"
 TRAFFIC_AUTH_FILE="$PROJECT_ROOT/deploy/nginx/secrets/.htpasswd"
+LOCK_FILE="${DEPLOY_LOCK_FILE:-/tmp/moim-production-deploy.lock}"
+
+if [[ "${DEPLOY_LOCK_HELD:-0}" != "1" ]]; then
+  if ! command -v flock >/dev/null 2>&1; then
+    echo "flock 명령을 찾을 수 없어 안전하게 배포를 잠글 수 없습니다." >&2
+    exit 1
+  fi
+
+  exec 9>"$LOCK_FILE"
+  if ! flock -n 9; then
+    echo "다른 배포가 이미 진행 중입니다." >&2
+    exit 1
+  fi
+fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "배포 환경 파일이 없습니다: $ENV_FILE" >&2
@@ -21,6 +35,15 @@ fi
 
 if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
   echo "이미지 태그에는 Git 전체 커밋 SHA(40자리 소문자 16진수)를 사용해야 합니다." >&2
+  exit 1
+fi
+
+CURRENT_SHA="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
+if [[ "$CURRENT_SHA" != "$IMAGE_TAG" ]]; then
+  echo "배포 설정의 Git SHA와 이미지 SHA가 일치하지 않습니다." >&2
+  echo "현재 설정: $CURRENT_SHA" >&2
+  echo "요청 이미지: $IMAGE_TAG" >&2
+  echo "대상 SHA를 checkout한 뒤 다시 배포하세요." >&2
   exit 1
 fi
 
