@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 
+import { env } from '../config/env';
 import { swaggerSets } from '../config/swagger';
 import {
   AUTH_ROUTES,
@@ -19,9 +20,9 @@ import { voteController } from '../containers/vote.container';
 import { createAuthRouter } from './auth.routes';
 import { createCalendarRouter } from './calendar.routes';
 import { createDateInfoRouter } from './dateInfo.routes';
+import { healthRouter } from './health.routes';
 import { createParticipantRouter } from './participant.routes';
 import { createVoteRouter } from './vote.routes';
-import { healthRouter } from './health.routes';
 
 const router = Router();
 const authRouter = createAuthRouter(authController);
@@ -37,6 +38,8 @@ router.use(DATE_INFO_ROUTES.BASE, dateInfoRouter);
 router.use(HEALTH_ROUTES.BASE, healthRouter);
 router.use(PARTICIPANT_ROUTES.BASE, participantRouter);
 router.use(VOTE_ROUTES.BASE, voteRouter);
-router.use(SWAGGER_ROUTES.BASE, swaggerUi.serve, swaggerRouter);
+if (env.NODE_ENV !== 'production') {
+  router.use(SWAGGER_ROUTES.BASE, swaggerUi.serve, swaggerRouter);
+}
 
 export default router;
