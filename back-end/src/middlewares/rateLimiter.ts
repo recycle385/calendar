@@ -88,7 +88,9 @@ export const authRateLimiter: RateLimitRequestHandler = rateLimit({
 const guestEntryKey = (req: Request) => {
   const ip = ipKeyGenerator(req.ip ?? 'unknown');
   const slug = String(req.params.slug ?? 'unknown');
-  const nickname = String(req.body?.nickname ?? '').trim().toLocaleLowerCase('ko-KR');
+  const nickname = String(req.body?.nickname ?? '')
+    .trim()
+    .toLocaleLowerCase('ko-KR');
   return `${ip}:${slug}:${nickname}`;
 };
 
@@ -129,5 +131,38 @@ export const strictRateLimiter: RateLimitRequestHandler = rateLimit({
     '요청이 너무 빈번합니다. 1분 후 다시 시도해주세요.',
     'STRICT_RATE_LIMIT_EXCEEDED',
     60
+  ),
+});
+
+const analysisParticipantKey = (req: Request) => {
+  const participantUuid = req.participantUuid ?? 'unknown';
+  const slug = String(req.params.slug ?? req.calendarSlug ?? 'unknown');
+
+  return `${slug}:${participantUuid}`;
+};
+
+export const analysisMinuteRateLimiter: RateLimitRequestHandler = rateLimit({
+  ...commonConfig,
+  windowMs: 60 * 1000,
+  max: 3,
+  keyGenerator: analysisParticipantKey,
+  store: createRedisStore('analysis-minute'),
+  handler: createHandler(
+    '질문을 너무 빠르게 보내고 있어요. 잠시 후 다시 시도해주세요.',
+    'ANALYSIS_MINUTE_RATE_LIMIT_EXCEEDED',
+    60
+  ),
+});
+
+export const analysisHourlyRateLimiter: RateLimitRequestHandler = rateLimit({
+  ...commonConfig,
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  keyGenerator: analysisParticipantKey,
+  store: createRedisStore('analysis-hour'),
+  handler: createHandler(
+    '질문 사용량이 많아요. 잠시 후 다시 이용해주세요.',
+    'ANALYSIS_HOURLY_RATE_LIMIT_EXCEEDED',
+    3600
   ),
 });

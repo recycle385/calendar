@@ -47,7 +47,15 @@ if (env.NODE_ENV !== 'production') {
 export const sanitizeData = (data: any): any => {
   if (!data || typeof data !== 'object') return data;
 
-  const sensitiveFields = ['password', 'token', 'accessToken', 'refreshToken', 'secret'];
+  const sensitiveFields = [
+    'password',
+    'token',
+    'accessToken',
+    'refreshToken',
+    'secret',
+    'question',
+    'prompt',
+  ];
   const sanitized = { ...data };
 
   for (const key of Object.keys(sanitized)) {

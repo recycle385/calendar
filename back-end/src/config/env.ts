@@ -27,12 +27,18 @@ interface EnvConfig {
   GET_REST_DE_INFO: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  GMAIL_CLIENT_ID?: string;
+  GMAIL_CLIENT_SECRET?: string;
+  GMAIL_REFRESH_TOKEN?: string;
+  GMAIL_SENDER_EMAIL?: string;
   BACKEND_URL: string;
   SIGNUP_MODE: 'pending' | 'immediate';
   DB_CONNECTION_LIMIT: number;
   ENABLE_RATE_LIMIT: boolean;
   GENERAL_RATE_LIMIT_MAX: number;
   HOST_ACCESS_TOKEN?: string;
+  GROQ_API_KEY?: string;
+  GROQ_MODEL: string;
 }
 
 function parsePositiveIntegerEnv(key: string, fallback: number): number {
@@ -130,12 +136,18 @@ function validateEnv(): EnvConfig {
     GET_REST_DE_INFO: process.env.GET_REST_DE_INFO!,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
+    GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID,
+    GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET,
+    GMAIL_REFRESH_TOKEN: process.env.GMAIL_REFRESH_TOKEN,
+    GMAIL_SENDER_EMAIL: process.env.GMAIL_SENDER_EMAIL,
     BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:4000',
     SIGNUP_MODE: signupMode,
     DB_CONNECTION_LIMIT: connectionLimit,
     ENABLE_RATE_LIMIT: enableRateLimit,
     GENERAL_RATE_LIMIT_MAX: generalRateLimitMax,
     HOST_ACCESS_TOKEN: process.env.HOST_ACCESS_TOKEN,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
+    GROQ_MODEL: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
   };
 }
 
