@@ -73,3 +73,7 @@ export const HEALTH_ROUTES = {
   LIVE: '/live',
   READY: '/ready',
 };
+
+export const ANALYSIS_ROUTES = {
+  BASE: '/calendars/:slug/analysis',
+};

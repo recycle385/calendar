@@ -33,6 +33,8 @@ interface EnvConfig {
   ENABLE_RATE_LIMIT: boolean;
   GENERAL_RATE_LIMIT_MAX: number;
   HOST_ACCESS_TOKEN?: string;
+  GROQ_API_KEY?: string;
+  GROQ_MODEL: string;
 }
 
 function parsePositiveIntegerEnv(key: string, fallback: number): number {
@@ -136,6 +138,8 @@ function validateEnv(): EnvConfig {
     ENABLE_RATE_LIMIT: enableRateLimit,
     GENERAL_RATE_LIMIT_MAX: generalRateLimitMax,
     HOST_ACCESS_TOKEN: process.env.HOST_ACCESS_TOKEN,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
+    GROQ_MODEL: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
   };
 }
 
