@@ -59,3 +59,6 @@ frontMd/
 back-end/tests/k6/.env
 back-end/tests/k6/*.log
 back-end/tests/k6/results/
+
+
+scripts/

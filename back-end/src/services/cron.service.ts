@@ -5,16 +5,25 @@ import { logger } from '../middlewares/logger';
 import { dateKindMap, SafeDateInfo } from '../models/DateInfo';
 import { ICalendarRepository } from '../repositories/calendar.repository';
 import { IDateInfoRepository } from '../repositories/dateInfo.repository';
+import { IParticipantRepository } from '../repositories/participant.repository';
+import { IUserRepository } from '../repositories/user.repository';
 import { getIO } from '../sockets';
 import { dateKindCodeToDateKind } from '../utils/dateKindCodeChanger';
 import { todayDateOnlyKst } from '../utils/dateOnly';
 import { getSpcdeInfoUrl } from '../utils/Spcde.api';
+import { MailService } from './mail.service';
+import { IVoteService } from './vote.service';
 
 export class CronService {
   private holidayUpdateInFlight?: Promise<void>;
+
   constructor(
     private calendarRepository: ICalendarRepository,
-    private dateInfoRepository: IDateInfoRepository
+    private dateInfoRepository: IDateInfoRepository,
+    private voteService?: IVoteService,
+    private userRepository?: IUserRepository,
+    private participantRepository?: IParticipantRepository,
+    private mailService?: MailService
   ) {}
 
   public start() {
@@ -118,12 +127,38 @@ export class CronService {
 
       logger.info(`[Cron] 투표 기간이 끝난 ${closedCalendars.length}개의 캘린더를 마감`);
 
-      if (!emitRealtime) return;
-
-      const io = getIO();
-
       for (const calendar of closedCalendars) {
+        if (
+          this.voteService &&
+          this.userRepository &&
+          this.participantRepository &&
+          this.mailService
+        ) {
+          try {
+            const [owner, voteStatus, participants] = await Promise.all([
+              this.userRepository.findUserInfoById(calendar.owner_id),
+              this.voteService.getVoteStatusByCalendar(calendar.id),
+              this.participantRepository.findAllByCalendarId(calendar.id),
+            ]);
+
+            await this.mailService.sendCalendarClosedEmail({
+              to: owner.email,
+              calendar,
+              voteStatus,
+              participantsCount: participants.length,
+            });
+          } catch (error) {
+            // 메일 전송 실패가 캘린더 마감 상태나 실시간 종료 알림에 영향을 주지 않게 분리한다.
+            logger.error(`[Cron] 마감 메일 발송 실패: ${calendar.slug}`, error);
+          }
+        }
+
+        if (!emitRealtime) {
+          continue;
+        }
+
         try {
+          const io = getIO();
           io.to(calendar.slug).emit('calendarClosed', {
             message: '투표 기간이 종료되어 자동 마감되었습니다.',
             isClosed: true,
@@ -131,7 +166,7 @@ export class CronService {
 
           logger.info(`[Cron] 마감 완료: ${calendar.slug}`);
         } catch (error) {
-          logger.error(`[Cron] 마감 실패: ${calendar.slug}`, error);
+          logger.error(`[Cron] 실시간 마감 알림 실패: ${calendar.slug}`, error);
         }
       }
     } catch (err) {
