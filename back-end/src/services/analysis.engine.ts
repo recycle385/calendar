@@ -19,11 +19,18 @@ function statusFor(
   return date.votes.get(participantId) ?? 'no_vote';
 }
 
-function matchesStatus(actual: Exclude<AnalysisVoteStatus, 'responded'>, expected: AnalysisVoteStatus[]) {
+function matchesStatus(
+  actual: Exclude<AnalysisVoteStatus, 'responded'>,
+  expected: AnalysisVoteStatus[]
+) {
   return expected.some((item) => (item === 'responded' ? actual !== 'no_vote' : item === actual));
 }
 
-function applyOperator(left: number, operator: NonNullable<AnalysisCondition['operator']>, right: number) {
+function applyOperator(
+  left: number,
+  operator: NonNullable<AnalysisCondition['operator']>,
+  right: number
+) {
   switch (operator) {
     case 'eq':
       return left === right;
@@ -48,13 +55,18 @@ function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
 }
 
-function resolveParticipantScope(snapshot: AnalysisSnapshot, plan: AnalysisPlan): AnalysisSnapshotParticipant[] {
+function resolveParticipantScope(
+  snapshot: AnalysisSnapshot,
+  plan: AnalysisPlan
+): AnalysisSnapshotParticipant[] {
   const byAlias = new Map(snapshot.participants.map((item) => [item.alias, item]));
   const include = unique(plan.participantScope.include);
   const exclude = new Set(unique(plan.participantScope.exclude));
 
   let scoped = include.length
-    ? include.map((alias) => byAlias.get(alias)).filter((item): item is AnalysisSnapshotParticipant => Boolean(item))
+    ? include
+        .map((alias) => byAlias.get(alias))
+        .filter((item): item is AnalysisSnapshotParticipant => Boolean(item))
     : [...snapshot.participants];
 
   scoped = scoped.filter((item) => !exclude.has(item.alias));
@@ -92,7 +104,10 @@ function countsForDate(date: AnalysisSnapshotDate, participants: AnalysisSnapsho
   return counts;
 }
 
-function countsForParticipant(participant: AnalysisSnapshotParticipant, dates: AnalysisSnapshotDate[]) {
+function countsForParticipant(
+  participant: AnalysisSnapshotParticipant,
+  dates: AnalysisSnapshotDate[]
+) {
   const counts = {
     available: 0,
     maybe: 0,
@@ -131,7 +146,8 @@ function conditionOnDate(
     if (!condition.operator || condition.value === null) return false;
     const counts = countsForDate(date, participants);
     const numerator = unique(condition.statuses).reduce((sum, status) => sum + counts[status], 0);
-    const denominator = condition.denominator === 'responded' ? counts.responded : participants.length;
+    const denominator =
+      condition.denominator === 'responded' ? counts.responded : participants.length;
     if (denominator <= 0) return false;
     matched = applyOperator((numerator / denominator) * 100, condition.operator, condition.value);
   } else {
@@ -184,10 +200,7 @@ function metricValue(
   return item.counts[metric];
 }
 
-function sortDates(
-  rows: AnalysisDateResult[],
-  output: AnalysisOutput
-): AnalysisDateResult[] {
+function sortDates(rows: AnalysisDateResult[], output: AnalysisOutput): AnalysisDateResult[] {
   const metric = output.metric ?? 'default_rank';
   const direction = output.direction ?? 'max';
 
@@ -243,7 +256,9 @@ function selectWithTies<T extends AnalysisDateResult | AnalysisParticipantResult
   const boundary = limited[limited.length - 1];
   if (!boundary) return { rows: limited, selected, ties: [] };
   const boundaryValue = metricValue(boundary, metric);
-  const expanded = rows.filter((item, index) => index < limit || metricValue(item, metric) === boundaryValue);
+  const expanded = rows.filter(
+    (item, index) => index < limit || metricValue(item, metric) === boundaryValue
+  );
   const selectedValue = metricValue(selected, metric);
   const topTies = rows.filter((item) => metricValue(item, metric) === selectedValue);
   return { rows: expanded, selected, ties: topTies.length > 1 ? topTies : [] };
@@ -254,14 +269,20 @@ export function validateAnalysisPlanDomain(plan: AnalysisPlan, snapshot: Analysi
   if (!plan.target || !plan.output.kind) throw new Error('분석 대상 또는 출력 형식이 없습니다');
 
   const participantAliases = new Set(snapshot.participants.map((item) => item.alias));
-  const exactDates = new Set(snapshot.dates.filter((item) => item.isEnabled).map((item) => item.date));
+  const exactDates = new Set(
+    snapshot.dates.filter((item) => item.isEnabled).map((item) => item.date)
+  );
 
   for (const alias of [...plan.participantScope.include, ...plan.participantScope.exclude]) {
-    if (!participantAliases.has(alias)) throw new Error(`현재 캘린더에 없는 참가자 참조입니다: ${alias}`);
+    if (!participantAliases.has(alias))
+      throw new Error(`현재 캘린더에 없는 참가자 참조입니다: ${alias}`);
   }
 
-  const overlap = plan.participantScope.include.filter((alias) => plan.participantScope.exclude.includes(alias));
-  if (overlap.length > 0) throw new Error(`동시에 포함/제외된 참가자가 있습니다: ${overlap.join(', ')}`);
+  const overlap = plan.participantScope.include.filter((alias) =>
+    plan.participantScope.exclude.includes(alias)
+  );
+  if (overlap.length > 0)
+    throw new Error(`동시에 포함/제외된 참가자가 있습니다: ${overlap.join(', ')}`);
 
   for (const date of plan.dateScope.dates) {
     normalizeDateOnly(date);
@@ -269,7 +290,11 @@ export function validateAnalysisPlanDomain(plan: AnalysisPlan, snapshot: Analysi
   }
   if (plan.dateScope.from) normalizeDateOnly(plan.dateScope.from);
   if (plan.dateScope.to) normalizeDateOnly(plan.dateScope.to);
-  if (plan.dateScope.from && plan.dateScope.to && compareDateOnly(plan.dateScope.from, plan.dateScope.to) > 0) {
+  if (
+    plan.dateScope.from &&
+    plan.dateScope.to &&
+    compareDateOnly(plan.dateScope.from, plan.dateScope.to) > 0
+  ) {
     throw new Error('날짜 범위의 시작일이 종료일보다 늦습니다');
   }
 
@@ -278,15 +303,20 @@ export function validateAnalysisPlanDomain(plan: AnalysisPlan, snapshot: Analysi
       throw new Error('responded 상태는 다른 상태와 함께 사용할 수 없습니다');
     }
     if (condition.type === 'participant_status') {
-      if (plan.target !== 'dates') throw new Error('participant_status 조건은 날짜 탐색에서만 사용할 수 있습니다');
-      if (!condition.ref || !participantAliases.has(condition.ref)) throw new Error('유효하지 않은 참가자 조건입니다');
+      if (plan.target !== 'dates')
+        throw new Error('participant_status 조건은 날짜 탐색에서만 사용할 수 있습니다');
+      if (!condition.ref || !participantAliases.has(condition.ref))
+        throw new Error('유효하지 않은 참가자 조건입니다');
     }
     if (condition.type === 'date_status') {
-      if (plan.target !== 'participants') throw new Error('date_status 조건은 참가자 탐색에서만 사용할 수 있습니다');
-      if (!condition.ref || !exactDates.has(condition.ref)) throw new Error('유효하지 않은 날짜 조건입니다');
+      if (plan.target !== 'participants')
+        throw new Error('date_status 조건은 참가자 탐색에서만 사용할 수 있습니다');
+      if (!condition.ref || !exactDates.has(condition.ref))
+        throw new Error('유효하지 않은 날짜 조건입니다');
     }
     if (condition.type === 'count' || condition.type === 'ratio') {
-      if (!condition.operator || condition.value === null) throw new Error('집계 조건에 비교 연산자와 값이 필요합니다');
+      if (!condition.operator || condition.value === null)
+        throw new Error('집계 조건에 비교 연산자와 값이 필요합니다');
     }
     if (condition.type === 'ratio' && (condition.value! < 0 || condition.value! > 100)) {
       throw new Error('비율 조건은 0~100 범위여야 합니다');
@@ -310,7 +340,10 @@ export function validateAnalysisPlanDomain(plan: AnalysisPlan, snapshot: Analysi
   }
 }
 
-export function executeAnalysisPlan(plan: AnalysisPlan, snapshot: AnalysisSnapshot): AnalysisExecutionResult {
+export function executeAnalysisPlan(
+  plan: AnalysisPlan,
+  snapshot: AnalysisSnapshot
+): AnalysisExecutionResult {
   if (plan.status !== 'ok' || !plan.target || !plan.output.kind) {
     throw new Error('실행할 수 없는 분석 계획입니다');
   }
@@ -324,13 +357,20 @@ export function executeAnalysisPlan(plan: AnalysisPlan, snapshot: AnalysisSnapsh
     let rows: AnalysisDateResult[] = dates
       .filter((date) =>
         matchConditions(
-          plan.conditions.map((condition) => conditionOnDate(condition, date, participants, participantByAlias)),
+          plan.conditions.map((condition) =>
+            conditionOnDate(condition, date, participants, participantByAlias)
+          ),
           plan.conditionLogic
         )
       )
-      .map((date) => ({ type: 'date' as const, date: date.date, counts: countsForDate(date, participants) }));
+      .map((date) => ({
+        type: 'date' as const,
+        date: date.date,
+        counts: countsForDate(date, participants),
+      }));
 
-    if (plan.output.kind === 'rank' || plan.output.kind === 'compare') rows = sortDates(rows, plan.output);
+    if (plan.output.kind === 'rank' || plan.output.kind === 'compare')
+      rows = sortDates(rows, plan.output);
     if (plan.output.kind === 'list' && plan.output.position) {
       rows = sortDates(rows, { ...plan.output, metric: 'default_rank' });
     }
@@ -351,7 +391,9 @@ export function executeAnalysisPlan(plan: AnalysisPlan, snapshot: AnalysisSnapsh
   let rows: AnalysisParticipantResult[] = participants
     .filter((participant) =>
       matchConditions(
-        plan.conditions.map((condition) => conditionOnParticipant(condition, participant, dates, dateByValue)),
+        plan.conditions.map((condition) =>
+          conditionOnParticipant(condition, participant, dates, dateByValue)
+        ),
         plan.conditionLogic
       )
     )
