@@ -117,9 +117,16 @@ const planSchema = Joi.object({
       Joi.object({
         type: Joi.string().valid('participant_status', 'date_status', 'count', 'ratio').required(),
         ref: Joi.string().allow(null).required(),
-        statuses: Joi.array().items(Joi.string().valid(...voteStatuses)).min(1).max(5).required(),
+        statuses: Joi.array()
+          .items(Joi.string().valid(...voteStatuses))
+          .min(1)
+          .max(5)
+          .required(),
         negate: Joi.boolean().required(),
-        operator: Joi.string().valid(...operators).allow(null).required(),
+        operator: Joi.string()
+          .valid(...operators)
+          .allow(null)
+          .required(),
         value: Joi.number().allow(null).required(),
         denominator: Joi.string().valid('scoped_participants', 'responded').allow(null).required(),
       })
@@ -128,8 +135,14 @@ const planSchema = Joi.object({
     .required(),
   conditionLogic: Joi.string().valid('all', 'any').required(),
   output: Joi.object({
-    kind: Joi.string().valid('list', 'count', 'ratio', 'rank', 'summary', 'compare').allow(null).required(),
-    metric: Joi.string().valid(...voteStatuses, 'default_rank').allow(null).required(),
+    kind: Joi.string()
+      .valid('list', 'count', 'ratio', 'rank', 'summary', 'compare')
+      .allow(null)
+      .required(),
+    metric: Joi.string()
+      .valid(...voteStatuses, 'default_rank')
+      .allow(null)
+      .required(),
     direction: Joi.string().valid('max', 'min').allow(null).required(),
     limit: Joi.number().integer().min(1).max(20).allow(null).required(),
     position: Joi.string().valid('earliest', 'latest').allow(null).required(),
@@ -140,7 +153,9 @@ const planSchema = Joi.object({
 export function validateAnalysisPlanSchema(input: unknown): AnalysisPlan {
   const { error, value } = planSchema.validate(input);
   if (error) {
-    throw new Error(`LLM 분석 계획 스키마 오류: ${error.details.map((item: { message: string }) => item.message).join(', ')}`);
+    throw new Error(
+      `LLM 분석 계획 스키마 오류: ${error.details.map((item: { message: string }) => item.message).join(', ')}`
+    );
   }
   return value as AnalysisPlan;
 }

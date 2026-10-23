@@ -5,14 +5,23 @@
 방장이 후보 날짜와 투표 기간을 정해 캘린더를 만들면, 참여자들이 회원 또는 게스트로 들어와 가능한 날짜를 투표하고 결과를 실시간으로 확인할 수 있습니다.
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
+
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+
 ![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
+
 ![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
+
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-4-010101?logo=socket.io&logoColor=white)
+
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
+
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
 
 ---
@@ -36,20 +45,31 @@
 참여자가 많아질수록 다음 문제가 커집니다.
 
 - 누가 응답했는지 확인하기 어려움
+
 - 가능한 날짜를 다시 취합해야 함
+
 - 투표 마감 시점을 따로 관리해야 함
+
 - 여러 사용자의 수정이 동시에 발생할 수 있음
+
 - 비회원 참여 기록을 다시 찾기 어려움
 
 moim은 이 흐름을 **캘린더 생성 → 링크 공유 → 참여 → 날짜별 투표 → 결과 확인 → 마감**으로 단순화했습니다.
 
 ```mermaid
+
 flowchart LR
+
     A[캘린더 생성] --> B[공유 링크 전달]
+
     B --> C[회원 또는 게스트 참여]
+
     C --> D[날짜별 투표]
+
     D --> E[실시간 결과 확인]
+
     E --> F[직접 마감 또는 자동 마감]
+
 ```
 
 ---
@@ -57,16 +77,31 @@ flowchart LR
 ## 주요 기능
 
 - 공유 링크 기반 캘린더 참여
+
 - 회원 / 비회원 게스트 참여
+
 - 가능 / 미정 / 불가능 / 미투표 상태 관리
+
 - Socket.IO 기반 실시간 투표 및 참여 상태 반영
+
 - 회원·게스트 재입장
+
 - 게스트 기록과 회원 계정 연결
+
 - 후보 날짜 및 투표 기간 수정
+
 - 참여자 강퇴
+
 - 조기 마감 / 자동 마감
+
 - 만료 데이터 자동 정리
+
 - 공공데이터 API 기반 공휴일 동기화
+
+- LLM 기반 투표 현황 자연어 질문 및 분석
+
+- Gmail API 설정 시 캘린더 자동 마감 결과를 방장에게 메일로 알림
+
 - 모바일 / 태블릿 / 데스크톱 대응
 
 ---
@@ -87,6 +122,8 @@ flowchart LR
 |              | Redis 7                        | Token blacklist / Rate limit         |
 |              | Joi                            | Request validation                   |
 |              | node-cron                      | Automatic jobs                       |
+|              | Groq API · GPT-OSS 20B (기본값) | 투표 현황 자연어 분석                |
+|              | Gmail API                      | 설정 시 마감 결과 메일 발송          |
 |              | Jest · Supertest               | Test                                 |
 | **Infra**    | Docker · Docker Compose        | Container                            |
 |              | Nginx                          | Static serving / Reverse proxy / TLS |
@@ -98,48 +135,77 @@ flowchart LR
 # System Architecture
 
 ```mermaid
+
 flowchart TB
+
     Browser[Browser]
 
     Browser -->|HTTPS| Nginx[Nginx]
+
     Nginx -->|Static Files| React[React SPA]
+
     Nginx -->|/api| API[Express API]
+
     Nginx -->|/socket.io| Socket[Socket.IO]
 
     subgraph Backend[Node.js Backend]
+
         API
+
         Socket
+
         Cron[node-cron]
+
     end
 
     API --> MySQL[(MySQL 8)]
+
     API --> Redis[(Redis 7)]
+
+    API -->|투표 분석 요청| Groq[Groq API]
+
     Socket --> MySQL
+
     Cron --> MySQL
 
+    Cron -->|Gmail 설정 시 마감 결과 메일| Gmail[Gmail API]
+
     Actions[GitHub Actions] -->|Test / Build| GHCR[GHCR]
+
     GHCR -->|Manual Deploy / Commit SHA| Oracle[Oracle Cloud]
+
     Oracle --- Nginx
+
     Oracle --- Backend
+
     Oracle --- MySQL
+
     Oracle --- Redis
+
 ```
 
 외부에는 Nginx만 공개하고 Backend, MySQL, Redis는 Docker 내부 네트워크에서 통신합니다.
 
 Nginx는 React 정적 파일을 제공하고 `/api`와 `/socket.io` 요청을 백엔드로 전달합니다.
 
+투표 분석 요청은 Backend가 필요한 투표 상태만 정리해 Groq API로 전달하고, Gmail API가 설정된 환경에서는 자동 마감 시 Cron이 방장에게 결과 메일을 발송합니다.
+
 ---
 
 ## Backend Layer
 
 ```text
+
 Route → Controller → Service → Repository → MySQL / Redis
+
 ```
 
 - **Controller**: HTTP 요청과 응답 처리
+
 - **Service**: 비즈니스 규칙과 유스케이스 조정
+
 - **Repository**: SQL과 데이터 접근, 투표 전체 교체처럼 저장 단위가 명확한 트랜잭션 처리
+
 - **Infrastructure**: 여러 저장소를 묶는 공통 트랜잭션 및 인프라
 
 ORM 대신 `mysql2`를 사용해 SQL과 트랜잭션 흐름을 직접 제어합니다.
@@ -151,38 +217,65 @@ ORM 대신 `mysql2`를 사용해 SQL과 트랜잭션 흐름을 직접 제어합�
 프론트엔드는 기능 단위의 도메인 구조로 구성했습니다. 화면 조합과 앱 전역 관심사는 `app`, 기능별 책임은 `domains`, 특정 도메인을 모르는 범용 코드는 `shared`에 둡니다.
 
 ```text
+
 src/
+
 ├─ app/
+
 │  ├─ router/
+
 │  ├─ providers/
+
 │  ├─ guards/
+
 │  └─ pages/          # 여러 도메인을 조합하는 라우트 페이지
+
 ├─ domains/
+
 │  ├─ auth/
+
 │  ├─ user/
+
 │  ├─ calendar/
+
 │  ├─ participant/
+
 │  └─ vote/
+
 └─ shared/
+
    ├─ api/
+
    ├─ socket/
+
    ├─ ui/
+
    ├─ hooks/
+
    ├─ utils/
+
    ├─ constants/
+
    └─ types/
+
 ```
 
 의존 방향은 다음처럼 한쪽으로 유지합니다.
 
 ```text
+
 main → app → domain pages / ui / hooks → domain api / model → shared
+
 ```
 
 - **app**: Router, Provider, Guard와 여러 도메인의 조합을 담당
+
 - **domains**: 인증, 캘린더, 참가자, 투표처럼 기능별 API·상태·UI 책임을 소유
+
 - **shared**: HTTP, Socket transport, 범용 UI·유틸처럼 도메인에 의존하지 않는 코드만 배치
+
 - 도메인끼리 직접 import하지 않고, 여러 도메인을 연결해야 하는 경우 `app/pages` 또는 `app/providers`에서 조합
+
 - 도메인 외부에서는 각 도메인이 `index.ts`로 공개한 진입점만 사용
 
 이 구조를 선택한 이유는 화면 규모가 커져도 인증·참가·투표 로직이 페이지 컴포넌트에 뒤섞이지 않게 하고, 기능 단위 변경이 다른 도메인으로 번지는 범위를 줄이기 위해서입니다.
@@ -190,7 +283,6 @@ main → app → domain pages / ui / hooks → domain api / model → shared
 ### State Ownership
 
 서버에서 받은 상태와 사용자가 아직 저장하지 않은 편집 상태를 같은 원본으로 취급하지 않습니다.
-
 | 상태                      | 관리 방식                        |
 | ------------------------- | -------------------------------- |
 | 캘린더·참가자·투표·공휴일 | 각 도메인의 TanStack Query 캐시  |
@@ -219,7 +311,6 @@ Socket 이벤트는 최종 데이터를 직접 소유하는 수단이 아니라 
 초기 복수 투표 저장은 참가자의 기존 투표를 모두 삭제한 뒤 Bulk INSERT하는 구조였고, `date_option_id` 처리 순서도 고정되어 있지 않았습니다. 동시 요청이 겹치면서 DB 로그에 `Deadlock found when trying to get lock`이 발생했고, 20 VU 테스트에서 실패율이 60%까지 올라갔습니다.
 
 당시에는 DB에 전달하기 전 `date_option_id`를 오름차순으로 정렬하고, 전체 `DELETE → INSERT` 방식 대신 Bulk UPSERT로 전환했습니다. 두 변경을 함께 적용한 뒤 동일 조건 테스트에서 실패율이 0%로 내려갔습니다.
-
 | 지표   |   Before |       After |
 | ------ | -------: | ----------: |
 | 성공률 |      40% |    **100%** |
@@ -229,23 +320,39 @@ Socket 이벤트는 최종 데이터를 직접 소유하는 수단이 아니라 
 이후 날짜별로 `available / maybe / unavailable` 상태를 저장하고, 한 요청이 참가자의 현재 선택 목록 전체를 교체하도록 기능이 확장되면서 저장 경로도 다시 보강했습니다. 현재 구현은 UPSERT에 의존하지 않고 명시적인 잠금 순서와 전체 트랜잭션 재시도로 동시성을 제어합니다.
 
 ```mermaid
+
 flowchart TD
+
     A[투표 저장 요청] --> B[Transaction 시작]
+
     B --> C[Calendar FOR SHARE]
+
     C --> D[Participant FOR UPDATE]
+
     D --> E[Date Options ORDER BY id FOR SHARE]
+
     E --> F[권한 / 기간 / 날짜 상태 검증]
+
     F --> G[기존 Vote PK 조회]
+
     G --> H[기존 PK만 DELETE]
+
     H --> I[Bulk INSERT]
+
     I --> J[Commit]
+
     J --> K[Socket 이벤트 발행]
+
 ```
 
 - 잠금 순서: **Calendar → Participant → Date Option → Vote**
+
 - 같은 참가자의 투표 변경은 `Participant FOR UPDATE`로 직렬화
+
 - 날짜 옵션은 `ORDER BY id FOR SHARE`로 고정된 순서로 접근
+
 - 기존 투표는 PK를 먼저 조회한 뒤 해당 PK만 삭제해 넓은 범위의 DELETE 경합을 줄임
+
 - `ER_LOCK_DEADLOCK` 발생 시 Rollback 후 **전체 트랜잭션을 최대 2회 재시도**
 
 즉, 포트폴리오의 `정렬 + Bulk UPSERT`는 최초 데드락을 해결한 당시 개선 기록이고, 현재 코드는 기능 확장 이후 잠금 순서와 재시도까지 추가한 구조입니다.
@@ -257,7 +364,6 @@ flowchart TD
 참가자별 투표 현황 조회에서 날짜 옵션과 선택 투표를 반복 조회하던 구간을 `IN` 절 일괄 조회 후 `Map`으로 조립하도록 변경하고, 참가자별 `COUNT`는 별도 집계 쿼리로 분리했습니다.
 
 동일한 300 VU 조건에서 직접적인 개선 전후를 비교한 결과:
-
 | 지표          |      Before |           After |
 | ------------- | ----------: | --------------: |
 | 평균 응답시간 |       1.10s |       **262ms** |
@@ -277,24 +383,33 @@ flowchart TD
 로그인하지 않은 게스트도 특정 캘린더에는 참여할 수 있고, 로그인 사용자라고 해서 모든 캘린더의 참가 권한을 가지는 것은 아닙니다.
 
 ```mermaid
+
 flowchart LR
+
     User[사용자]
 
     User --> Main[Main Token]
+
     User --> Participant[Participant Token]
 
     Main --> MemberAuth[서비스 회원 인증]
+
     Participant --> CalendarAuth[특정 캘린더 참가 인증]
 
     CalendarAuth --> Guest[게스트 Participant]
+
     CalendarAuth --> MemberParticipant[회원 Participant]
 
     Guest -->|로그인 후 기록 연결| MemberParticipant
+
 ```
 
 - Main Token: 서비스 회원 인증
+
 - Participant Token: 특정 캘린더 참가 권한
+
 - 게스트가 먼저 투표한 뒤 로그인해도 기존 참가 기록을 계정과 연결
+
 - 수정·삭제·마감·강퇴는 토큰뿐 아니라 DB의 실제 소유 관계까지 재검증
 
 ---
@@ -306,23 +421,39 @@ Socket.IO 이벤트 자체를 데이터의 최종 상태로 사용하지 않습�
 DB Commit이 성공한 뒤 이벤트를 발행하고, 클라이언트는 이벤트를 변경 신호로 사용합니다.
 
 ```mermaid
+
 sequenceDiagram
+
     participant A as 사용자 A
+
     participant API as Express API
+
     participant DB as MySQL
+
     participant WS as Socket.IO
+
     participant B as 사용자 B
 
     A->>API: 투표 저장
+
     API->>DB: Transaction / Write
+
     DB-->>API: Commit
+
     API->>WS: 변경 이벤트 발행
+
     WS-->>B: 변경 알림
+
     B->>B: React Query 캐시 갱신 또는 무효화
+
     B->>API: 필요한 최신 상태 조회
+
     API->>DB: SELECT
+
     DB-->>API: 최신 상태
+
     API-->>B: 응답
+
 ```
 
 데이터의 최종 기준은 DB와 API 응답입니다.
@@ -336,11 +467,50 @@ sequenceDiagram
 일정 서비스의 날짜와 서버 timestamp를 같은 값으로 처리하지 않습니다.
 
 - 투표 날짜: KST 기준 `YYYY-MM-DD`
+
 - 서버 Timestamp / Log: UTC
+
 - 화면 표시: KST 변환
+
 - 자정 및 날짜 변경 구간 테스트
 
 UTC와 KST 혼용으로 발생할 수 있는 날짜 경계 오류를 회귀 테스트로 검증합니다.
+
+---
+
+## 6. LLM 기반 투표 분석
+
+사용자의 자연어 질문을 LLM이 직접 DB 조회나 계산하도록 하지 않고, 제한된 `AnalysisPlan` JSON으로 변환한 뒤 서버의 결정적 분석 로직에서 실행합니다.
+
+```mermaid
+
+flowchart LR
+
+    Q[사용자 질문] --> LLM[LLM: AnalysisPlan 생성]
+
+    LLM --> Validate[Schema / Domain Validation]
+
+    Validate --> Engine[Read-only 분석 엔진]
+
+    Engine --> Result[결과 생성]
+
+```
+
+- LLM은 DB에 직접 접근하지 않음
+
+- 허용된 분석 범위만 Schema와 도메인 검증으로 제한
+
+- 참가자 닉네임은 alias로 치환한 뒤 LLM에 전달
+
+- 사용자 질문 내부의 역할 변경·지시 무시 요청을 신뢰하지 않도록 Prompt Injection 완화 규칙 적용
+
+- 참가자·캘린더 단위 Rate Limit 적용
+
+- Groq Strict JSON 생성 실패 시 JSON Object 방식으로 1회 재시도하고, 최종 결과는 서버 Schema로 검증
+
+- 실제 집계·필터링·순위 계산은 서버 코드가 수행하며, 동일한 검증 계획과 투표 스냅샷에는 같은 집계 결과를 반환
+
+LLM은 질문을 분석 계획으로 구조화하고 일부 결과를 자연어로 표현합니다. 실제 투표 집계·필터링·순위 계산과 최종 데이터 검증은 서버가 수행합니다.
 
 ---
 
@@ -351,34 +521,44 @@ UTC와 KST 혼용으로 발생할 수 있는 날짜 경계 오류를 회귀 테�
 ### Frontend
 
 - 투표 상태 계산
+
 - Heatmap
+
 - 후보 날짜 Ranking
+
 - 투표 현황 집계
+
 - 인증 후 원래 경로 복귀
+
 - 429 Retry 정책
+
 - KST 날짜 경계
 
 ### Backend
 
 - 인증 / 권한
+
 - Calendar / Participant / Vote Service
+
 - MySQL Transaction
+
 - Redis
+
 - HTTP API
+
 - Socket.IO
+
 - 날짜 / 시간대 처리
 
 ### Load Test
 
 k6를 사용해 동시 투표, 조회, 쓰기, Socket 부하를 검증했습니다.
-
 | Test                     |      Before |           After |
 | ------------------------ | ----------: | --------------: |
 | 동시 투표 성공률 / 20 VU |         40% |        **100%** |
 | 조회 평균 / 300 VU       |       1.10s |       **262ms** |
 | 조회 p95 / 300 VU        |       2.36s |       **742ms** |
 | 조회 처리량 / 300 VU     | 111.7 req/s | **209.0 req/s** |
-| 쓰기 실패율 / 100 VU     |       7.81% |          **0%** |
 
 ---
 
@@ -389,31 +569,47 @@ k6를 사용해 동시 투표, 조회, 쓰기, Socket 부하를 검증했습니�
 GitHub Actions에서 테스트와 이미지 빌드를 수행하고, 운영 서버는 검증된 Docker Image만 실행합니다.
 
 ```mermaid
+
 flowchart LR
+
     Push[Push / Pull Request] --> Actions[GitHub Actions]
 
     Actions --> FrontTest[Frontend Test]
+
     Actions --> BackTest[Backend Test + MySQL / Redis]
 
     FrontTest --> Build[Docker Image Build]
+
     BackTest --> Build
 
     Build --> GHCR[GHCR]
+
     GHCR -->|Manual Deploy / Commit SHA| Oracle[Oracle Cloud]
 
     Oracle --> Compose[Docker Compose]
+
     Compose --> Front[Nginx / Frontend]
+
     Compose --> Back[Backend]
+
     Compose --> DB[(MySQL)]
+
     Compose --> Redis[(Redis)]
+
     Compose --> Health[Health / Readiness Check]
+
 ```
 
 - Frontend / Backend 테스트 통과 후 Image Build
+
 - Backend 테스트에서는 MySQL / Redis 컨테이너 실제 기동
+
 - GHCR에 Git SHA 기반 이미지 저장
+
 - 운영 배포 시 특정 SHA 이미지 사용
+
 - Frontend HTTPS Health Check
+
 - Backend Readiness Check
 
 ---
@@ -425,20 +621,31 @@ flowchart LR
 한 서버에서 다음 서비스를 함께 실행합니다.
 
 - Nginx
+
 - Node.js Backend
+
 - MySQL
+
 - Redis
+
 - GoAccess
 
 자원 사용량을 제어하기 위해:
 
 - 컨테이너별 Memory Limit
+
 - Node.js Heap 제한
+
 - MySQL 메모리 설정 조정
+
 - Redis `maxmemory`
+
 - Redis AOF
+
 - Docker Healthcheck
+
 - Docker Log Rotation
+
 - Swap
 
 을 적용했습니다.
@@ -450,16 +657,33 @@ flowchart LR
 # Security
 
 - 회원 Access Token / Participant Token / Refresh Token 분리
+
 - Refresh Token HttpOnly Cookie
+
 - Redis 기반 Refresh Token 폐기 관리
+
 - 서버 측 권한 재검증
+
 - Socket 재입장 시 참가자·캘린더·토큰 재검증
+
 - 강퇴된 참가자의 Socket 연결 정리
+
 - Rate Limit
+
 - Joi Validation
+
 - Helmet
+
 - CORS
+
 - Request Size Limit
+
+- LLM 입력 시 참가자 닉네임 alias 처리
+
+- LLM 출력 Schema 검증 및 허용된 분석 연산만 실행
+
+- AI 질문 API에 참가자·캘린더 단위 Rate Limit 적용
+
 - Secret 환경변수 관리
 
 ---
@@ -467,50 +691,91 @@ flowchart LR
 # Automatic Operations
 
 ```mermaid
+
 flowchart LR
+
     VoteEnd[투표 기간 종료] --> Close[자동 마감]
+
+    Close --> Mail[Gmail 설정 시 방장에게 결과 메일 발송]
+
     Retention[보관 기간 종료] --> Cleanup[캘린더 자동 정리]
+
     December[매년 12월] --> PublicAPI[공공데이터 API]
+
     PublicAPI --> Holiday[다음 연도 공휴일 동기화]
+
 ```
 
 자동 작업에서도 일반 API와 동일하게 필요한 트랜잭션과 데이터 정합성 규칙을 적용합니다.
+
+Gmail API가 설정된 환경에서는 캘린더 자동 마감 후 투표 결과와 참여자 수를 정리해 방장에게 안내 메일을 발송합니다. 메일 발송 실패는 캘린더 마감 처리와 분리됩니다.
 
 ---
 
 # Project Structure
 
 ```text
+
 Calendar_project/
+
 ├─ frontend/
+
 │  ├─ src/
+
 │  │  ├─ app/
+
 │  │  ├─ domains/
+
 │  │  │  ├─ auth/
+
 │  │  │  ├─ calendar/
+
 │  │  │  ├─ participant/
+
 │  │  │  ├─ user/
+
 │  │  │  └─ vote/
+
 │  │  └─ shared/
+
 │  ├─ nginx/
+
 │  └─ docs/
+
 │
+
 ├─ back-end/
+
 │  ├─ src/
+
 │  │  ├─ controllers/
+
 │  │  ├─ services/
+
 │  │  ├─ repositories/
+
 │  │  ├─ middlewares/
+
 │  │  ├─ routes/
+
 │  │  ├─ sockets/
+
 │  │  ├─ infrastructure/
+
 │  │  ├─ models/
+
 │  │  └─ __tests__/
+
 │  └─ docker-compose.ci.yml
+
 │
+
 ├─ deploy/
+
 ├─ .github/workflows/
+
 └─ compose.production.yml
+
 ```
 
 ---
@@ -518,11 +783,17 @@ Calendar_project/
 ## 설계 원칙
 
 - DB를 최종 상태의 기준으로 사용
+
 - Socket 이벤트는 상태 자체가 아닌 변경 신호로 사용
+
 - 회원 인증과 캘린더 참가 인증 분리
+
 - 트랜잭션 경계는 변경 범위에 맞춰 Service의 공통 TransactionManager 또는 저장 단위가 명확한 Repository에서 명시적으로 관리
+
 - SQL과 데이터 접근 책임은 Repository에 배치
+
 - 운영 서버에서는 검증된 Docker Image만 실행
+
 - 성능 개선은 부하 테스트 결과로 검증
 
 ---
@@ -530,5 +801,7 @@ Calendar_project/
 ## 상세 문서
 
 - [Backend README](back-end/README.md) - API, 인증, 현재 백엔드 처리 구조
+
 - [Frontend Architecture](frontend/docs/FRONTEND_ARCHITECTURE.md) - 프론트엔드 책임 분리와 상태 관리 설계
+
 - [Benchmark Results](docs/benchmarks/k6-results.md) - k6 테스트 조건과 성능 개선 전후 결과
